@@ -92,3 +92,9 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 ### Diarization on non-English synthetic (proxy test, same day)
 - hi+ta two-voice synthetic mix (4 turns): turn boundaries found, but 2 of 4 turns had their first half attributed to the WRONG speaker (both TTS voices are similar-pitch female voices; short segments give weak embeddings).
 - Read: diarization is solid on distinct real voices (LibriSpeech 16/16 turns), degrades on acoustically similar voices. Real Hindi meeting test stays on Hassan's list; don't promise speaker labels for his calls until that passes.
+
+### Diarization speaker-count modes (demo meeting rerun, same day)
+- --speakers 2 (known count): 7/7 turns correct.
+- auto count (clusterer decides): over-clustered - split ONE gTTS voice into "Speaker 1" and "Speaker 3" (3 clusters for 2 voices). Turn boundaries still right.
+- Guidance shipped in README: pass --speakers N when you know the headcount; auto mode may over-split. Real-meeting calibration stays on Hassan's list.
+- Bonus live evidence: on this rerun the verifier demoted "Write the retention sweep tonight (owner not mentioned in transcript)" - the integrity pass catching an over-eager owner attribution in the wild, unscripted.

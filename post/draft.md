@@ -32,13 +32,13 @@ backend: ultramarine (hosted fallback - dev sandbox has no GPU; on a laptop this
 integrity: {'checked': 6, 'passed': 6}
 ```
 
-transcript.md (sentence-level, VAD segmentation):
+transcript.md (sentence-level, VAD segmentation, speaker labels from `--diarize`):
 ```text
-[00:14] We shipped the Android recorder on Friday.
-[00:23] Priya will own the sync server. And it should only move transcripts and notes. Never the audio.
-[00:31] We also decided recordings delete themselves after seven days. Transcripts stay local only.
-[00:39] I will write the retention sweep tonight.
-[00:48] Hassan tests the Hindi transcript on his phone before we post anything.
+[00:14] Speaker 3: We shipped the Android recorder on Friday.
+[00:23] Speaker 2: Priya will own the sync server. And it should only move transcripts and notes. Never the audio.
+[00:31] Speaker 3: We also decided recordings delete themselves after seven days. Transcripts stay local only.
+[00:39] Speaker 2: I will write the retention sweep tonight.
+[00:48] Speaker 3: Hassan tests the Hindi transcript on his phone before we post anything.
 ```
 
 notes.md (every claim carries its receipt):
