@@ -102,4 +102,4 @@ Read the demo transcript above again: the speaker said "we ship on Friday" and W
 - Best Use of MongoDB Atlas - [if it lands: sync store]
 - Best Use of a .tech Domain - [demo page if deployed]
 
-*Built with: whisper.cpp (MIT), Whisper tiny/base/small (MIT), pyannote segmentation + ERes2Net via sherpa-onnx, Gemma 3 via Ollama, age (X25519), Kotlin/Android (zero third-party deps), Python stdlib. Tests: 67 Python unit/integration tests + Android JUnit on CI. License: MIT.*
+*Built with: whisper.cpp (MIT), Whisper tiny/base/small (MIT), pyannote segmentation + ERes2Net via sherpa-onnx, Gemma 3 via Ollama, age (X25519), Kotlin/Android (zero third-party deps), Python stdlib. Tests: 98 Python unit/integration tests + 10 Android JVM unit tests, both green on CI. License: MIT.*
