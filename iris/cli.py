@@ -38,7 +38,7 @@ def cmd_ingest(audio, backend_name="ollama", title="", diarize=False, speakers=0
     print(f"meeting: {mid}\nbackend: {backend.name}\nintegrity: {notes['integrity']}")
     print(f"notes: {os.path.join(STORE, mid, 'notes.md')}")
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 def _need(args, i, what):
     if len(args) <= i:
