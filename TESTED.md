@@ -41,9 +41,9 @@ Every claim the product makes is tied to a test that actually ran. Anything not 
 - No speaker diarization yet: attempted with synthetic two-channel audio (one voice panned per channel) and whisper.cpp's -di flag; it returned "(speaker ?)" - inconclusive. Real stereo recordings and tuning needed; v1 ships without speaker labels.
 
 ## NOT tested here (Hassan must test on his devices)
-- Ollama + gemma3:4b as the notes backend (default). Sandbox has no GPU/RAM for it; the hosted fallback was used instead. Test: `ollama pull gemma3:4b && python3 convo/cli.py ingest meeting.wav` (default backend is ollama).
+- Ollama + gemma3:4b as the notes backend (default). Sandbox has no GPU/RAM for it; the hosted fallback was used instead. Test: `ollama pull gemma3:4b && python3 iris/cli.py ingest meeting.wav` (default backend is ollama).
 - Real Hindi speech (sandbox test used synthetic gTTS audio, which is unnaturally clean). Use models/ggml-small.bin with -l hi.
-- Microphone capture on his laptop and phone (convo/record.py written, untestable in the sandbox - no audio device).
+- Microphone capture on his laptop and phone (Iris/record.py written, untestable in the sandbox - no audio device).
 - Long meeting (30-60 min) transcription time and notes quality on his hardware.
 - Sync between two real devices (loopback test passed; real phone<->laptop sync still needs his hardware).
 - Android recorder app.
@@ -53,24 +53,24 @@ Every claim the product makes is tied to a test that actually ran. Anything not 
 - Encryption at rest (transcripts are plain files today; age-based encryption is v1.5).
 - iOS anything.
 
-## Meeting auto-detect (convo/detect.py) - added Oct 21
+## Meeting auto-detect (Iris/detect.py) - added Oct 21
 - TESTED (unit, 7 fake-probe tests): Zoom/Teams/Webex/Slack process detection, Google Meet browser window-title detection (incl. "Meet - abc-defg-hij" title form), 2-poll confirmation (a 1-poll glitch does NOT fire), meeting-end after silence, no duplicate start events, mic signal only attached when a meeting app is present.
 - DETECTION ONLY: it never joins or reads the meeting. Recording still starts with a manual confirm.
 - Hassan's real-device tests pending: live Zoom + Meet detection on his laptop (X11 vs Wayland - window titles only work on X11; Wayland needs process/mic signals), mic-in-use check on his audio stack.
 - Phone (honest limits, built into docs not code): Android can only see the FOREGROUND app name via Usage Access - it cannot see another app's mic or audio (Play policy, May 2022). iOS: no detection possible. Android companion app will use the foreground-app signal with a "meeting? tap to record" notification.
 
-## Encryption at rest (convo/crypto.py + store wiring) - added Oct 21
-- age v1.2.1 (X25519, vendored binary in vendor/), key at ~/.convo/key.txt (chmod 600), ASCII-armored .age files.
+## Encryption at rest (Iris/crypto.py + store wiring) - added Oct 21
+- age v1.2.1 (X25519, vendored binary in vendor/), key at ~/.Iris/key.txt (chmod 600), ASCII-armored .age files.
 - TESTED (7 unit tests): keygen + 600 perms + age1 pubkey, refuses overwrite, byte/file roundtrip, wrong key fails, store-level: encrypt_meeting removes plaintext and keeps only .age, decrypt_meeting roundtrip, meta.encrypted flag.
-- TESTED LIVE: demo meeting encrypted via `convo encrypt`, plaintext gone from disk, `convo read` roundtrips the real transcript.
-- Behavior: `convo ingest` auto-encrypts when a key exists. Sync carries only .age ciphertext (relay never sees plaintext).
+- TESTED LIVE: demo meeting encrypted via `Iris encrypt`, plaintext gone from disk, `Iris read` roundtrips the real transcript.
+- Behavior: `Iris ingest` auto-encrypts when a key exists. Sync carries only .age ciphertext (relay never sees plaintext).
 - Hassan's tests pending: key pair across 2 devices (copy key file, confirm same pubkey fingerprint), passphrase-protected key variant, sync roundtrip of encrypted meetings.
 
-## Export & encrypted share (convo/export.py) - added Oct 21
+## Export & encrypted share (Iris/export.py) - added Oct 21
 - export: one markdown bundle (notes + full transcript + meta), plaintext, audio never included.
 - share: same bundle encrypted to a RECIPIENT'S age public key - sharing = re-encrypting to their key, nothing uploaded.
 - TESTED (3 unit tests): bundle contents, plaintext export, share only opens with the recipient's key (owner key correctly fails).
-- TESTED LIVE: `convo export` on the encrypted demo meeting produced a readable bundle.
+- TESTED LIVE: `Iris export` on the encrypted demo meeting produced a readable bundle.
 - Hassan's tests pending: share a real meeting with a second person (they run `age -d` with their key), PDF export if he wants it.
 
 ## Android app (android/) - added Oct 21
@@ -80,7 +80,7 @@ Every claim the product makes is tied to a test that actually ran. Anything not 
 - SyncClient: pulls meeting bundles from the user's own relay; posts recordings to the user's own laptop ingest endpoint over LAN. Nothing third-party.
 - AgeDecrypt: full age v1 decryption in-app (bech32 key import, X25519 via API 33 platform crypto, HKDF-SHA256, ChaCha20-Poly1305, STREAM chunks) - the phone reads encrypted notes with the user's own key.
 - TESTED: compiles to a working APK (app-debug.apk builds clean). NOT testable in sandbox - Hassan's on-device list: mic recording quality, nudge firing in a real Zoom/Meet call, LAN upload to laptop, encrypted notes read on phone, Android 13+ gate message on older phones.
-- Laptop ingest server (convo/ingest_server.py): phone -> laptop over LAN, full pipeline runs on the laptop, results sync back encrypted via relay.
+- Laptop ingest server (Iris/ingest_server.py): phone -> laptop over LAN, full pipeline runs on the laptop, results sync back encrypted via relay.
 
 ## Multi-language transcription (ggml-small multilingual, synthetic gTTS speech) - tested Oct 21
 Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio speech; real meetings are harder. Hassan's real-speech tests still pending.
@@ -91,7 +91,7 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 - Bengali: SCRIPT FAILURE - Whisper heard the Bengali words but wrote them in Devanagari script, not Bengali script. Documented limitation: treat Bengali as unsupported until the large model or a fine-tune fixes it.
 - Reminder (tested earlier): ggml-base TRANSLATES Hindi to English instead of transcribing - always use ggml-small or better for non-English. English meetings use base.en (2x faster).
 
-## Local web UI (convo/webui.py) - added Oct 21
+## Local web UI (Iris/webui.py) - added Oct 21
 - TESTED LIVE: index lists meetings with encrypted badge + integrity counts; detail page renders the ENCRYPTED demo meeting's decrypted notes (claims with receipts as blockquotes) and full transcript.
 - Localhost-only bind by design - it serves decrypted content. No JS, no CDN, no auth (threat model: same-user same-machine). Exposing it on LAN is explicitly out of scope.
 
@@ -100,16 +100,16 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 - Round 2 (real humans, proper test per Hassan): 16 alternating turns from TWO REAL LibriSpeech dev-clean speakers (CC-BY 4.0), 6s per turn -> ZERO [SPEAKER_TURN] markers again. Transcription fine; turn detection dead in this build.
 - Conclusion: whisper.cpp tinydiarize does not work. Speaker labels come from sherpa-onnx instead (below).
 
-## Speaker diarization SHIPPED (convo/diarize.py) - tested Oct 21, proper retest per Hassan
+## Speaker diarization SHIPPED (Iris/diarize.py) - tested Oct 21, proper retest per Hassan
 - Stack: sherpa-onnx OfflineSpeakerDiarization = pyannote-segmentation-3.0 (ONNX, 6MB) + 3dspeaker ERes2Net voxceleb embedding (26MB) + fast clustering. Fully local, free, no accounts. `models/get-diarize-models.sh` fetches both.
 - TEST 1 - real two-human speech (16 alternating 6s turns, two LibriSpeech dev-clean speakers, CC-BY): 21 segments, EVERY turn attributed to the correct speaker (perfect alternation). campplus embedding variant FAILED this test (collapsed to one speaker) - ERes2Net is the one that works; don't swap it.
 - TEST 2 - synthetic gTTS two-voice demo meeting: 7/7 turns correct.
-- TEST 3 - end to end: `convo ingest two_humans.wav --diarize --speakers 2` produced a transcript with correct "Speaker 1:/Speaker 2:" prefixes per line.
+- TEST 3 - end to end: `Iris ingest two_humans.wav --diarize --speakers 2` produced a transcript with correct "Speaker 1:/Speaker 2:" prefixes per line.
 - Unit tests (5): overlap assignment, majority rule, no-overlap, same-speaker merging, gap respect.
 - Honest limits: num_speakers known helps; unknown-speaker-count mode (clustering threshold) untested; overlapping speech (two people talking at once) untested - segmentation models handle overlap partially, expect misses; Hindi/multilingual diarization untested (embedding is English-voxceleb-trained but language-agnostic in principle - Hassan's real Hindi meeting is the test).
 
-## Full-text search (convo search) - added Oct 21
-- TESTED LIVE: `convo search Priya` on the ENCRYPTED demo meeting decrypts locally and finds matches in both transcript and notes. Case-insensitive, searches all meetings.
+## Full-text search (Iris search) - added Oct 21
+- TESTED LIVE: `Iris search Priya` on the ENCRYPTED demo meeting decrypts locally and finds matches in both transcript and notes. Case-insensitive, searches all meetings.
 
 ### Diarization on non-English synthetic (proxy test, same day)
 - hi+ta two-voice synthetic mix (4 turns): turn boundaries found, but 2 of 4 turns had their first half attributed to the WRONG speaker (both TTS voices are similar-pitch female voices; short segments give weak embeddings).
