@@ -110,3 +110,11 @@ def test_rename_caps_long_title(server):
     _post(f"/rename/{mid}", {"title": "x" * 500})
     meta = json.load(open(os.path.join(STORE, mid, "meta.json")))
     assert len(meta["title"]) == 120
+
+def test_title_html_escaped_in_page(server):
+    import html as H
+    mid = _mk_search_meeting()
+    payload = '<script>alert(1)</script>'
+    _post(f"/rename/{mid}", {"title": payload})
+    body = urllib.request.urlopen(f"http://127.0.0.1:{PORT}/meeting/{mid}").read().decode()
+    assert payload not in body and H.escape(payload) in body
