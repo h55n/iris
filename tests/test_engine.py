@@ -95,3 +95,21 @@ if __name__ == "__main__":
     for fn in fns:
         fn(); print(f"PASS {fn.__name__}")
     print(f"{len(fns)}/{len(fns)} tests pass")
+
+def test_transcript_markdown_lang_tags():
+    from iris import transcribe as T
+    segs = [
+        {"start": 0.0, "text": "hello there", "lang": "en"},
+        {"start": 61.0, "text": "हिन्दी पंक्ति", "lang": "hi"},
+        {"start": 65.0, "text": "no lang key"},
+    ]
+    md = T.transcript_markdown(segs)
+    lines = md.splitlines()
+    assert "<hi>" in lines[1] and lines[1].startswith("[01:01]")
+    assert "<hi>" not in lines[0] and "<hi>" not in lines[2]
+
+def test_transcript_markdown_speaker_names():
+    from iris import transcribe as T
+    segs = [{"start": 5.0, "text": "hi", "speaker": 0, "lang": "en"}]
+    md = T.transcript_markdown(segs, speaker_names={0: "Priya"})
+    assert "Priya:" in md and "Speaker 1" not in md
