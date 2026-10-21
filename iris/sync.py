@@ -33,8 +33,8 @@ def push_changed(store_dir, server, token):
     hashes = st.get("push_hashes", {})
     pushed, skipped = [], []
     for mid in sorted(os.listdir(store_dir)):
-        if not os.path.isdir(os.path.join(store_dir, mid)):
-            continue
+        if mid.startswith((".", "_")) or not os.path.isfile(os.path.join(store_dir, mid, "meta.json")):
+            continue  # .trash, _folders.json, stray dirs: never meetings
         try:
             h = bundle_hash(store_dir, mid)
         except (OSError, ValueError):

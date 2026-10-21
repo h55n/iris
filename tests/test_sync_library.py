@@ -39,3 +39,9 @@ def test_merge_folders_never_deletes_or_renames_local():
     assert Y.merge_folders(B, remote) == 1
     names = {f["name"] for f in L.list_folders(B)}
     assert "renamed remotely" not in names and "New" in names and "B only" in names
+
+def test_trash_and_stray_dirs_never_sync():
+    mid = L.new_note(A, "will be trashed"); L.trash_note(A, mid)
+    os.makedirs(os.path.join(A, "stray-dir"), exist_ok=True)
+    pushed, _ = Y.push_changed(A, URL, "t")
+    assert ".trash" not in pushed and "stray-dir" not in pushed and mid not in pushed
