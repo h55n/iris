@@ -61,8 +61,7 @@ if __name__ == "__main__":
         elif len(args) > 1 and args[1] == "qr":
             print(C.export_qr())
         elif len(args) > 1 and args[1] == "info":
-            import subprocess
-            subprocess.run(["python3", "iris/crypto.py", "info"])
+            print(C.key_info())
         else:
             print(C.public_key())
     elif args[0] == "encrypt":

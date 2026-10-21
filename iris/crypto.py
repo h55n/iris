@@ -88,6 +88,13 @@ def export_qr(path: str = DEFAULT_KEY) -> str:
     qr.print_ascii(out=buf, invert=True)
     return buf.getvalue()
 
+def key_info(path: str = DEFAULT_KEY) -> str:
+    import time
+    st = os.stat(path)
+    return (f"key file: {path}\n"
+            f"created: {time.strftime('%Y-%m-%d %H:%M', time.localtime(st.st_ctime))}\n"
+            f"public: {public_key(path)}")
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "pubkey"
     if cmd == "init":
@@ -99,8 +106,4 @@ if __name__ == "__main__":
     elif cmd == "qr":
         print(export_qr())
     elif cmd == "info":
-        import time
-        st = os.stat(DEFAULT_KEY)
-        print("key file:", DEFAULT_KEY)
-        print("created:", time.strftime("%Y-%m-%d %H:%M", time.localtime(st.st_ctime)))
-        print("public:", public_key())
+        print(key_info())
