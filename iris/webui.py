@@ -14,14 +14,14 @@ PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=
   --bg:#ffffff; --side:#f7f7f5; --text:#37352f; --muted:#73726e; --faint:#a3a29e;
   --border:#e9e9e7; --border-soft:#ededeb; --accent:#2383e2;
   --quote-border:#d3d1cb; --pill-ok-bg:#eef7ee; --pill-ok:#2f6b31;
-  --input-bg:#ffffff;
+  --input-bg:#ffffff; --active-bg:#e3e3e0; --danger:#b83232; --danger-border:#e5c7c5;
 }
 @media (prefers-color-scheme: dark){
   :root{
     --bg:#191919; --side:#202020; --text:#d4d4d2; --muted:#9b9b98; --faint:#6f6f6c;
     --border:#2f2f2f; --border-soft:#2a2a2a; --accent:#529cca;
     --quote-border:#4a4a47; --pill-ok-bg:#1e2b1e; --pill-ok:#6aaa6f;
-    --input-bg:#252525;
+    --input-bg:#252525; --active-bg:#373737; --danger:#e08a8a; --danger-border:#5a3535;
   }
 }
 *{box-sizing:border-box}
@@ -38,7 +38,7 @@ body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"SF Pro Text","Seg
 .searchbox input:focus{border-color:var(--accent)}
 .nav-item{display:block;padding:6px 10px;border-radius:6px;color:var(--text);text-decoration:none;margin-bottom:1px}
 .nav-item:hover{background:#ececea}
-.nav-item.active{background:#e3e3e0}
+.nav-item.active{background:var(--active-bg)}
 .nav-title{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nav-meta{font-size:11.5px;color:var(--faint);margin-top:1px}
 .content{flex:1;min-width:0}
@@ -215,10 +215,10 @@ def make_handler(store_dir: str):
                 when = time.strftime("%B %-d, %Y at %-I:%M %p", time.localtime(meta.get("created", 0)))
                 body = (f'<h1>{esc(meta.get("title", mid))}</h1><div class=doc-meta>{when} &middot; {mid}</div>'
                         f'<form method=post action="/rename/{mid}" style="margin-bottom:18px">'
-                        f'<input name=title placeholder="Rename meeting" style="padding:5px 9px;font-size:13px;border:1px solid var(--border);border-radius:6px;width:220px"> '
-                        f'<button style="padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:#fff">rename</button></form>'
+                        f'<input name=title placeholder="Rename meeting" style="padding:5px 9px;font-size:13px;border:1px solid var(--border);border-radius:6px;width:220px;background:var(--input-bg);color:var(--text)"> '
+                        f'<button style="padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--input-bg);color:var(--text)">rename</button></form>'
                         f'<form method=post action="/delete/{mid}" onsubmit="return confirm(\'Delete this meeting? Notes and transcript are removed from this device.\')" style="margin-bottom:24px">'
-                        f'<button style="padding:5px 12px;font-size:13px;border:1px solid #e5c7c5;border-radius:6px;background:#fff;color:#b83232">delete meeting</button></form>')
+                        f'<button style="padding:5px 12px;font-size:13px;border:1px solid var(--danger-border);border-radius:6px;background:var(--input-bg);color:var(--danger)">delete meeting</button></form>')
                 if "notes.md" in texts:
                     body += render_notes_md(texts["notes.md"])
                 if "transcript.md" in texts:
