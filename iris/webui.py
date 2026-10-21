@@ -121,6 +121,12 @@ body{margin:0;font:16px/1.65 var(--font);-webkit-font-smoothing:antialiased;
 .inline button{padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:999px;background:var(--input-bg);color:var(--text)}
 .inline .danger{border-color:var(--danger-border);color:var(--danger)}.inline .primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .speaker{cursor:pointer}
+h2.big{font-size:26px;margin-top:28px}
+.todo.done span:last-child{text-decoration:line-through;color:var(--faint)}
+.box.on{background:var(--accent);border-color:var(--accent)}
+.num{margin:4px 0}.num .n{color:var(--muted);display:inline-block;min-width:22px}
+code{font-family:var(--mono);font-size:.9em;background:var(--side);border:1px solid var(--border-soft);border-radius:4px;padding:1px 5px}
+del{color:var(--faint)}
 .lang{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;padding:1px 6px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-right:2px}
 .recent{max-width:560px;margin:34px auto 0;text-align:left}
 .card{display:block;padding:12px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;text-decoration:none;color:var(--text);background:var(--input-bg)}
@@ -309,35 +315,57 @@ def render_transcript_line(line: str) -> str:
         return f'<span style="color:var(--faint)">{m2.group(1)}</span>  {esc(m2.group(2))}'
     return esc(line)
 
-def render_notes_md(md: str) -> str:
+def inline_md(t: str) -> str:
+    """Escape first, then turn **bold**, *italic*, `code` and ~~strike~~ into tags."""
+    import re
+    t = esc(t)
+    t = re.sub(r"`([^`]+)`", r"<code>\1</code>", t)
+    t = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", t)
+    t = re.sub(r"(?<![\w*])\*([^*\s][^*]*?)\*(?![\w*])", r"<em>\1</em>", t)
+    t = re.sub(r"~~([^~]+)~~", r"<del>\1</del>", t)
+    return t
+
+def render_notes_md(md: str, skip_title: bool = True) -> str:
+    import re
     out = []
+    first = True
     for line in md.splitlines():
+        if first and line.strip():
+            first = False
+            if skip_title and line.startswith("# "):
+                continue  # generated notes: page title already shown
         if line.startswith("# "):
-            continue  # page title already shown
-        if line.startswith("## "):
+            out.append(f"<h2 class=big>{inline_md(line[2:])}</h2>")
+        elif line.startswith("## "):
             t = line[3:]
-            out.append(f"<h2>{heading_icon(t)}{esc(t)}</h2>")
+            out.append(f"<h2>{heading_icon(t)}{inline_md(t)}</h2>")
         elif line.startswith("### "):
-            out.append(f"<h3>{esc(line[4:])}</h3>")
-        elif line.startswith("  > "):
-            body = line[4:]
-            import re
+            out.append(f"<h3>{inline_md(line[4:])}</h3>")
+        elif line.strip() in ("---", "***"):
+            out.append("<hr class=divider>")
+        elif line.startswith("  > ") or line.startswith("> "):
+            body = line.split("> ", 1)[1]
             m = re.match(r'^"(.*)"\s*\[(\d\d:\d\d)\]$', body)
             if m:
                 out.append(f'<blockquote>&ldquo;{esc(m.group(1))}&rdquo; <span class=ts>{m.group(2)}</span></blockquote>')
             else:
-                out.append(f"<blockquote>{esc(body)}</blockquote>")
-        elif line.startswith("- [ ] "):
-            out.append(f'<div class=todo><span class=box></span><span>{esc(line[6:])}</span></div>')
-        elif line.startswith("- "):
-            out.append(f'<div class=bullet>{esc(line[2:])}</div>')
+                out.append(f"<blockquote>{inline_md(body)}</blockquote>")
+        elif re.match(r"^\s*- \[[xX]\] ", line):
+            out.append(f'<div class="todo done"><span class="box on"></span><span>{inline_md(line.split("] ", 1)[1])}</span></div>')
+        elif re.match(r"^\s*- \[ \] ", line):
+            out.append(f'<div class=todo><span class=box></span><span>{inline_md(line.split("] ", 1)[1])}</span></div>')
+        elif re.match(r"^\s*- ", line):
+            depth = (len(line) - len(line.lstrip())) // 2
+            out.append(f'<div class=bullet style="margin-left:{depth * 20}px">{inline_md(line.lstrip()[2:])}</div>')
+        elif re.match(r"^\d+\. ", line):
+            n, rest = line.split(". ", 1)
+            out.append(f'<div class=num><span class=n>{n}.</span> {inline_md(rest)}</div>')
         elif line.startswith("_integrity"):
-            import re
             m = re.search(r"(\d+)/(\d+)", line)
             label = f"{m.group(1)}/{m.group(2)} claims verified" if m else esc(line)
             out.append(f'<p><span class=pill>{label}</span></p>')
         elif line.strip():
-            out.append(f"<p>{esc(line)}</p>")
+            out.append(f"<p>{inline_md(line)}</p>")
     return "\n".join(out)
 
 def meeting_nav(store_dir: str, mid: str) -> str:
@@ -700,7 +728,7 @@ def make_handler(store_dir: str):
                       f'<button class=danger>Delete</button></form></div></details></div>')
                 notes_txt = texts.get("notes.md", "")
                 is_note = meta.get("kind") == "note" or not notes_txt.strip()
-                body += (f'<div id=view{" hidden" if is_note else ""}>{render_notes_md(notes_txt) if notes_txt.strip() else ""}</div>'
+                body += (f'<div id=view{" hidden" if is_note else ""}>{render_notes_md(notes_txt, skip_title=meta.get("kind") != "note") if notes_txt.strip() else ""}</div>'
                          f'<div id=edit{"" if is_note else " hidden"}>'
                          f'<textarea id=ed data-mid="{mid}" spellcheck=true placeholder="Write notes. # heading, - list, - [ ] task, > quote">{esc(notes_txt)}</textarea>'
                          f'<div class=edmeta><span id=saved>Saved</span><span>Markdown. Saved on this device only.</span></div></div>'
