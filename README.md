@@ -36,6 +36,16 @@ own machine, writes notes you can trust, deletes the audio after a week.
 Audio never leaves your devices. The relay moves only encrypted
 transcripts and notes; decryption keys never touch it.
 
+## See it
+
+<p>
+<img src="post/assets/ui-index.png" width="32%" alt="Meetings home with mascot and stats">
+<img src="post/assets/ui-meeting.png" width="32%" alt="Meeting notes with claim receipts">
+<img src="post/assets/ui-search.png" width="32%" alt="Search across encrypted notes">
+</p>
+
+Dark mode follows your system; six accent themes live in the sidebar footer.
+
 ## Run it
 
 ```sh
