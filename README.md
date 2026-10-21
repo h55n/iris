@@ -16,6 +16,26 @@ own machine, writes notes you can trust, deletes the audio after a week.
 - **Sync without audio** - a tiny self-hostable server moves transcripts/notes/meta
   between your devices. Recordings never leave the device they were made on.
 
+## How it fits together
+
+```
+  phone (Android)                laptop (this repo)                 other devices
+ --------------                 -----------------                 ---------------
+  record wav ----LAN POST /ingest--> record -> transcribe (whisper.cpp, local)
+       |                                  -> diarize (pyannote seg + ERes2Net)
+       |                                  -> notes (ollama, or hosted fallback)
+       |                                  -> age-encrypt at rest
+       |                                        |
+       +------- pull transcript/notes ----------+
+       |        (never the audio)               v
+       +-------------------------------> self-hosted sync relay (stdlib http)
+                                                |
+                    web UI / search / export <--+
+```
+
+Audio never leaves your devices. The relay moves only encrypted
+transcripts and notes; decryption keys never touch it.
+
 ## Run it
 
 ```sh
