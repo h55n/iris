@@ -120,3 +120,9 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 - auto count (clusterer decides): over-clustered - split ONE gTTS voice into "Speaker 1" and "Speaker 3" (3 clusters for 2 voices). Turn boundaries still right.
 - Guidance shipped in README: pass --speakers N when you know the headcount; auto mode may over-split. Real-meeting calibration stays on Hassan's list.
 - Bonus live evidence: on this rerun the verifier demoted "Write the retention sweep tonight (owner not mentioned in transcript)" - the integrity pass catching an over-eager owner attribution in the wild, unscripted.
+
+## Voice enrollment (iris/voices.py) - added Oct 21 evening
+- Enroll a name from a 5-15s sample; diarized clusters then render as names.
+- LIVE TEST (real audio): enrolled LibriSpeech speaker 1272 from a held-out clip, ran name_clusters on the 16-turn two-human mix -> correct cluster matched at cosine 0.844, other speaker at -0.002 (correctly unknown). Threshold default 0.5.
+- Voiceprints are 192-d float embeddings in ~/.iris/voices/*.npy - no audio stored, nothing leaves the machine.
+- Hassan's tests: enroll himself + a family member/friend, run a real meeting, tune threshold if needed.
