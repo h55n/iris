@@ -10,8 +10,11 @@ POST /ingest  (body = raw audio bytes, X-Convo-Token, optional X-Iris-Title)
 Audio lands in store/<mid>/audio.* and is swept by the 7-day retention like
 any other recording.
 """
-import io, os, json, argparse
+import io, os, json, argparse, sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
+
+if __name__ == "__main__" and __package__ is None:
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def make_handler(store_dir, token, backend):
     from iris import transcribe as T, backends as B, verify, store, crypto as C, render
