@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from iris import store as S
 
 PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
-<title>convo</title><style>
+<title>Iris</title><style>
 :root{
   --bg:#ffffff; --side:#f7f7f5; --text:#37352f; --muted:#73726e; --faint:#a3a29e;
   --border:#e9e9e7; --border-soft:#ededeb; --accent:#2383e2;
@@ -128,7 +128,7 @@ def sidebar(store_dir: str, active: str | None) -> str:
         items.append(f'<a class="{cls}" href="/meeting/{mid}">'
                      f'<div class=nav-title>{esc(meta.get("title", mid))}</div>'
                      f'<div class=nav-meta>{when}{iv}</div></a>')
-    return ('<div class=brand>convo<span>private meeting notes</span></div>'
+    return ('<div class=brand>Iris<span>private meeting notes</span></div>'
             '<form class=searchbox method=get action="/search">'
             '<input name=q placeholder="Search meetings"></form>'
             + ("".join(items) or '<div class=nav-meta style="padding:0 10px">No meetings yet.</div>'))
@@ -194,5 +194,5 @@ if __name__ == "__main__":
     ap.add_argument("--port", type=int, default=8473)
     a = ap.parse_args()
     from http.server import HTTPServer
-    print(f"convo UI on http://127.0.0.1:{a.port} (local only - serves decrypted content)")
+    print(f"Iris UI on http://127.0.0.1:{a.port} (local only - serves decrypted content)")
     HTTPServer(("127.0.0.1", a.port), make_handler(a.store)).serve_forever()
