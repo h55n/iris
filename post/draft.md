@@ -6,6 +6,18 @@
 
 [Name] is a local-first meeting notetaker for people whose meetings don't happen in one place. Phone call on the way in, a Google Meet at the desk, an in-person chat in the hallway - it records (when you tell it to), transcribes on your own machine with open-weight Whisper, and writes the notes with a local open-weight model. Recordings delete themselves after 7 days; transcripts and notes stay on your devices, encrypted, syncing only between hardware you own.
 
+The full loop that shipped:
+
+- **Laptop**: a watch daemon notices when Zoom/Meet/Teams/Webex opens (process + window-title + mic-in-use signals) and nudges you - detection only, recording always starts with your tap. An optional CLI recorder captures the mic. After the meeting, `convo ingest` runs Whisper (silero VAD, sentence timestamps) and the notes model, then encrypts everything with age (X25519) before it touches disk.
+- **Phone (Android app, zero third-party deps)**: a foreground-service WAV recorder with an always-visible notification, meeting nudges via the only signal Android allows (foreground-app detection with Usage Access - the OS hides other apps' mics and audio, since Play policy May 2022), and one tap to send the recording over your LAN to your own laptop for transcription. Notes sync back and decrypt on the phone with your age key.
+- **Sync**: a tiny self-hostable relay (~100 lines, stdlib Python) moves only transcripts and notes between your devices - NEVER audio - and only as age ciphertext. The relay operator (also you) can't read a word.
+- **Reading**: `convo search` across every meeting (decrypts locally), a one-file markdown export, and encrypted sharing - sending notes to a colleague means re-encrypting them to THEIR age key, not uploading anything anywhere.
+- **Local web UI** at 127.0.0.1 only: browse meetings, see every claim's receipt inline.
+
+The part that makes it trustworthy: every decision and action item in the notes must quote the exact transcript lines it came from, with a timestamp. A small verifier checks every claim against the transcript before the note is saved. If the model invents a task or a name, the claim is demoted to an "unverified" section instead of silently becoming your to-do list.
+
+[Name] is a local-first meeting notetaker for people whose meetings don't happen in one place. Phone call on the way in, a Google Meet at the desk, an in-person chat in the hallway - it records (when you tell it to), transcribes on your own machine with open-weight Whisper, and writes the notes with a local open-weight model. Recordings delete themselves after 7 days; transcripts and notes stay on your devices, encrypted, syncing only between hardware you own.
+
 The part that makes it trustworthy: every decision and action item in the notes must quote the exact transcript lines it came from, with a timestamp. A small verifier checks every claim against the transcript before the note is saved. If the model invents a task or a name, the claim is demoted to an "unverified" section instead of silently becoming your to-do list.
 
 ## Demo
@@ -71,6 +83,10 @@ deleted store/20261013-0915-a1b2c3/audio.wav     # 8 days old
 Meetings are the most private audio most people produce: client names, salaries, health, unreleased plans. The dominant notetakers (Otter, Fireflies) work by uploading that audio to someone else's cloud. [Name] exists because the models are open: Whisper's weights are MIT, Gemma's are open, so the whole pipeline - record, transcribe, summarize - runs where the audio already is. No vendor to trust, no per-minute bill, works on a plane. [Also honest: iOS 18 call recording, Pixel Recorder and Galaxy AI each do pieces of this, but only inside their own silo - open models are what let one archive span an Android phone, a Linux laptop and everything between.]
 
 ## The honest limits (tested vs untested)
+
+Speaker labels: I tested whisper.cpp's tinydiarize build (ggml-small.en-tdrz) on synthetic two-voice audio and it detected ZERO speaker turns, so diarization is deliberately not shipped rather than shipped broken. Languages: Hindi is strong on ggml-small (correct script, code-mixed words fine), Spanish perfect, Tamil good - but Bengali comes out in the WRONG SCRIPT (Devanagari), so it's documented as unsupported. (All synthetic TTS tests - real meeting audio is noisier; full matrix in TESTED.md.)
+
+
 
 Read the demo transcript above again: the speaker said "we ship on Friday" and Whisper heard "we shipped". The verifier passed that line - correctly, because the quote really is in the transcript - but the transcript itself misheard. That is the honest limit of this design: the integrity pass stops the MODEL from inventing things; it cannot stop the EARS from mishearing. Also real, also unfixed today: no speaker labels yet, Hindi needs the small multilingual model (base translates instead of transcribing - tested), and mixed Hindi-English audio needs per-segment language detection. Full list in TESTED.md in the repo.
 
