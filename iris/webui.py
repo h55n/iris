@@ -106,6 +106,7 @@ body{margin:0;font:16px/1.65 var(--font);-webkit-font-smoothing:antialiased;
 .more{position:relative}.more summary{list-style:none;cursor:pointer;padding:3px 8px;border-radius:6px}.more summary:hover{background:var(--active-bg)}
 .more summary::-webkit-details-marker{display:none}
 .menu{position:absolute;z-index:5;left:0;top:28px;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:4px;box-shadow:0 6px 24px rgba(0,0,0,.12)}
+.menu .mi{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--text);padding:6px 14px;font-size:13px;border-radius:6px}.menu .mi:hover{background:var(--active-bg)}
 .menu .danger{border:0;background:transparent;color:var(--danger);padding:6px 14px;font-size:13px;border-radius:6px;white-space:nowrap}.menu .danger:hover{background:var(--active-bg)}
 #slash{position:absolute;z-index:6;min-width:230px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:4px;box-shadow:0 8px 28px rgba(0,0,0,.14)}
 .slash-item{display:flex;justify-content:space-between;gap:18px;padding:6px 10px;border-radius:6px;font-size:14px;cursor:pointer}
@@ -613,6 +614,8 @@ def make_handler(store_dir: str):
                     return go("/folder/" + parts[1])
                 if len(parts) == 3 and parts[2] == "delete":
                     L.delete_folder(store_dir, parts[1]); return go("/")
+            if len(parts) == 2 and parts[0] == "duplicate" and ok_mid(parts[1]):
+                return go("/meeting/" + L.duplicate_note(store_dir, parts[1]))
             if len(parts) == 2 and parts[0] == "restore":
                 L.restore_note(store_dir, parts[1]); return go("/trash")
             if self.path == "/trash/empty":
@@ -804,14 +807,18 @@ def make_handler(store_dir: str):
                 opts = '<option value="">No folder</option>' + "".join(
                     f'<option value="{f["id"]}"{" selected" if f["id"] == cur else ""}>{esc(f["name"])}</option>' for f in fl)
                 pin = bool(meta.get("pinned"))
+                wc = L.word_count(texts.get("notes.md", ""))
+                edited_label = (f' &middot; edited {_day_label(meta["edited"]).lower()}' if meta.get("edited") else "") \
+                    + (f' &middot; {wc} word{"s" if wc != 1 else ""}' if wc else "")
                 body += (crumb
                     + f'<input id=title class=title value="{esc(meta.get("title", mid))}" maxlength=120 '
                       f'placeholder="Untitled" aria-label="Title" data-mid="{mid}">'
-                    + f'<div class=props><span>{when}{lock}</span>'
+                    + f'<div class=props><span>{when}{lock}{edited_label}</span>'
                       f'<form method=post action="/move/{mid}" class=propform><select name=folder onchange="this.form.submit()" aria-label="Folder">{opts}</select></form>'
                       f'<form method=post action="/{"unpin" if pin else "pin"}/{mid}" class=propform>'
                       f'<button class="pinbtn{" on" if pin else ""}" title="{"Unpin" if pin else "Pin to top"}">{"&#9733; Pinned" if pin else "&#9734; Pin"}</button></form>'
                       f'<details class=more><summary>&middot;&middot;&middot;</summary><div class=menu>'
+                      f'<form method=post action="/duplicate/{mid}"><button class=mi>Duplicate</button></form>'
                       f'<form method=post action="/delete/{mid}" onsubmit="return confirm(\'Move this note to Trash? You can restore it for 30 days.\')">'
                       f'<button class=danger>Delete</button></form></div></details></div>')
                 notes_txt = texts.get("notes.md", "")

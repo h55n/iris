@@ -138,3 +138,12 @@ def test_empty_trash_is_permanent():
     mid = post("/new", {"title": "Gone for good"})[1].split("/")[-1]
     post(f"/delete/{mid}", {}); post("/trash/empty", {})
     assert "Trash is empty" in get("/trash")
+
+def test_duplicate_over_http_and_edited_label():
+    mid = post("/new", {"title": "Dup src"})[1].split("/")[-1]
+    post(f"/notes/{mid}", {"text": "one two three"})
+    st, loc = post(f"/duplicate/{mid}", {})
+    assert st == 303 and loc.startswith("/meeting/") and loc.split("/")[-1] != mid
+    html = get(loc)
+    assert 'value="Copy of Dup src"' in html and "one two three" in html
+    assert "3 words" in get(f"/meeting/{mid}") and "edited today" in get(f"/meeting/{mid}")
