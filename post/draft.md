@@ -13,6 +13,7 @@ The full loop that shipped:
 - **Sync**: a tiny self-hostable relay (~100 lines, stdlib Python) moves only transcripts and notes between your devices - NEVER audio - and only as age ciphertext. The relay operator (also you) can't read a word.
 - **Reading**: `convo search` across every meeting (decrypts locally), a one-file markdown export, and encrypted sharing - sending notes to a colleague means re-encrypting them to THEIR age key, not uploading anything anywhere.
 - **Local web UI** at 127.0.0.1 only: browse meetings, see every claim's receipt inline.
+- **Speaker labels**: `ingest --diarize` labels each transcript line Speaker 1 / Speaker 2 / ... using local pyannote segmentation + ERes2Net speaker embeddings (sherpa-onnx). No cloud, no account.
 
 The part that makes it trustworthy: every decision and action item in the notes must quote the exact transcript lines it came from, with a timestamp. A small verifier checks every claim against the transcript before the note is saved. If the model invents a task or a name, the claim is demoted to an "unverified" section instead of silently becoming your to-do list.
 
@@ -84,7 +85,7 @@ Meetings are the most private audio most people produce: client names, salaries,
 
 ## The honest limits (tested vs untested)
 
-Speaker labels: I tested whisper.cpp's tinydiarize build (ggml-small.en-tdrz) on synthetic two-voice audio and it detected ZERO speaker turns, so diarization is deliberately not shipped rather than shipped broken. Languages: Hindi is strong on ggml-small (correct script, code-mixed words fine), Spanish perfect, Tamil good - but Bengali comes out in the WRONG SCRIPT (Devanagari), so it's documented as unsupported. (All synthetic TTS tests - real meeting audio is noisier; full matrix in TESTED.md.)
+Speaker labels took three tries, and the first two failures are in the repo history. whisper.cpp's tinydiarize detected ZERO speaker turns - not on synthetic two-voice audio, not even on 16 alternating turns of real human speech from LibriSpeech. The first working stack also failed silently: one embedding model (campplus) cheerfully attributed every line to a single speaker. The third - pyannote segmentation + ERes2Net embeddings via sherpa-onnx - attributes every turn correctly on both test sets, so THAT is what shipped. If I had only run it on one file and eyeballed the output, I'd have shipped the broken one. Languages: Hindi is strong on ggml-small (correct script, code-mixed words fine), Spanish perfect, Tamil good - but Bengali comes out in the WRONG SCRIPT (Devanagari), so it's documented as unsupported. (Synthetic TTS + LibriSpeech tests - real meeting audio is noisier; full matrix in TESTED.md.)
 
 
 
