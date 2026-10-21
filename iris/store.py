@@ -46,6 +46,12 @@ def sweep(store_dir: str, now: float = None) -> list[str]:
         _save_meta(store_dir, mid, meta)
     return deleted
 
+def list_meetings(store_dir: str, reverse: bool = False) -> list[str]:
+    """Meeting ids in the store (dirs with a meta.json), newest-first if reverse."""
+    return sorted((d for d in os.listdir(store_dir)
+                   if os.path.isfile(os.path.join(store_dir, d, "meta.json"))),
+                  reverse=reverse)
+
 def _load_meta(store_dir, mid):
     return json.load(open(os.path.join(store_dir, mid, "meta.json")))
 
@@ -97,9 +103,8 @@ def search(store_dir: str, query: str, key_path: str = None) -> list[dict]:
     import re
     hits = []
     rx = re.compile(re.escape(query), re.I)
-    for mid in sorted(os.listdir(store_dir)):
+    for mid in list_meetings(store_dir):
         d = os.path.join(store_dir, mid)
-        if not os.path.isfile(os.path.join(d, "meta.json")): continue
         if is_encrypted(store_dir, mid):
             texts = decrypt_meeting(store_dir, mid, key_path or C.DEFAULT_KEY)
         else:

@@ -130,11 +130,8 @@ def render_notes_md(md: str) -> str:
 
 def sidebar(store_dir: str, active: str | None) -> str:
     items = []
-    for mid in sorted(os.listdir(store_dir), reverse=True):
-        mp = os.path.join(store_dir, mid, "meta.json")
-        if not os.path.isfile(mp):
-            continue
-        meta = json.load(open(mp))
+    for mid in S.list_meetings(store_dir, reverse=True):
+        meta = json.load(open(os.path.join(store_dir, mid, "meta.json")))
         integ = meta.get("integrity") or {}
         iv = f' &middot; {integ.get("passed")}/{integ.get("checked")} verified' if integ else ""
         when = time.strftime("%b %-d, %-I:%M %p", time.localtime(meta.get("created", 0)))
