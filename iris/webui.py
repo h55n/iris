@@ -424,6 +424,21 @@ def make_handler(store_dir: str):
                            + (rows or '<div class=empty>' + mascot(88, "sleep")
                               + '<div class=t>Nothing found</div>'
                               + '<div class=s>try another word - Iris only searches your own notes</div></div>'))
+            elif path == "/ask":
+                from iris import ask as A
+                q = U.parse_qs(U.urlparse(self.path).query).get("q", [""])[0].strip()
+                self._active = None
+                if not q:
+                    return self._html("<h1>Ask</h1><p class=doc-meta>Ask a question, e.g. /ask?q=what did we decide about retention</p>")
+                hits = A.ask(store_dir, q)
+                rows = "".join(
+                    f'<div style="margin-bottom:14px"><a class=nav-title href="/meeting/{h["meeting"]}">{esc(h["title"])}</a>'
+                    f'<div class=nav-meta>at {esc(h["at"])}</div><p style="margin-top:2px">&ldquo;{esc(h["quote"])}&rdquo;</p></div>'
+                    for h in hits)
+                self._html(f'<h1>Ask</h1><p class=doc-meta>{esc(q)}</p>'
+                           + (rows or '<div class=empty>' + mascot(88, "sleep")
+                              + '<div class=t>Nothing in your meetings answers that</div>'
+                              + '<div class=s>Iris only quotes what was said, so it stays quiet when nothing matches</div></div>'))
             elif path.startswith("/raw/"):
                 rest = path.split("/raw/", 1)[1].strip("/")
                 parts = rest.split("/", 1)

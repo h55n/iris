@@ -179,3 +179,13 @@ def test_corrupt_meeting_meta_does_not_break_ui(server):
 def test_script_tags_balanced(server):
     html = urllib.request.urlopen(f"http://127.0.0.1:{PORT}/").read().decode()
     assert html.count("<script") == html.count("</script>")
+
+def test_ask_quotes_transcript_with_source(server):
+    mid = _mk_search_meeting()
+    html = _get("/ask?q=" + urllib.parse.quote("how long is retention"))
+    assert "retention stays seven days" in html and mid in html and "00:05" in html
+
+def test_ask_no_answer_stays_quiet(server):
+    _mk_search_meeting()
+    html = _get("/ask?q=" + urllib.parse.quote("budget for catering"))
+    assert "Nothing in your meetings answers that" in html
