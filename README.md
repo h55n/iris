@@ -125,6 +125,19 @@ python3 iris/cli.py export <id> out.md       # shareable markdown bundle
 python3 iris/cli.py share <id> age1... out.md.age  # encrypted for one recipient
 ```
 
+## Organize from the terminal
+
+```
+iris note "Title"            # blank note
+iris folder new "Work"       # new folder
+iris folders                 # list folders
+iris move <note> <folder>    # file a note
+iris pin <note> / iris unpin <note>
+iris ask "what did we decide about pricing?"
+```
+
+Same library as the web UI, so changes show up in both.
+
 ## Voice enrollment (who said what, by name)
 
 ```
