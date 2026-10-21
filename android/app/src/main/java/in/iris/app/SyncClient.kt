@@ -47,11 +47,23 @@ object SyncClient {
         return JSONObject(String(bytes))
     }
 
-    /** Upload a recording to the user's laptop over LAN for transcription. */
-    fun uploadForIngest(laptop: String, token: String, wav: File, title: String): JSONObject {
-        val (code, bytes) = req("$laptop/ingest", token, wav.readBytes(),
-            contentType = "audio/wav", extraHeaders = mapOf("X-Convo-Title" to title))
-        if (code != 200) throw Exception("ingest failed: $code ${String(bytes)}")
-        return JSONObject(String(bytes))
+    /** Upload a recording to the user's laptop over LAN for transcription.
+     *  Retries twice with backoff: phones drop off Wi-Fi mid-upload often. */
+    fun uploadForIngest(laptop: String, token: String, wav: File, title: String,
+                        retries: Int = 2): JSONObject {
+        val payload = wav.readBytes()
+        var lastErr: Exception? = null
+        for (attempt in 0..retries) {
+            try {
+                val (code, bytes) = req("$laptop/ingest", token, payload,
+                    contentType = "audio/wav", extraHeaders = mapOf("X-Iris-Title" to title))
+                if (code == 200) return JSONObject(String(bytes))
+                lastErr = Exception("ingest failed: $code ${String(bytes)}")
+            } catch (e: Exception) {
+                lastErr = e
+            }
+            if (attempt < retries) Thread.sleep(1500L * (attempt + 1))
+        }
+        throw lastErr ?: Exception("ingest failed")
     }
 }
