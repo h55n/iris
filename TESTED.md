@@ -59,3 +59,12 @@
 - AgeDecrypt: full age v1 decryption in-app (bech32 key import, X25519 via API 33 platform crypto, HKDF-SHA256, ChaCha20-Poly1305, STREAM chunks) - the phone reads encrypted notes with the user's own key.
 - TESTED: compiles to a working APK (app-debug.apk builds clean). NOT testable in sandbox - Hassan's on-device list: mic recording quality, nudge firing in a real Zoom/Meet call, LAN upload to laptop, encrypted notes read on phone, Android 13+ gate message on older phones.
 - Laptop ingest server (convo/ingest_server.py): phone -> laptop over LAN, full pipeline runs on the laptop, results sync back encrypted via relay.
+
+## Multi-language transcription (ggml-small multilingual, synthetic gTTS speech) - tested Oct 21
+Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio speech; real meetings are harder. Hassan's real-speech tests still pending.
+
+- Hindi: STRONG. "हमने फैसला किया की रिकॉर्डिंग सात दिन बाद अपने आप डिलीट हो जाएगी। प्रिया सिंक सर्वर संभालेगी।" - minor word errors (सवर for सर्वर), correct script, no unwanted translation. Code-mixed Hinglish words (रिकॉर्डिंग, सिंक) handled.
+- Spanish: PERFECT on the test sentence.
+- Tamil: GOOD - meaning preserved, some consonant doubling errors (வெள்ளிக்கிளமை).
+- Bengali: SCRIPT FAILURE - Whisper heard the Bengali words but wrote them in Devanagari script, not Bengali script. Documented limitation: treat Bengali as unsupported until the large model or a fine-tune fixes it.
+- Reminder (tested earlier): ggml-base TRANSLATES Hindi to English instead of transcribing - always use ggml-small or better for non-English. English meetings use base.en (2x faster).
