@@ -68,3 +68,7 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 - Tamil: GOOD - meaning preserved, some consonant doubling errors (வெள்ளிக்கிளமை).
 - Bengali: SCRIPT FAILURE - Whisper heard the Bengali words but wrote them in Devanagari script, not Bengali script. Documented limitation: treat Bengali as unsupported until the large model or a fine-tune fixes it.
 - Reminder (tested earlier): ggml-base TRANSLATES Hindi to English instead of transcribing - always use ggml-small or better for non-English. English meetings use base.en (2x faster).
+
+## Local web UI (convo/webui.py) - added Oct 21
+- TESTED LIVE: index lists meetings with encrypted badge + integrity counts; detail page renders the ENCRYPTED demo meeting's decrypted notes (claims with receipts as blockquotes) and full transcript.
+- Localhost-only bind by design - it serves decrypted content. No JS, no CDN, no auth (threat model: same-user same-machine). Exposing it on LAN is explicitly out of scope.

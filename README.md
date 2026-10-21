@@ -49,3 +49,31 @@ python3 convo/sync_server.py --dir syncdata --token S3CRET --port 8471
 - `TESTED.md` - what is actually tested vs untested, honestly
 
 License: MIT.
+
+
+## Components
+
+| piece | file | what it does |
+|---|---|---|
+| CLI | `convo/cli.py` | ingest / sweep / list / sync / key / encrypt / read / export / share |
+| transcription | `convo/transcribe.py` | whisper.cpp + silero VAD, sentence timestamps |
+| notes backends | `convo/backends.py` | Ollama gemma3:4b (local default) or Ultramarine (hosted fallback) |
+| claim verifier | `convo/verify.py` | every decision/action item must quote the transcript; invented claims demoted |
+| retention | `convo/store.py` | recordings auto-delete after 7 days; transcripts/notes stay |
+| encryption | `convo/crypto.py` | age X25519 at rest; key at ~/.convo/key.txt (600) |
+| sync | `convo/sync.py` + `sync_server.py` | tiny self-hostable relay; moves ciphertext, NEVER audio |
+| LAN ingest | `convo/ingest_server.py` | phone posts recordings to your own laptop for transcription |
+| meeting detect | `convo/detect.py` | laptop: Zoom/Meet/Teams/Webex via process+window+mic signals, debounced |
+| local web UI | `convo/webui.py` | browse meetings at 127.0.0.1:8473 (localhost only, serves decrypted content) |
+| Android app | `android/` | recorder, meeting nudges, relay sync, on-device age decryption |
+| DEV post draft | `post/draft.md` | Hacktoberfest Week 3 submission (unpublished) |
+
+## Quick start
+
+```
+python3 convo/cli.py key init                 # one-time: encryption key
+python3 convo/cli.py ingest meeting.wav       # record/transcribe/verify/encrypt
+python3 convo/webui.py                        # browse at 127.0.0.1:8473
+python3 convo/sync_server.py --token T &      # relay (your own box)
+python3 convo/cli.py sync --server http://... # move notes between devices
+```
