@@ -15,3 +15,9 @@ def test_no_character_features():
 
 def test_unknown_mood_falls_back_to_sprout():
     assert mascot(50, "weird") == mascot(50, "happy")
+
+def test_mood_class_hooks_for_animation():
+    assert 'class="mascot happy"' in mascot(40)
+    assert 'class="mascot sleep"' in mascot(40, "sleep")
+    c = mascot(40, "celebrate")
+    assert 'class="mascot celebrate"' in c and "class=bloom" in c and "class=sparkles" in c

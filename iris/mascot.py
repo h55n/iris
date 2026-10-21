@@ -32,6 +32,7 @@ def _sparkles(c):
                    for x, y in ((38, 60), (166, 52), (28, 120), (176, 118)))
 
 def mascot(size: int = 96, mood: str = "happy", plants: int = 0) -> str:
+    kind = mood if mood in ("sleep", "celebrate") else "happy"
     stem = f'<path d="M100 142 Q98 110 101 {84 if mood!="celebrate" else 70}" fill="none" stroke="{LEAF3}" stroke-width="4.4" stroke-linecap="round"/>' \
            f'<path d="M100 142 Q98 110 101 {84 if mood!="celebrate" else 70}" fill="none" {_s(1.4)} opacity=".5"/>'
     body = ''
@@ -44,15 +45,15 @@ def mascot(size: int = 96, mood: str = "happy", plants: int = 0) -> str:
     elif mood == "celebrate":
         body = (_leaf(100, 118, -40, -12, LEAF2) + _leaf(100, 104, 42, -14, LEAF)
                 + _leaf(100, 92, -30, -18, LEAF)
-                + ''.join(f'<ellipse cx="101" cy="52" rx="9" ry="17" fill="var(--accent)" transform="rotate({a} 101 70) translate(1.5 1.5)" opacity=".9"/>'
+                + '<g class=bloom>' + ''.join(f'<ellipse cx="101" cy="52" rx="9" ry="17" fill="var(--accent)" transform="rotate({a} 101 70) translate(1.5 1.5)" opacity=".9"/>'
                           f'<ellipse cx="101" cy="52" rx="9" ry="17" fill="none" {_s(2.4)} transform="rotate({a} 101 70)"/>'
                           for a in (0, 72, 144, 216, 288))
-                + f'<circle cx="101" cy="70" r="9" fill="#f2cf63" {_s(2.6)}/>'
-                + _sparkles("var(--accent)"))
+                + f'<circle cx="101" cy="70" r="9" fill="#f2cf63" {_s(2.6)}/></g>'
+                + '<g class=sparkles>' + _sparkles("var(--accent)") + '</g>')
     else:
         body = (_leaf(100, 112, -38, -10, LEAF2) + _leaf(100, 98, 38, -16, LEAF)
                 + _leaf(101, 84, -6, -26, LEAF2) + _leaf(101, 84, 26, -18, LEAF))
-    return (f'<svg class=mascot width="{size}" height="{size}" viewBox="0 0 200 200" fill="none" aria-hidden="true">'
+    return (f'<svg class="mascot {kind}" width="{size}" height="{size}" viewBox="0 0 200 200" fill="none" aria-hidden="true">'
             '<defs><filter id="wob" x="-5%" y="-5%" width="110%" height="110%">'
             '<feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4" result="n"/>'
             '<feDisplacementMap in="SourceGraphic" in2="n" scale="3.2"/></filter></defs>'
