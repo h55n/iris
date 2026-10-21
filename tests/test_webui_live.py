@@ -14,6 +14,7 @@ def server():
     os.makedirs(d)
     json.dump({"id": mid, "title": mid, "created": time.time()}, open(os.path.join(d, "meta.json"), "w"))
     open(os.path.join(d, "notes.md"), "w").write("## Decisions\n- keep it local")
+    open(os.path.join(d, "transcript.md"), "w").write("[00:05] Speaker 1: retention stays seven days")
     env = dict(os.environ, IRIS_STORE=STORE)
     srv = subprocess.Popen(["python3", "iris/webui.py", "--store", STORE, "--port", str(PORT)],
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -50,3 +51,37 @@ def test_path_traversal_rejected(server):
 def test_delete_removes_meeting(server):
     _post(f"/delete/{server}", {})
     assert not os.path.isdir(os.path.join(STORE, server))
+
+
+def _get(path):
+    return urllib.request.urlopen(f"http://127.0.0.1:{PORT}{path}").read().decode()
+
+def _mk_search_meeting():
+    # the shared fixture meeting may already be deleted by test_delete_*;
+    # search tests create their own so they are order-independent
+    mid = "20261021-0001-sea777"
+    d = os.path.join(STORE, mid)
+    os.makedirs(d, exist_ok=True)
+    json.dump({"id": mid, "title": mid, "created": time.time()}, open(os.path.join(d, "meta.json"), "w"))
+    open(os.path.join(d, "notes.md"), "w").write("## Decisions\n- keep it local")
+    open(os.path.join(d, "transcript.md"), "w").write("[00:05] Speaker 1: retention stays seven days")
+    return mid
+
+def test_search_finds_note_text(server):
+    mid = _mk_search_meeting()
+    html = _get("/search?q=" + urllib.parse.quote("keep it local"))
+    assert "keep it local" in html and mid in html
+
+def test_search_finds_transcript_text(server):
+    _mk_search_meeting()
+    html = _get("/search?q=retention")
+    assert "seven days" in html
+
+def test_search_no_match(server):
+    _mk_search_meeting()
+    html = _get("/search?q=zzzznope")
+    assert "keep it local" not in html
+
+def test_search_empty_query(server):
+    html = _get("/search?q=")
+    assert "Search" in html
