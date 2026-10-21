@@ -7,9 +7,14 @@ VAD_MODEL = os.environ.get("IRIS_VAD_MODEL", "models/ggml-silero-v6.2.0.bin")
 
 def to_wav16k(src: str) -> str:
     """Any audio/video -> 16kHz mono wav (whisper.cpp input contract)."""
+    if not os.path.exists(src):
+        raise FileNotFoundError(f"audio not found: {src}")
     out = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
-    subprocess.run(["ffmpeg", "-y", "-i", src, "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", out],
-                   check=True, capture_output=True)
+    r = subprocess.run(["ffmpeg", "-y", "-i", src, "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", out],
+                       capture_output=True)
+    if r.returncode != 0:
+        tail = r.stderr.decode(errors="replace").strip().splitlines()[-1:]
+        raise RuntimeError(f"ffmpeg could not convert {src}: {'; '.join(tail) or 'unknown error'}")
     return out
 
 def transcribe(audio_path: str, model: str = MODEL, language: str = "en") -> list[dict]:

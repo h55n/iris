@@ -101,3 +101,17 @@ def test_transcribe_missing_model_named():
     import pytest
     with pytest.raises(FileNotFoundError, match="whisper model not found"):
         T.transcribe("/tmp/whatever.wav", model="/tmp/no-such-model.bin")
+
+def test_to_wav16k_missing_input_named():
+    from iris import transcribe as T
+    import pytest
+    with pytest.raises(FileNotFoundError, match="audio not found"):
+        T.to_wav16k("/tmp/definitely-not-here.mp3")
+
+def test_to_wav16k_unreadable_media_named():
+    from iris import transcribe as T
+    import pytest, tempfile
+    junk = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
+    junk.write(b"this is not audio"); junk.close()
+    with pytest.raises(RuntimeError, match="ffmpeg could not convert"):
+        T.to_wav16k(junk.name)
