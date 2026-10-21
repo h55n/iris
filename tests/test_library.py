@@ -127,3 +127,13 @@ def test_trash_rejects_bad_ids_and_restore_never_overwrites(tmp_path):
     mid = L.new_note(d, "a"); L.trash_note(d, mid)
     os.makedirs(os.path.join(d, mid))                      # id reused meanwhile
     assert L.restore_note(d, mid) is False
+
+def test_cli_sweep_purges_old_trash(tmp_path, monkeypatch, capsys):
+    import time
+    from iris import cli
+    d = str(tmp_path); mid = L.new_note(d, "old"); L.trash_note(d, mid)
+    mp = os.path.join(d, ".trash", mid, "meta.json"); m = json.load(open(mp)); m["trashed_at"] = time.time() - 40 * 86400
+    json.dump(m, open(mp, "w"))
+    monkeypatch.setattr(cli, "STORE", d); monkeypatch.setattr("sys.argv", ["iris", "sweep"])
+    cli.main([])
+    assert "purged 1 note(s)" in capsys.readouterr().out and L.list_trash(d) == []

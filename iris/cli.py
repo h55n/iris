@@ -147,6 +147,10 @@ def main(args):
     elif args[0] == "sweep":
         dry = "--dry-run" in args
         for p in store.sweep(STORE, dry_run=dry): print(f"{'would delete' if dry else 'deleted'} {p}")
+        if not dry:
+            from iris import library as _L
+            n = _L.purge_trash(STORE)
+            if n: print(f"purged {n} note(s) from Trash older than {_L.TRASH_DAYS} days")
     elif args[0] == "list":
         from iris import store as _S
         for mid in _S.list_meetings(STORE, reverse=True):
