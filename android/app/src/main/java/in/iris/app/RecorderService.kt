@@ -45,6 +45,8 @@ class RecorderService : Service() {
         val notif = Notification.Builder(this, CH)
             .setContentTitle("Iris is recording")
             .setContentText("Local only. Tap to stop.")
+            .setWhen(System.currentTimeMillis())
+            .setUsesChronometer(true)
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .addAction(Notification.Action.Builder(null, "Stop",
                 PendingIntent.getService(this, 1,
