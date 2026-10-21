@@ -74,7 +74,7 @@ class RecorderService : Service() {
                     if (n > 0) { raf.write(buf, 0, n); total += n }
                 }
                 rec.stop(); rec.release()
-                writeWavHeader(raf, total, rate)
+                WavHeader.write(raf, total, rate)
             }
             lastFile = f
             sendBroadcast(Intent("in.iris.app.RECORDING_DONE").setPackage(packageName))
@@ -82,7 +82,12 @@ class RecorderService : Service() {
         }
     }
 
-    private fun writeWavHeader(raf: RandomAccessFile, dataLen: Long, rate: Int) {
+}
+
+/** Minimal 16-bit mono PCM WAV header writer. Companion-level so it is
+ *  unit-testable on the JVM (no Android APIs involved). */
+object WavHeader {
+    fun write(raf: RandomAccessFile, dataLen: Long, rate: Int) {
         val byteRate = rate * 2L
         raf.seek(0)
         raf.writeBytes("RIFF")
