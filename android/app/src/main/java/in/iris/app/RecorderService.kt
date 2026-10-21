@@ -1,4 +1,4 @@
-package `in`.convo.app
+package `in`.iris.app
 
 import android.app.*
 import android.content.Context
@@ -21,8 +21,8 @@ class RecorderService : Service() {
     private var outFile: File? = null
 
     companion object {
-        const val ACTION_START = "in.convo.app.START"
-        const val ACTION_STOP = "in.convo.app.STOP"
+        const val ACTION_START = "in.iris.app.START"
+        const val ACTION_STOP = "in.iris.app.STOP"
         const val EXTRA_OUT = "out"
         const val CH = "rec"
         var lastFile: File? = null
@@ -43,7 +43,7 @@ class RecorderService : Service() {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.createNotificationChannel(NotificationChannel(CH, "Recording", NotificationManager.IMPORTANCE_LOW))
         val notif = Notification.Builder(this, CH)
-            .setContentTitle("convo is recording")
+            .setContentTitle("Iris is recording")
             .setContentText("Local only. Tap to stop.")
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .addAction(Notification.Action.Builder(null, "Stop",
@@ -75,7 +75,7 @@ class RecorderService : Service() {
                 writeWavHeader(raf, total, rate)
             }
             lastFile = f
-            sendBroadcast(Intent("in.convo.app.RECORDING_DONE").setPackage(packageName))
+            sendBroadcast(Intent("in.iris.app.RECORDING_DONE").setPackage(packageName))
             stopSelf()
         }
     }

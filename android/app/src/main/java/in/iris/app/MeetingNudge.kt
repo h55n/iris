@@ -1,4 +1,4 @@
-package `in`.convo.app
+package `in`.iris.app
 
 import android.app.NotificationChannel
 import android.app.NotificationManager

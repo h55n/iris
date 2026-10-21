@@ -1,4 +1,4 @@
-package `in`.convo.app
+package `in`.iris.app
 
 import android.Manifest
 import android.app.Activity
@@ -18,7 +18,7 @@ class MainActivity : Activity() {
     private lateinit var recordBtn: Button
     private var recording = false
 
-    private val prefs by lazy { getSharedPreferences("convo", MODE_PRIVATE) }
+    private val prefs by lazy { getSharedPreferences("iris", MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,7 +34,7 @@ class MainActivity : Activity() {
             setOnFocusChangeListener { _, _ -> prefs.edit().putString(key, text.toString()).apply() }
         }
 
-        status = TextView(this).apply { text = "convo - private meeting notes"; textSize = 18f; gravity = Gravity.CENTER }
+        status = TextView(this).apply { text = "Iris - private meeting notes"; textSize = 18f; gravity = Gravity.CENTER }
         recordBtn = Button(this).apply {
             text = "Start recording"
             setOnClickListener { toggleRecording() }
@@ -135,7 +135,7 @@ class MainActivity : Activity() {
 
     private fun enableNudges() {
         if (!MeetingNudge.hasUsageAccess(this)) {
-            toast("grant Usage Access for convo, then come back")
+            toast("grant Usage Access for Iris, then come back")
             startActivity(MeetingNudge.usageAccessIntent())
             return
         }
