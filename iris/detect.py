@@ -40,7 +40,8 @@ MEETING_URL_PATTERNS = [
     (re.compile(r"zoom\.us/(j|wc)/", re.I), "Zoom (web)"),
     (re.compile(r"\.webex\.com/(meet|join)", re.I), "Webex (web)"),
     (re.compile(r"meet\.jit\.si", re.I), "Jitsi Meet (web)"),
-    (re.compile(r"whereby\.com/", re.I), "Whereby (web)"),
+    # Whereby titles show "Whereby - room", not the URL
+    (re.compile(r"whereby\.com/|Whereby - ", re.I), "Whereby (web)"),
     (re.compile(r"discord\.com/channels", re.I), "Discord (web)"),
 ]
 
