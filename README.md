@@ -1,4 +1,4 @@
-# convo (working name)
+# Iris (working name)
 
 Private, local-first meeting notes. Records when you tell it to, transcribes on your
 own machine, writes notes you can trust, deletes the audio after a week.
@@ -27,24 +27,24 @@ curl -L -o models/ggml-silero-v6.2.0.bin https://huggingface.co/ggml-org/whisper
 # Hindi / multilingual: ggml-small.bin from the same repo (see TESTED.md for why not base)
 
 # notes backend (default, local): ollama pull gemma3:4b
-python3 convo/cli.py ingest meeting.wav                      # local notes
-python3 convo/cli.py ingest meeting.wav --backend ultramarine  # hosted fallback
-python3 convo/cli.py sweep                                   # delete >7-day recordings
-python3 convo/cli.py list
-python3 convo/cli.py sync --server http://YOUR-SERVER:8471   # sync notes between devices
+python3 iris/cli.py ingest meeting.wav                      # local notes
+python3 iris/cli.py ingest meeting.wav --backend ultramarine  # hosted fallback
+python3 iris/cli.py sweep                                   # delete >7-day recordings
+python3 iris/cli.py list
+python3 iris/cli.py sync --server http://YOUR-SERVER:8471   # sync notes between devices
 
 # sync server (self-host, stdlib only)
-python3 convo/sync_server.py --dir syncdata --token S3CRET --port 8471
+python3 iris/sync_server.py --dir syncdata --token S3CRET --port 8471
 ```
 
 ## Layout
 
-- `convo/transcribe.py` - whisper.cpp wrapper (VAD sentence segmentation)
-- `convo/backends.py` - notes backends (ollama default, hosted fallback)
-- `convo/verify.py` - integrity pass (evidence quotes + timestamps + owner names)
-- `convo/store.py` - local meeting store + 7-day recording retention
-- `convo/sync.py` / `convo/sync_server.py` - device sync (never audio)
-- `convo/record.py` - laptop mic capture
+- `iris/transcribe.py` - whisper.cpp wrapper (VAD sentence segmentation)
+- `iris/backends.py` - notes backends (ollama default, hosted fallback)
+- `iris/verify.py` - integrity pass (evidence quotes + timestamps + owner names)
+- `iris/store.py` - local meeting store + 7-day recording retention
+- `iris/sync.py` / `iris/sync_server.py` - device sync (never audio)
+- `iris/record.py` - laptop mic capture
 - `tests/` - `python3 tests/test_engine.py`
 - `TESTED.md` - what is actually tested vs untested, honestly
 
@@ -55,40 +55,40 @@ License: MIT.
 
 | piece | file | what it does |
 |---|---|---|
-| CLI | `convo/cli.py` | ingest / sweep / list / sync / key / encrypt / read / export / share |
-| transcription | `convo/transcribe.py` | whisper.cpp + silero VAD, sentence timestamps |
-| notes backends | `convo/backends.py` | Ollama gemma3:4b (local default) or Ultramarine (hosted fallback) |
-| claim verifier | `convo/verify.py` | every decision/action item must quote the transcript; invented claims demoted |
-| retention | `convo/store.py` | recordings auto-delete after 7 days; transcripts/notes stay |
-| encryption | `convo/crypto.py` | age X25519 at rest; key at ~/.convo/key.txt (600) |
-| sync | `convo/sync.py` + `sync_server.py` | tiny self-hostable relay; moves ciphertext, NEVER audio |
-| LAN ingest | `convo/ingest_server.py` | phone posts recordings to your own laptop for transcription |
-| speaker labels | `convo/diarize.py` | sherpa-onnx: pyannote-seg + ERes2Net, `ingest --diarize` |
-| meeting detect | `convo/detect.py` | laptop: Zoom/Meet/Teams/Webex via process+window+mic signals, debounced |
-| local web UI | `convo/webui.py` | browse meetings at 127.0.0.1:8473 (localhost only, serves decrypted content) |
+| CLI | `iris/cli.py` | ingest / sweep / list / sync / key / encrypt / read / export / share |
+| transcription | `iris/transcribe.py` | whisper.cpp + silero VAD, sentence timestamps |
+| notes backends | `iris/backends.py` | Ollama gemma3:4b (local default) or Ultramarine (hosted fallback) |
+| claim verifier | `iris/verify.py` | every decision/action item must quote the transcript; invented claims demoted |
+| retention | `iris/store.py` | recordings auto-delete after 7 days; transcripts/notes stay |
+| encryption | `iris/crypto.py` | age X25519 at rest; key at ~/.iris/key.txt (600) |
+| sync | `iris/sync.py` + `sync_server.py` | tiny self-hostable relay; moves ciphertext, NEVER audio |
+| LAN ingest | `iris/ingest_server.py` | phone posts recordings to your own laptop for transcription |
+| speaker labels | `iris/diarize.py` | sherpa-onnx: pyannote-seg + ERes2Net, `ingest --diarize` |
+| meeting detect | `iris/detect.py` | laptop: Zoom/Meet/Teams/Webex via process+window+mic signals, debounced |
+| local web UI | `iris/webui.py` | browse meetings at 127.0.0.1:8473 (localhost only, serves decrypted content) |
 | Android app | `android/` | recorder, meeting nudges, relay sync, on-device age decryption |
 | DEV post draft | `post/draft.md` | Hacktoberfest Week 3 submission (unpublished) |
 
 ## Quick start
 
 ```
-python3 convo/cli.py key init                 # one-time: encryption key
-python3 convo/cli.py ingest meeting.wav       # record/transcribe/verify/encrypt
-python3 convo/cli.py ingest meeting.wav --diarize --speakers 2  # + speaker labels (needs models/get-diarize-models.sh first)
+python3 iris/cli.py key init                 # one-time: encryption key
+python3 iris/cli.py ingest meeting.wav       # record/transcribe/verify/encrypt
+python3 iris/cli.py ingest meeting.wav --diarize --speakers 2  # + speaker labels (needs models/get-diarize-models.sh first)
 #   pass --speakers N when you know the headcount - auto mode may over-split (tested)
-python3 convo/webui.py                        # browse at 127.0.0.1:8473
-python3 convo/sync_server.py --token T &      # relay (your own box)
-python3 convo/cli.py sync --server http://... # move notes between devices
-python3 convo/watch.py                        # nudge when Zoom/Meet/Teams opens (detection only)
-python3 convo/cli.py search "retention"       # full-text over all meetings (decrypts locally)
-python3 convo/cli.py export <id> out.md       # shareable markdown bundle
-python3 convo/cli.py share <id> age1... out.md.age  # encrypted for one recipient
+python3 iris/webui.py                        # browse at 127.0.0.1:8473
+python3 iris/sync_server.py --token T &      # relay (your own box)
+python3 iris/cli.py sync --server http://... # move notes between devices
+python3 iris/watch.py                        # nudge when Zoom/Meet/Teams opens (detection only)
+python3 iris/cli.py search "retention"       # full-text over all meetings (decrypts locally)
+python3 iris/cli.py export <id> out.md       # shareable markdown bundle
+python3 iris/cli.py share <id> age1... out.md.age  # encrypted for one recipient
 ```
 
 ## Phone -> laptop -> everywhere (the cross-device loop)
 
 1. Phone (android/): record in the app (or get nudged when Zoom/Meet/Teams opens).
-2. Tap "Send to laptop": the WAV goes over your LAN to `convo/ingest_server.py` on your own machine - never a third party.
+2. Tap "Send to laptop": the WAV goes over your LAN to `iris/ingest_server.py` on your own machine - never a third party.
 3. Laptop transcribes, verifies, encrypts, and pushes ciphertext to your relay.
 4. Phone and other devices pull from the relay and decrypt with your key.
 
