@@ -1,5 +1,6 @@
 """iris doctor - one command to check a machine is ready to run everything.
 Prints OK / MISSING per dependency with the fix. Exit 1 if anything core is missing."""
+from iris import crypto as C
 import os, shutil, subprocess, sys
 
 def _ok(name, yes, fix=""):
@@ -18,7 +19,7 @@ def main():
         "download ggml-silero-v6.2.0.bin from hf.co/ggml-org/whisper-vad")
     _ok("multilingual model (small, for Hindi)", os.path.exists("models/ggml-small.bin"),
         "download ggml-small.bin - needed for non-English meetings")
-    _ok("encryption key", os.path.exists(os.path.expanduser("~/.iris/key.txt")),
+    _ok("encryption key", os.path.exists(C.DEFAULT_KEY),
         "python3 iris/cli.py key init")
     _ok("diarization models", os.path.exists("models/pyannote-seg-3-0.onnx") and os.path.exists("models/eres2net_en.onnx"),
         "models/get-diarize-models.sh")
