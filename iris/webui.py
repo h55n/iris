@@ -8,6 +8,7 @@ import argparse, html, json, os, sys, time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from iris import store as S
 from iris.mascot import mascot
+from iris import library as L
 
 PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
 <title>Iris</title>
@@ -82,6 +83,22 @@ body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"SF Pro Text","Seg
 .searchbox input{width:100%;padding:6px 10px;font-size:13px;border:1px solid var(--border);
   border-radius:6px;background:var(--input-bg);color:var(--text);outline:none}
 .searchbox input:focus{border-color:var(--accent)}
+.nav-sec{font-size:11px;font-weight:600;color:var(--faint);padding:14px 10px 4px;letter-spacing:.2px}
+.folder{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:6px;color:var(--text);text-decoration:none;font-size:14px}
+.folder:hover{background:var(--active-bg)}.folder.on{background:var(--active-bg);font-weight:500}
+.folder .chev{font-size:10px;color:var(--faint);width:10px}.folder .count{margin-left:auto;font-size:11.5px;color:var(--faint)}
+.indent{margin-left:14px;border-left:1px solid var(--border-soft);padding-left:4px}
+.newfolder input{width:100%;border:0;background:transparent;font-size:13px;padding:5px 10px;color:var(--muted)}
+.newfolder input:focus{background:var(--input-bg);color:var(--text);outline:0;border-radius:6px}
+.newnote{margin:0 6px 4px}.newnote button{width:100%;text-align:left;padding:7px 10px;border:0;border-radius:6px;
+  background:transparent;color:var(--text);font-size:14px;font-weight:500}
+.newnote button:hover{background:var(--active-bg)}
+.inline{display:inline-block;margin:0 6px 18px 0}
+.inline input{padding:5px 9px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--input-bg);color:var(--text)}
+.inline button{padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:999px;background:var(--input-bg);color:var(--text)}
+.inline .danger{border-color:var(--danger-border);color:var(--danger)}.inline .primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.card{display:block;padding:12px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;text-decoration:none;color:var(--text);background:var(--input-bg)}
+.card:hover{border-color:var(--accent)}.card .nav-title{font-size:15px}
 .nav-item{display:block;padding:6px 10px;border-radius:6px;color:var(--text);text-decoration:none;margin-bottom:1px}
 .nav-item:hover{background:#ececea}
 .nav-item.active{background:var(--active-bg)}
@@ -273,19 +290,47 @@ def _title_in(store_dir: str, mid: str) -> str:
     except Exception:
         return mid
 
-def sidebar(store_dir: str, active: str | None) -> str:
-    items = []
+def _nav_item(mid, meta, active):
+    integ = meta.get("integrity") or {}
+    iv = f' &middot; {integ.get("passed")}/{integ.get("checked")} verified' if integ else ""
+    when = time.strftime("%b %-d, %-I:%M %p", time.localtime(meta.get("created", 0)))
+    cls = "nav-item active" if mid == active else "nav-item"
+    kind = "note" if meta.get("kind") == "note" else ("locked" if meta.get("encrypted") else "")
+    tail = f' &middot; {kind}' if kind else ""
+    return (f'<a class="{cls}" href="/meeting/{mid}">'
+            f'<div class=nav-title>{esc(meta.get("title", mid))}</div>'
+            f'<div class=nav-meta>{when}{tail}{iv}</div></a>')
+
+def sidebar(store_dir: str, active: str | None, active_folder: str | None = None) -> str:
+    metas = []
     for mid in S.list_meetings(store_dir, reverse=True):
         meta = load_meta_safe(store_dir, mid)
-        if meta is None:
-            continue
-        integ = meta.get("integrity") or {}
-        iv = f' &middot; {integ.get("passed")}/{integ.get("checked")} verified' if integ else ""
-        when = time.strftime("%b %-d, %-I:%M %p", time.localtime(meta.get("created", 0)))
-        cls = "nav-item active" if mid == active else "nav-item"
-        items.append(f'<a class="{cls}" href="/meeting/{mid}">'
-                     f'<div class=nav-title>{esc(meta.get("title", mid))}</div>'
-                     f'<div class=nav-meta>{when}{" &middot; locked" if meta.get("encrypted") else ""}{iv}</div></a>')
+        if meta is not None:
+            metas.append((mid, meta))
+    folders = L.list_folders(store_dir)
+    fids = {f["id"] for f in folders}
+    pinned = [(m, x) for m, x in metas if x.get("pinned")]
+    loose = [(m, x) for m, x in metas if x.get("folder") not in fids]
+    sec = lambda t: f'<div class=nav-sec>{t}</div>'
+    out = ""
+    if pinned:
+        out += sec("Pinned") + "".join(_nav_item(m, x, active) for m, x in pinned)
+    out += sec("Folders")
+    for f in folders:
+        inside = [(m, x) for m, x in metas if x.get("folder") == f["id"]]
+        open_ = f["id"] == active_folder or any(m == active for m, _ in inside)
+        out += (f'<a class="folder{" on" if f["id"] == active_folder else ""}" href="/folder/{f["id"]}">'
+                f'<span class=chev>{"&#9662;" if open_ else "&#9656;"}</span>{esc(f["name"])}'
+                f'<span class=count>{len(inside)}</span></a>')
+        if open_:
+            out += '<div class=indent>' + "".join(_nav_item(m, x, active) for m, x in inside) + '</div>'
+    out += ('<form class=newfolder method=post action="/folders/new">'
+            '<input name=name placeholder="+ New folder" maxlength=60 autocomplete=off></form>')
+    out += sec("Notes") + ("".join(_nav_item(m, x, active) for m, x in loose) or "")
+    if not metas:
+        out += ('<div class=empty>' + mascot(72, "sleep")
+                + '<div class=t>No meetings yet</div>'
+                + '<div class=s>record one and Iris will keep it safe</div></div>')
     return ('<div class=brand>Iris<span id=tagline>private meeting notes</span></div>'
             '<script>(function(){var t=["private meeting notes","your meetings, your machines",'
             '"nothing leaves your devices","notes that keep receipts","always local, always yours"];'
@@ -293,11 +338,10 @@ def sidebar(store_dir: str, active: str | None) -> str:
             'if(el)el.textContent=t[i]})()</script>'
             '<form class=searchbox method=get action="/search">'
             '<input name=q placeholder="Search meetings"></form>'
-            + '<div class=nav>'
-            + ("".join(items) or '<div class=empty>' + mascot(72, "sleep")
-               + '<div class=t>No meetings yet</div>'
-               + '<div class=s>record one and Iris will keep it safe</div></div>')
-            + '</div>'
+            '<form method=post action="/new" class=newnote>'
+            + (f'<input type=hidden name=folder value="{esc(active_folder)}">' if active_folder else "")
+            + '<button>+ New note</button></form>'
+            + '<div class=nav>' + out + '</div>'
             + '<div class=themes><span class=lbl>Theme</span>'
             + ''.join(f'<button class=dot data-t="{t}" title="{t or "blue"}" '
                       f'onclick="pickTheme(\'{t}\',this)"></button>'
@@ -326,7 +370,7 @@ def page(inner: str) -> bytes:
 def make_handler(store_dir: str):
     class H(BaseHTTPRequestHandler := __import__("http.server", fromlist=["BaseHTTPRequestHandler"]).BaseHTTPRequestHandler):
         def _html(self, body: str, status: int = 200):
-            data = page(f'<div class=layout><nav class=sidebar>{sidebar(store_dir, self._active)}</nav>'
+            data = page(f'<div class=layout><nav class=sidebar>{sidebar(store_dir, self._active, self._folder)}</nav>'
                         f'<main class=content><div class=doc>{body}</div></main></div>')
             self.send_response(status)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -334,6 +378,7 @@ def make_handler(store_dir: str):
             self.end_headers()
             self.wfile.write(data)
         _active = None
+        _folder = None
         def do_POST(self):
             import urllib.parse as U
             if self.path.startswith("/delete/"):
@@ -344,11 +389,42 @@ def make_handler(store_dir: str):
                 self.send_response(303)
                 self.send_header("Location", "/")
                 return self.end_headers()
+            length = int(self.headers.get("Content-Length", 0))
+            raw = self.rfile.read(length).decode("utf-8", "replace") if length else ""
+            form = {k: v[0] for k, v in U.parse_qs(raw).items()}
+            def go(loc):
+                self.send_response(303); self.send_header("Location", loc); self.end_headers()
+            def ok_mid(m):
+                return bool(m) and "/" not in m and ".." not in m and os.path.isfile(os.path.join(store_dir, m, "meta.json"))
+            parts = self.path.strip("/").split("/")
+            if self.path == "/new":
+                fid = form.get("folder") or None
+                return go("/meeting/" + L.new_note(store_dir, form.get("title", ""), fid))
+            if parts[0] == "folders":
+                if len(parts) == 2 and parts[1] == "new":
+                    try: f = L.create_folder(store_dir, form.get("name", ""))
+                    except ValueError: return go("/")
+                    return go("/folder/" + f["id"])
+                if len(parts) == 3 and parts[2] == "rename":
+                    L.rename_folder(store_dir, parts[1], form.get("name", ""))
+                    return go("/folder/" + parts[1])
+                if len(parts) == 3 and parts[2] == "delete":
+                    L.delete_folder(store_dir, parts[1]); return go("/")
+            if len(parts) == 2 and parts[0] in ("pin", "unpin", "move", "notes") and ok_mid(parts[1]):
+                mid = parts[1]
+                if parts[0] == "notes":
+                    L.save_notes(store_dir, mid, form.get("text", ""))
+                    self.send_response(204); return self.end_headers()
+                if parts[0] == "move":
+                    try: L.move(store_dir, mid, form.get("folder") or None)
+                    except ValueError: pass
+                else:
+                    L.set_pinned(store_dir, mid, parts[0] == "pin")
+                return go(form.get("next") or "/meeting/" + mid)
             if not self.path.startswith("/rename/"):
                 self.send_response(404); return self.end_headers()
             mid = self.path.split("/rename/", 1)[1].strip("/")
-            length = int(self.headers.get("Content-Length", 0))
-            title = U.parse_qs(self.rfile.read(length).decode()).get("title", [""])[0].strip()
+            title = form.get("title", "").strip()
             mp = os.path.join(store_dir, mid, "meta.json")
             if title and "/" not in mid and ".." not in mid and os.path.isfile(mp):
                 meta = json.load(open(mp))
@@ -401,6 +477,29 @@ def make_handler(store_dir: str):
                            + (rows or '<div class=empty>' + mascot(88, "sleep")
                               + '<div class=t>Nothing found</div>'
                               + '<div class=s>try another word - Iris only searches your own notes</div></div>'))
+            elif path.startswith("/folder/"):
+                fid = path.split("/folder/", 1)[1].strip("/")
+                fl = [f for f in L.list_folders(store_dir) if f["id"] == fid]
+                if not fl:
+                    self._html("<p>folder not found</p>", status=404); return
+                self._active, self._folder = None, fid
+                f = fl[0]
+                notes = [(m, load_meta_safe(store_dir, m)) for m in S.list_meetings(store_dir, reverse=True)]
+                notes = [(m, x) for m, x in notes if x and x.get("folder") == fid]
+                notes.sort(key=lambda t: not t[1].get("pinned"))
+                cards = "".join(_nav_item(m, x, None).replace('class="nav-item"', 'class="card"') for m, x in notes)
+                self._html(
+                    f'<h1>{esc(f["name"])}</h1><div class=doc-meta>{len(notes)} note(s)</div>'
+                    f'<form method=post action="/folders/{fid}/rename" class=inline>'
+                    f'<input name=name value="{esc(f["name"])}" maxlength=60> <button>rename</button></form>'
+                    f'<form method=post action="/new" class=inline><input type=hidden name=folder value="{fid}">'
+                    f'<button class=primary>+ New note here</button></form>'
+                    f'<form method=post action="/folders/{fid}/delete" class=inline '
+                    f'onsubmit="return confirm(\'Delete this folder? Its notes are kept.\')">'
+                    f'<button class=danger>delete folder</button></form>'
+                    + (cards or '<div class=empty>' + mascot(88, "sleep")
+                       + '<div class=t>Nothing in this folder yet</div>'
+                       + '<div class=s>make a note here, or move one in from its page</div></div>'))
             elif path == "/ask":
                 from iris import ask as A
                 q = U.parse_qs(U.urlparse(self.path).query).get("q", [""])[0].strip()
