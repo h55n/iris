@@ -63,6 +63,7 @@ License: MIT.
 | encryption | `convo/crypto.py` | age X25519 at rest; key at ~/.convo/key.txt (600) |
 | sync | `convo/sync.py` + `sync_server.py` | tiny self-hostable relay; moves ciphertext, NEVER audio |
 | LAN ingest | `convo/ingest_server.py` | phone posts recordings to your own laptop for transcription |
+| speaker labels | `convo/diarize.py` | sherpa-onnx: pyannote-seg + ERes2Net, `ingest --diarize` |
 | meeting detect | `convo/detect.py` | laptop: Zoom/Meet/Teams/Webex via process+window+mic signals, debounced |
 | local web UI | `convo/webui.py` | browse meetings at 127.0.0.1:8473 (localhost only, serves decrypted content) |
 | Android app | `android/` | recorder, meeting nudges, relay sync, on-device age decryption |

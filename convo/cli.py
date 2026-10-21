@@ -2,14 +2,21 @@
 """convo - private meeting notes. ingest | sweep | list | sync | key | encrypt | read | export | share | search"""
 import sys, os, json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from convo import transcribe as T, backends, verify, store, crypto as C, render
+from convo import transcribe as T, backends, verify, store, crypto as C, render, diarize as DZ
 
 STORE = os.environ.get("CONVO_STORE", "store")
 
-def cmd_ingest(audio, backend_name="ollama", title=""):
+def cmd_ingest(audio, backend_name="ollama", title="", diarize=False, speakers=0):
     mid = store.new_meeting(STORE, title)
     store.attach_audio(STORE, mid, audio)
     segs = T.transcribe(audio)
+    if diarize:
+        if not DZ.available():
+            print("diarize models missing - run models/get-diarize-models.sh")
+        else:
+            dia = DZ.diarize(T.to_wav16k(audio), num_speakers=speakers)
+            segs = DZ.assign_speakers(segs, dia)
+            print(f"speakers: {len(set(d['speaker'] for d in dia))}")
     tmd = T.transcript_markdown(segs)
     store.write_text(STORE, mid, "transcript.md", tmd)
     backend = backends.get_backend(backend_name)
@@ -63,7 +70,9 @@ if __name__ == "__main__":
         backend = "ollama"
         if "--backend" in args:
             i = args.index("--backend"); backend = args[i + 1]; del args[i:i + 2]
-        cmd_ingest(args[1], backend)
+        dia = "--diarize" in args
+        spk = int(args[args.index("--speakers") + 1]) if "--speakers" in args else 0
+        cmd_ingest(args[1], backend, diarize=dia, speakers=spk)
     elif args[0] == "sweep":
         for p in store.sweep(STORE): print(f"deleted {p}")
     elif args[0] == "list":

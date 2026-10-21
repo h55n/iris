@@ -76,7 +76,15 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 ## Speaker labels (diarization) - TESTED, NOT SHIPPED (Oct 21)
 - Round 1 (synthetic): gTTS two-voice meeting + pitch-shifted variant -> ZERO [SPEAKER_TURN] markers. (whisper.cpp tinydiarize, ggml-small.en-tdrz, akashmjn/tinydiarize-whisper.cpp)
 - Round 2 (real humans, proper test per Hassan): 16 alternating turns from TWO REAL LibriSpeech dev-clean speakers (CC-BY 4.0), 6s per turn -> ZERO [SPEAKER_TURN] markers again. Transcription fine; turn detection dead in this build.
-- Conclusion: whisper.cpp tinydiarize does not work. Speaker labels must come from a separate embedding+clustering pass (tested next with sherpa-onnx / pyannote-segmentation ONNX models).
+- Conclusion: whisper.cpp tinydiarize does not work. Speaker labels come from sherpa-onnx instead (below).
+
+## Speaker diarization SHIPPED (convo/diarize.py) - tested Oct 21, proper retest per Hassan
+- Stack: sherpa-onnx OfflineSpeakerDiarization = pyannote-segmentation-3.0 (ONNX, 6MB) + 3dspeaker ERes2Net voxceleb embedding (26MB) + fast clustering. Fully local, free, no accounts. `models/get-diarize-models.sh` fetches both.
+- TEST 1 - real two-human speech (16 alternating 6s turns, two LibriSpeech dev-clean speakers, CC-BY): 21 segments, EVERY turn attributed to the correct speaker (perfect alternation). campplus embedding variant FAILED this test (collapsed to one speaker) - ERes2Net is the one that works; don't swap it.
+- TEST 2 - synthetic gTTS two-voice demo meeting: 7/7 turns correct.
+- TEST 3 - end to end: `convo ingest two_humans.wav --diarize --speakers 2` produced a transcript with correct "Speaker 1:/Speaker 2:" prefixes per line.
+- Unit tests (5): overlap assignment, majority rule, no-overlap, same-speaker merging, gap respect.
+- Honest limits: num_speakers known helps; unknown-speaker-count mode (clustering threshold) untested; overlapping speech (two people talking at once) untested - segmentation models handle overlap partially, expect misses; Hindi/multilingual diarization untested (embedding is English-voxceleb-trained but language-agnostic in principle - Hassan's real Hindi meeting is the test).
 
 ## Full-text search (convo search) - added Oct 21
 - TESTED LIVE: `convo search Priya` on the ENCRYPTED demo meeting decrypts locally and finds matches in both transcript and notes. Case-insensitive, searches all meetings.
