@@ -52,3 +52,38 @@ def _load_meta(store_dir, mid):
 def _save_meta(store_dir, mid, meta):
     with open(os.path.join(store_dir, mid, "meta.json"), "w") as f:
         json.dump(meta, f, indent=2)
+
+
+"""Encryption wiring (age). When the user has a key (~/.convo/key.txt),
+transcript.md and notes.md are stored as .age ciphertext only - the relay
+and the disk never hold plaintext. Audio is untouched (deleted by sweep)."""
+from convo import crypto as C
+
+PLAINTEXT_FILES = ("transcript.md", "notes.md")
+
+def encrypt_meeting(store_dir: str, mid: str, key_path: str = C.DEFAULT_KEY) -> list[str]:
+    pub = C.public_key(key_path)
+    done = []
+    d = os.path.join(store_dir, mid)
+    for name in PLAINTEXT_FILES:
+        src = os.path.join(d, name)
+        if os.path.exists(src):
+            C.encrypt_file(src, pub)
+            os.remove(src)
+            done.append(name + ".age")
+    meta = _load_meta(store_dir, mid)
+    meta["encrypted"] = True
+    _save_meta(store_dir, mid, meta)
+    return done
+
+def decrypt_meeting(store_dir: str, mid: str, key_path: str = C.DEFAULT_KEY) -> dict:
+    out = {}
+    d = os.path.join(store_dir, mid)
+    for name in PLAINTEXT_FILES:
+        enc = os.path.join(d, name + ".age")
+        if os.path.exists(enc):
+            out[name] = C.decrypt_bytes(open(enc, "rb").read(), key_path).decode()
+    return out
+
+def is_encrypted(store_dir: str, mid: str) -> bool:
+    return bool(_load_meta(store_dir, mid).get("encrypted"))

@@ -36,3 +36,10 @@
 - DETECTION ONLY: it never joins or reads the meeting. Recording still starts with a manual confirm.
 - Hassan's real-device tests pending: live Zoom + Meet detection on his laptop (X11 vs Wayland - window titles only work on X11; Wayland needs process/mic signals), mic-in-use check on his audio stack.
 - Phone (honest limits, built into docs not code): Android can only see the FOREGROUND app name via Usage Access - it cannot see another app's mic or audio (Play policy, May 2022). iOS: no detection possible. Android companion app will use the foreground-app signal with a "meeting? tap to record" notification.
+
+## Encryption at rest (convo/crypto.py + store wiring) - added Oct 21
+- age v1.2.1 (X25519, vendored binary in vendor/), key at ~/.convo/key.txt (chmod 600), ASCII-armored .age files.
+- TESTED (7 unit tests): keygen + 600 perms + age1 pubkey, refuses overwrite, byte/file roundtrip, wrong key fails, store-level: encrypt_meeting removes plaintext and keeps only .age, decrypt_meeting roundtrip, meta.encrypted flag.
+- TESTED LIVE: demo meeting encrypted via `convo encrypt`, plaintext gone from disk, `convo read` roundtrips the real transcript.
+- Behavior: `convo ingest` auto-encrypts when a key exists. Sync carries only .age ciphertext (relay never sees plaintext).
+- Hassan's tests pending: key pair across 2 devices (copy key file, confirm same pubkey fingerprint), passphrase-protected key variant, sync roundtrip of encrypted meetings.

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""convo - private meeting notes. ingest | sweep | list | sync"""
+"""convo - private meeting notes. ingest | sweep | list | sync | key | encrypt | read"""
 import sys, os, json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from convo import transcribe as T, backends, verify, store
+from convo import transcribe as T, backends, verify, store, crypto as C
 
 STORE = os.environ.get("CONVO_STORE", "store")
 
@@ -42,14 +42,27 @@ def cmd_ingest(audio, backend_name="ollama", title=""):
     meta["backend"] = backend.name
     meta["integrity"] = notes.get("integrity")
     json.dump(meta, open(os.path.join(STORE, mid, "meta.json"), "w"), indent=2)
+    if os.path.exists(C.DEFAULT_KEY):
+        store.encrypt_meeting(STORE, mid)
+        print("encrypted: transcript.md.age, notes.md.age")
     print(f"meeting: {mid}\nbackend: {backend.name}\nintegrity: {notes['integrity']}")
     print(f"notes: {os.path.join(STORE, mid, 'notes.md')}")
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    if not args or args[0] not in ("ingest", "sweep", "list", "sync"):
+    if not args or args[0] not in ("ingest", "sweep", "list", "sync", "key", "encrypt", "read"):
         print(__doc__); sys.exit(1)
-    if args[0] == "sync":
+    if args[0] == "key":
+        print("public key:", C.generate_key() if len(args) > 1 and args[1] == "init" else C.public_key())
+    elif args[0] == "encrypt":
+        mids = [args[1]] if len(args) > 1 else [m for m in sorted(os.listdir(STORE)) if os.path.isdir(os.path.join(STORE, m))]
+        for m in mids:
+            if not store.is_encrypted(STORE, m):
+                print(m, "->", ", ".join(store.encrypt_meeting(STORE, m)))
+    elif args[0] == "read":
+        for name, text in store.decrypt_meeting(STORE, args[1]).items():
+            print(f"--- {name} ---\n{text}")
+    elif args[0] == "sync":
         import getpass
         server = args[args.index("--server") + 1] if "--server" in args else os.environ.get("CONVO_SYNC_SERVER", "http://127.0.0.1:8471")
         token = os.environ.get("CONVO_SYNC_TOKEN") or getpass.getpass("sync token: ")
