@@ -52,7 +52,7 @@ def _need_meeting(args):
         print("try: iris list", file=sys.stderr); sys.exit(1)
     return mid
 
-if __name__ == "__main__":
+def main(args):
     args = sys.argv[1:]
     if args == ["--version"]:
         print(f"iris {__version__}"); sys.exit(0)
@@ -110,8 +110,10 @@ if __name__ == "__main__":
         st["last_pull"] = __import__("time").time(); S.save_state(STORE, st)
         print(f"pushed {len(pushed)} ({len(skipped)} unchanged), pulled {len(got)}: {got}")
     elif args[0] == "ingest":
-        if len(args) < 2 or not os.path.exists(args[1]):
+        if len(args) < 2:
             print("usage: iris ingest <audio-file> [--backend ollama|ultramarine] [--diarize [--speakers N]] [--multilingual] [--title T]"); sys.exit(1)
+        if not os.path.exists(args[1]):
+            print(f"error: audio not found: {args[1]}", file=sys.stderr); sys.exit(1)
         backend = "ollama"
         if "--backend" in args:
             i = args.index("--backend")
@@ -145,3 +147,9 @@ if __name__ == "__main__":
             iv = f" ({i.get('passed')}/{i.get('checked')} verified)" if i else ""
             # untitled meetings store their id as the title; print it once
             print(f"{mid}{('  ' + title) if title and title != mid else ''}{enc}{iv}")
+
+if __name__ == "__main__":
+    try:
+        main(sys.argv[1:])
+    except (FileNotFoundError, RuntimeError, C.CryptoError) as e:
+        print(f"error: {e}", file=sys.stderr); sys.exit(1)
