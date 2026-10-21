@@ -13,7 +13,7 @@ def setup():
     os.system(f"rm -rf {KEY} {A} {B} {RELAY}")
     for d in (A, B, RELAY): os.makedirs(d)
     if not os.path.exists(KEY): C.generate_key(KEY)
-    srv = subprocess.Popen(["python3", "convo/sync_server.py", "--dir", RELAY,
+    srv = subprocess.Popen(["python3", "iris/sync_server.py", "--dir", RELAY,
                             "--token", "t0ken", "--port", str(PORT)],
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     time.sleep(0.8)
