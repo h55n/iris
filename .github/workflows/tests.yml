@@ -1,5 +1,8 @@
 name: tests
 on: [push]
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   pytest:
     runs-on: ubuntu-latest
