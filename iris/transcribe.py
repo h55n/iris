@@ -35,9 +35,16 @@ def mmss(seconds: float) -> str:
     m, s = divmod(int(seconds), 60)
     return f"{m:02d}:{s:02d}"
 
-def transcript_markdown(segs: list[dict]) -> str:
+def transcript_markdown(segs: list[dict], speaker_names: dict[int, str] | None = None) -> str:
+    speaker_names = speaker_names or {}
     lines = []
     for s in segs:
-        who = f"Speaker {s['speaker'] + 1}: " if s.get("speaker") is not None else ""
+        spk = s.get("speaker")
+        if spk is None:
+            who = ""
+        elif spk in speaker_names:
+            who = f"{speaker_names[spk]}: "
+        else:
+            who = f"Speaker {spk + 1}: "
         lines.append(f"[{mmss(s['start'])}] {who}{s['text']}")
     return "\n".join(lines)
