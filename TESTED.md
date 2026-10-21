@@ -127,3 +127,8 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 - Voiceprints are 192-d float embeddings in ~/.iris/voices/*.npy - no audio stored, nothing leaves the machine.
 - Hassan's tests: enroll himself + a family member/friend, run a real meeting, tune threshold if needed.
 - E2E (same day): `iris enroll SpeakerA sample.wav` then `iris ingest two_humans.wav --diarize --speakers 2` -> transcript lines show "SpeakerA:" for the enrolled voice and "Speaker 2:" for the unknown one. Full pipeline: diarize -> cluster embeddings -> voice match -> named markdown.
+
+## Mixed-language (Hinglish) transcription - tested Oct 21 evening
+- Synthetic 4-turn file (en/hi/en/hi): `transcribe_multilingual` segments with the multilingual model, detects language per segment. Result: all 4 turns correct language, Hindi in Devanagari. Small-model word errors on names (Priya->PREO, Hassan->वहसन) noted honestly.
+- Important tested failure: a base.en pass DROPS Hindi turns from segmentation entirely (whole-file pass returned 1 segment). Mixed audio must use --multilingual.
+- `iris ingest meeting.wav --multilingual`; non-English lines get <hi> tags in the transcript.

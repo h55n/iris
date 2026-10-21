@@ -6,10 +6,10 @@ from iris import transcribe as T, backends, verify, store, crypto as C, render, 
 
 STORE = os.environ.get("IRIS_STORE", "store")
 
-def cmd_ingest(audio, backend_name="ollama", title="", diarize=False, speakers=0):
+def cmd_ingest(audio, backend_name="ollama", title="", diarize=False, speakers=0, multilingual=False):
     mid = store.new_meeting(STORE, title)
     store.attach_audio(STORE, mid, audio)
-    segs = T.transcribe(audio)
+    segs = T.transcribe_multilingual(audio) if multilingual else T.transcribe(audio)
     tmd = None
     if diarize:
         if not DZ.available():
@@ -90,7 +90,8 @@ if __name__ == "__main__":
         dia = "--diarize" in args
         spk = int(args[args.index("--speakers") + 1]) if "--speakers" in args else 0
         title = args[args.index("--title") + 1] if "--title" in args else ""
-        cmd_ingest(args[1], backend, title=title, diarize=dia, speakers=spk)
+        ml = "--multilingual" in args
+        cmd_ingest(args[1], backend, title=title, diarize=dia, speakers=spk, multilingual=ml)
     elif args[0] == "sweep":
         for p in store.sweep(STORE): print(f"deleted {p}")
     elif args[0] == "list":
