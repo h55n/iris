@@ -46,6 +46,26 @@ PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=
 .dot[data-t=purple]{background:#6940a5}.dot[data-t=orange]{background:#d9730d}
 .dot[data-t=pink]{background:#c14c8a}.dot[data-t=red]{background:#d44c47}
 *{box-sizing:border-box}
+:root{--spring:cubic-bezier(.22,1,.36,1);--snap:cubic-bezier(.34,1.4,.44,1)}
+body{animation:pagein .45s var(--spring)}
+@keyframes pagein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.nav-item{transition:background .25s var(--spring),transform .25s var(--spring)}
+.nav-item:hover{transform:translateX(2px)}
+a{transition:color .2s var(--spring)}
+button{transition:transform .18s var(--snap),border-color .25s var(--spring),background .25s var(--spring);cursor:pointer}
+button:hover{transform:translateY(-1px)}
+button:active{transform:scale(.94)}
+.dot{transition:transform .25s var(--snap)}
+.dot:hover{transform:scale(1.25)}
+input{transition:border-color .25s var(--spring),box-shadow .25s var(--spring)}
+input:focus{box-shadow:0 0 0 3px var(--accent-soft)}
+.bullet,.todo,blockquote,.nav-item,h2,h3,.pill{animation:rise .5s var(--spring) both}
+.rise:nth-child(2){animation-delay:.04s}.rise:nth-child(3){animation-delay:.08s}
+.rise:nth-child(4){animation-delay:.12s}.rise:nth-child(5){animation-delay:.16s}
+.rise:nth-child(6){animation-delay:.2s}.rise:nth-child(7){animation-delay:.24s}
+.rise:nth-child(n+8){animation-delay:.28s}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
   color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
 .layout{display:flex;min-height:100vh}
@@ -79,7 +99,20 @@ blockquote .ts{color:var(--faint);font-size:12.5px}
 .pill{display:inline-block;font-size:12px;padding:2px 10px;border-radius:999px;
   background:var(--pill-ok-bg);color:var(--pill-ok);font-weight:500}
 .speaker{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:999px;
-  margin-right:6px;vertical-align:1px}
+  margin-right:6px;vertical-align:1px;animation:rise .4s var(--spring) both}
+.spk0{background:#e8f0fe;color:#1a56c4}.spk1{background:#fdeeee;color:#b83232}
+.spk2{background:#e9f6ec;color:#2f6b31}.spk3{background:#fdf3e3;color:#96610f}
+.spk4{background:#f3ecfa;color:#6b3fa0}.spk5{background:#e8f5f4;color:#0f6e63}
+@media (prefers-color-scheme: dark){
+  .spk0{background:#1e2c45;color:#7fa8ec}.spk1{background:#3a2020;color:#ec8a8a}
+  .spk2{background:#1d3020;color:#86c98c}.spk3{background:#332812;color:#e0b36a}
+  .spk4{background:#2b2138;color:#c0a3e8}.spk5{background:#16302d;color:#6ec9bf}
+}
+h2 .icon, h3 .icon{width:18px;height:18px;vertical-align:-3px;margin-right:7px;color:var(--accent)}
+.mascot{display:block;margin:26px auto 10px}
+.empty{text-align:center;color:var(--muted);padding:28px 12px 8px}
+.empty .t{font-size:15px;color:var(--text);font-weight:500;margin-top:6px}
+.empty .s{font-size:13px;margin-top:2px}
 pre.transcript{background:var(--side);border:1px solid var(--border-soft);border-radius:8px;
   padding:18px 20px;font:13px/1.8 ui-monospace,"SF Mono",Menlo,monospace;white-space:pre-wrap;color:#4a4844}
 .back{color:var(--muted);text-decoration:none;font-size:13.5px}
@@ -95,14 +128,10 @@ pre.transcript{background:var(--side);border:1px solid var(--border-soft);border
 
 def esc(t): return html.escape(t or "")
 
-SPEAKER_COLORS = [
-    ("#e8f0fe", "#1a56c4"), ("#fdeeee", "#b83232"), ("#e9f6ec", "#2f6b31"),
-    ("#fdf3e3", "#96610f"), ("#f3ecfa", "#6b3fa0"), ("#e8f5f4", "#0f6e63"),
-]
+N_SPEAKER_COLORS = 6
 
 def speaker_chip(n: int, label: str | None = None) -> str:
-    bg, fg = SPEAKER_COLORS[n % len(SPEAKER_COLORS)]
-    return f'<span class=speaker style="background:{bg};color:{fg}">{esc(label or "Speaker " + str(n + 1))}</span>'
+    return f'<span class="speaker spk{n % N_SPEAKER_COLORS}">{esc(label or "Speaker " + str(n + 1))}</span>'
 
 def render_transcript_line(line: str) -> str:
     """[mm:ss] Speaker N: text / [mm:ss] Name: text -> timestamp + chip + text"""
@@ -111,7 +140,7 @@ def render_transcript_line(line: str) -> str:
     if m:
         ts, numbered, name, text = m.groups()
         label = numbered or name
-        idx = (int(numbered.split()[1]) - 1) if numbered else (sum(label.encode()) % len(SPEAKER_COLORS))
+        idx = (int(numbered.split()[1]) - 1) if numbered else (sum(label.encode()) % N_SPEAKER_COLORS)
         chip = speaker_chip(idx, label)
         return f'<span style="color:var(--faint)">{ts}</span>  {chip}{esc(text)}'
     m2 = re.match(r"^\[(\d\d:\d\d)\] (.*)$", line)
