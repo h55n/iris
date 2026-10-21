@@ -142,6 +142,14 @@ pre.transcript{background:var(--side);border:1px solid var(--border-soft);border
 
 def esc(t): return html.escape(t or "")
 
+def load_meta_safe(store_dir: str, mid: str):
+    """meta.json as dict, or None when missing/corrupt (one bad meeting must
+    not take the whole UI down)."""
+    try:
+        return json.load(open(os.path.join(store_dir, mid, "meta.json")))
+    except (OSError, json.JSONDecodeError):
+        return None
+
 def read_meeting_texts(store_dir: str, mid: str):
     """Plaintext dict, or None when the meeting is encrypted and the local key
     can't open it (wrong/missing key)."""
@@ -291,7 +299,9 @@ def _title_in(store_dir: str, mid: str) -> str:
 def sidebar(store_dir: str, active: str | None) -> str:
     items = []
     for mid in S.list_meetings(store_dir, reverse=True):
-        meta = json.load(open(os.path.join(store_dir, mid, "meta.json")))
+        meta = load_meta_safe(store_dir, mid)
+        if meta is None:
+            continue
         integ = meta.get("integrity") or {}
         iv = f' &middot; {integ.get("passed")}/{integ.get("checked")} verified' if integ else ""
         when = time.strftime("%b %-d, %-I:%M %p", time.localtime(meta.get("created", 0)))
@@ -378,7 +388,7 @@ def make_handler(store_dir: str):
                 mids = S.list_meetings(store_dir, reverse=True)
                 n_enc = n_pass = n_checked = 0
                 for m in mids:
-                    mt = json.load(open(os.path.join(store_dir, m, "meta.json")))
+                    mt = load_meta_safe(store_dir, m) or {}
                     n_enc += 1 if mt.get("encrypted") else 0
                     ig = mt.get("integrity") or {}
                     n_pass += ig.get("passed", 0); n_checked += ig.get("checked", 0)
@@ -439,7 +449,9 @@ def make_handler(store_dir: str):
                 self._active = mid
                 if "/" in mid or ".." in mid or not os.path.isdir(os.path.join(store_dir, mid)):
                     self._html("<p>not found</p>", status=404); return
-                meta = json.load(open(os.path.join(store_dir, mid, "meta.json")))
+                meta = load_meta_safe(store_dir, mid)
+                if meta is None:
+                    self._html("<p>this meeting's metadata is unreadable</p>", status=500); return
                 texts = read_meeting_texts(store_dir, mid)
                 if texts is None:
                     self._active = mid

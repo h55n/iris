@@ -165,3 +165,13 @@ def test_meeting_nav_links_neighbors(server):
         assert f'/meeting/{ids[i-1]}' in html
     if i < len(ids) - 1:
         assert f'/meeting/{ids[i+1]}' in html
+
+def test_corrupt_meeting_meta_does_not_break_ui(server):
+    bad = os.path.join(STORE, "20261021-0002-corrupt")
+    os.makedirs(bad, exist_ok=True)
+    open(os.path.join(bad, "meta.json"), "w").write("{not json")
+    try:
+        html = urllib.request.urlopen(f"http://127.0.0.1:{PORT}/").read().decode()
+        assert "Iris" in html
+    finally:
+        import shutil; shutil.rmtree(bad)
