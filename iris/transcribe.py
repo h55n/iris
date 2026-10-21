@@ -46,7 +46,8 @@ def transcript_markdown(segs: list[dict], speaker_names: dict[int, str] | None =
             who = f"{speaker_names[spk]}: "
         else:
             who = f"Speaker {spk + 1}: "
-        lines.append(f"[{mmss(s['start'])}] {who}{s['text']}")
+        lang = f"<{s['lang']}> " if s.get("lang") and s["lang"] != "en" else ""
+        lines.append(f"[{mmss(s['start'])}] {who}{lang}{s['text']}")
     return "\n".join(lines)
 
 
