@@ -79,6 +79,10 @@ if __name__ == "__main__":
         from iris import export as E
         print(E.share_meeting(STORE, args[1], args[2], args[3]))
     elif args[0] == "read":
+        if len(args) < 2 or not os.path.isdir(os.path.join(STORE, args[1])):
+            print(f"no such meeting: {args[1] if len(args) > 1 else '(missing id)'}", file=sys.stderr)
+            print("try: iris list", file=sys.stderr)
+            sys.exit(1)
         for name, text in store.decrypt_meeting(STORE, args[1]).items():
             print(f"--- {name} ---\n{text}")
     elif args[0] == "sync":
