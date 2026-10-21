@@ -61,3 +61,9 @@ def test_legacy_convo_token_header_still_accepted(server):
         urllib.request.urlopen(req)
     except urllib.error.HTTPError as e:
         assert e.code == 404
+
+def test_legacy_convo_title_header_preference():
+    from iris.ingest_server import _meeting_title
+    assert _meeting_title({"X-Iris-Title": "standup", "X-Convo-Title": "old"}) == "standup"
+    assert _meeting_title({"X-Convo-Title": "old-apk title"}) == "old-apk title"
+    assert _meeting_title({}) == ""

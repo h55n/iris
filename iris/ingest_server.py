@@ -16,6 +16,10 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 if __name__ == "__main__" and __package__ is None:
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+def _meeting_title(headers) -> str:
+    """New header wins; legacy X-Convo-Title keeps already-built APKs working."""
+    return headers.get("X-Iris-Title", headers.get("X-Convo-Title", ""))
+
 def make_handler(store_dir, token, backend):
     from iris import transcribe as T, backends as B, verify, store, crypto as C, render
     class H(BaseHTTPRequestHandler):
@@ -36,7 +40,7 @@ def make_handler(store_dir, token, backend):
                 return self._send(413, {"error": "audio too large"})
             audio = self.rfile.read(size)
             if len(audio) < 1000: return self._send(400, {"error": "audio too small"})
-            title = self.headers.get("X-Iris-Title", self.headers.get("X-Convo-Title", ""))
+            title = _meeting_title(self.headers)
             mid = store.new_meeting(store_dir, title)
             tmp = os.path.join(store_dir, mid, "audio.wav")
             with open(tmp, "wb") as f: f.write(audio)
