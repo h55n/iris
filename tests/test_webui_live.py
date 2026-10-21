@@ -155,3 +155,13 @@ def test_locked_meeting_shows_friendly_page_not_500(server):
     m = json.load(open(mp)); m["encrypted"] = False
     json.dump(m, open(mp, "w"))
 
+
+def test_meeting_nav_links_neighbors(server):
+    mid = _mk_search_meeting()
+    html = urllib.request.urlopen(f"http://127.0.0.1:{PORT}/meeting/{mid}").read().decode()
+    ids = sorted(d for d in os.listdir(STORE) if os.path.isdir(os.path.join(STORE, d)))
+    i = ids.index(mid)
+    if i > 0:
+        assert f'/meeting/{ids[i-1]}' in html
+    if i < len(ids) - 1:
+        assert f'/meeting/{ids[i+1]}' in html

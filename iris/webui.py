@@ -265,6 +265,29 @@ def render_notes_md(md: str) -> str:
             out.append(f"<p>{esc(line)}</p>")
     return "\n".join(out)
 
+def meeting_nav(store_dir: str, mid: str) -> str:
+    """Newer/older neighbor links for the meeting page footer."""
+    ids = sorted(S.list_meetings(store_dir))
+    if mid not in ids or len(ids) < 2:
+        return ""
+    i = ids.index(mid)
+    older = ids[i - 1] if i > 0 else None
+    newer = ids[i + 1] if i < len(ids) - 1 else None
+    def lbl(other, arrow):
+        if not other:
+            return "<span style=\"opacity:.35\"></span>"
+        t = esc(_title_in(store_dir, other))
+        return f'<a class=back href="/meeting/{other}">{arrow} {t}</a>'
+    return ('<div style="display:flex;justify-content:space-between;margin:26px 0 4px;'
+            'font-size:12.5px">'
+            + lbl(older, "&larr;") + lbl(newer, "&rarr;") + "</div>")
+
+def _title_in(store_dir: str, mid: str) -> str:
+    try:
+        return json.load(open(os.path.join(store_dir, mid, "meta.json"))).get("title", mid)
+    except Exception:
+        return mid
+
 def sidebar(store_dir: str, active: str | None) -> str:
     items = []
     for mid in S.list_meetings(store_dir, reverse=True):
@@ -445,6 +468,7 @@ def make_handler(store_dir: str):
                     body += (f'<p style="font-size:12.5px"><a class=back href="/raw/{mid}/notes.md">download notes.md</a> &middot; <a class=back href="/raw/{mid}/transcript.md">download transcript.md</a></p>'
                          f'<hr class=divider><h2>{heading_icon("transcript")}Transcript</h2>'
                              f'<pre class=transcript>{lines}</pre>')
+                body += meeting_nav(store_dir, mid)
                 self._html(body)
             else:
                 self.send_response(404); self.end_headers()
