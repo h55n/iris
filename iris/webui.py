@@ -367,8 +367,13 @@ def make_handler(store_dir: str):
                 if not q:
                     return self._html("<h1>Search</h1><p class=doc-meta>Type something in the search box.</p>")
                 hits = S.search(store_dir, q)
+                def _title(mid):
+                    try:
+                        return json.load(open(os.path.join(store_dir, mid, "meta.json"))).get("title", mid)
+                    except Exception:
+                        return mid
                 rows = "".join(
-                    f'<div style="margin-bottom:14px"><a class=nav-title href="/meeting/{h["meeting"]}">{esc(h["meeting"])}</a>'
+                    f'<div style="margin-bottom:14px"><a class=nav-title href="/meeting/{h["meeting"]}">{esc(_title(h["meeting"]))}</a>'
                     f'<div class=nav-meta>{esc(h["file"])}</div><p style="margin-top:2px">{esc(h["line"][:200])}</p></div>'
                     for h in hits)
                 self._html(f'<h1>Search</h1><p class=doc-meta>{len(hits)} result(s) for &ldquo;{esc(q)}&rdquo;</p>'
