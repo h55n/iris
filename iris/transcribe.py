@@ -55,7 +55,11 @@ def transcript_markdown(segs: list[dict], speaker_names: dict[int, str] | None =
             who = f"{speaker_names[spk]}: "
         else:
             who = f"Speaker {spk + 1}: "
-        lang = f"<{s['lang']}> " if s.get("lang") and s["lang"] != "en" else ""
+        from iris.lang import classify
+        tag = s.get("lang") or "en"
+        if classify(s["text"]) == "hinglish":
+            tag = "hinglish"  # mixed Hindi/English beats whisper's single-language guess
+        lang = f"<{tag}> " if tag != "en" else ""
         lines.append(f"[{mmss(s['start'])}] {who}{lang}{s['text']}")
     return "\n".join(lines)
 
