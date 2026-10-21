@@ -87,3 +87,24 @@ def decrypt_meeting(store_dir: str, mid: str, key_path: str = C.DEFAULT_KEY) -> 
 
 def is_encrypted(store_dir: str, mid: str) -> bool:
     return bool(_load_meta(store_dir, mid).get("encrypted"))
+
+
+def search(store_dir: str, query: str, key_path: str = None) -> list[dict]:
+    """Full-text search over transcripts + notes (decrypts with local key as
+    needed). Returns [{'meeting': mid, 'file': name, 'line': str}]."""
+    import re
+    hits = []
+    rx = re.compile(re.escape(query), re.I)
+    for mid in sorted(os.listdir(store_dir)):
+        d = os.path.join(store_dir, mid)
+        if not os.path.isfile(os.path.join(d, "meta.json")): continue
+        if is_encrypted(store_dir, mid):
+            texts = decrypt_meeting(store_dir, mid, key_path or C.DEFAULT_KEY)
+        else:
+            texts = {n: open(os.path.join(d, n)).read()
+                     for n in PLAINTEXT_FILES if os.path.exists(os.path.join(d, n))}
+        for name, text in texts.items():
+            for line in text.splitlines():
+                if rx.search(line):
+                    hits.append({"meeting": mid, "file": name, "line": line.strip()})
+    return hits

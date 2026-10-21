@@ -78,3 +78,6 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 - Result: ZERO [SPEAKER_TURN] markers detected on both runs. Transcription itself is unaffected.
 - Decision: speaker labels stay OUT of the product until they work on real audio. Hassan can re-test with a real two-person recording (whisper-cli -m ggml-small.en-tdrz.bin --tinydiarize -f meeting.wav); if real speech fires markers, wiring it into convo is ~20 lines.
 - Alternative if it stays dead: pyannote (needs HF account + heavier deps) - park unless he asks.
+
+## Full-text search (convo search) - added Oct 21
+- TESTED LIVE: `convo search Priya` on the ENCRYPTED demo meeting decrypts locally and finds matches in both transcript and notes. Case-insensitive, searches all meetings.

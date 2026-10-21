@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""convo - private meeting notes. ingest | sweep | list | sync | key | encrypt | read | export | share"""
+"""convo - private meeting notes. ingest | sweep | list | sync | key | encrypt | read | export | share | search"""
 import sys, os, json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from convo import transcribe as T, backends, verify, store, crypto as C, render
@@ -28,7 +28,7 @@ def cmd_ingest(audio, backend_name="ollama", title=""):
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    if not args or args[0] not in ("ingest", "sweep", "list", "sync", "key", "encrypt", "read", "export", "share"):
+    if not args or args[0] not in ("ingest", "sweep", "list", "sync", "key", "encrypt", "read", "export", "share", "search"):
         print(__doc__); sys.exit(1)
     if args[0] == "key":
         print("public key:", C.generate_key() if len(args) > 1 and args[1] == "init" else C.public_key())
@@ -37,6 +37,9 @@ if __name__ == "__main__":
         for m in mids:
             if not store.is_encrypted(STORE, m):
                 print(m, "->", ", ".join(store.encrypt_meeting(STORE, m)))
+    elif args[0] == "search":
+        for h in store.search(STORE, " ".join(args[1:])):
+            print(f"{h['meeting']} ({h['file']}): {h['line']}")
     elif args[0] == "export":
         from convo import export as E
         print(E.export_meeting(STORE, args[1], args[2]))
