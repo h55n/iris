@@ -85,6 +85,8 @@ if __name__ == "__main__":
             if not store.is_encrypted(STORE, m):
                 print(m, "->", ", ".join(store.encrypt_meeting(STORE, m)))
     elif args[0] == "search":
+        if len(args) < 2:
+            print("usage: iris search <words>", file=sys.stderr); sys.exit(1)
         for h in store.search(STORE, " ".join(args[1:])):
             print(f"{h['meeting']} ({h['file']}): {h['line']}")
     elif args[0] == "export":
