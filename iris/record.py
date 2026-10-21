@@ -1,6 +1,6 @@
 """Laptop mic capture -> wav (needs a real audio device: Hassan's machine).
-Linux (pulse/pipewire):   python3 convo/record.py out.wav
-macOS (avfoundation):     python3 convo/record.py out.wav   # auto-detected
+Linux (pulse/pipewire):   python3 iris/record.py out.wav
+macOS (avfoundation):     python3 iris/record.py out.wav   # auto-detected
 Press Ctrl-C to stop. Add --ingest to run the full pipeline right after."""
 import subprocess, sys, os, threading, time
 
