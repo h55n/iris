@@ -85,3 +85,22 @@ def test_search_no_match(server):
 def test_search_empty_query(server):
     html = _get("/search?q=")
     assert "Search" in html
+
+def test_raw_download(server):
+    mid = _mk_search_meeting()
+    body = _get(f"/raw/{mid}/transcript.md")
+    assert "retention stays seven days" in body
+
+def test_raw_rejects_traversal(server):
+    # the handler renders its "not found" page and never touches the filesystem
+    body = ""
+    try:
+        body = _get("/raw/..%2f..%2fetc/transcript.md")
+    except urllib.error.HTTPError as e:
+        body = e.read().decode()
+    assert "root:" not in body and "[00:05]" not in body
+
+def test_raw_rejects_unknown_file(server):
+    mid = _mk_search_meeting()
+    body = _get(f"/raw/{mid}/secret.txt")
+    assert "not found" in body

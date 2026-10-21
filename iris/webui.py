@@ -380,6 +380,26 @@ def make_handler(store_dir: str):
                            + (rows or '<div class=empty>' + mascot(88, "sleep")
                               + '<div class=t>Nothing found</div>'
                               + '<div class=s>try another word - Iris only searches your own notes</div></div>'))
+            elif path.startswith("/raw/"):
+                rest = path.split("/raw/", 1)[1].strip("/")
+                parts = rest.split("/", 1)
+                mid = parts[0]
+                fname = parts[1] if len(parts) > 1 else ""
+                if ("/" in mid or ".." in mid or fname not in S.PLAINTEXT_FILES
+                        or not os.path.isdir(os.path.join(store_dir, mid))):
+                    self._html("<p>not found</p>"); return
+                texts = (S.decrypt_meeting(store_dir, mid) if S.is_encrypted(store_dir, mid)
+                         else {n: open(os.path.join(store_dir, mid, n)).read()
+                               for n in S.PLAINTEXT_FILES if os.path.exists(os.path.join(store_dir, mid, n))})
+                if fname not in texts:
+                    self._html("<p>not found</p>"); return
+                body_b = texts[fname].encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/markdown; charset=utf-8")
+                self.send_header("Content-Disposition", f'attachment; filename="{mid}-{fname}"')
+                self.send_header("Content-Length", str(len(body_b)))
+                self.end_headers()
+                self.wfile.write(body_b)
             elif path.startswith("/meeting/"):
                 mid = path.split("/meeting/", 1)[1].strip("/")
                 self._active = mid
@@ -407,7 +427,8 @@ def make_handler(store_dir: str):
                     body += render_notes_md(texts["notes.md"])
                 if "transcript.md" in texts:
                     lines = "<br>".join(render_transcript_line(l) for l in texts["transcript.md"].splitlines())
-                    body += (f'<hr class=divider><h2>{heading_icon("transcript")}Transcript</h2>'
+                    body += (f'<p style="font-size:12.5px"><a class=back href="/raw/{mid}/notes.md">download notes.md</a> &middot; <a class=back href="/raw/{mid}/transcript.md">download transcript.md</a></p>'
+                         f'<hr class=divider><h2>{heading_icon("transcript")}Transcript</h2>'
                              f'<pre class=transcript>{lines}</pre>')
                 self._html(body)
             else:
