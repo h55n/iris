@@ -16,7 +16,11 @@ def new_meeting(store_dir: str, title: str = "") -> str:
     return mid
 
 def attach_audio(store_dir: str, mid: str, audio_path: str) -> str:
-    dest = os.path.join(store_dir, mid, "audio" + os.path.splitext(audio_path)[1].lower())
+    ext = os.path.splitext(audio_path)[1].lower()
+    dest = os.path.join(store_dir, mid, "audio" + ext)
+    n = 2
+    while os.path.exists(dest):  # multi-part recordings must not overwrite each other
+        dest = os.path.join(store_dir, mid, f"audio-{n}{ext}"); n += 1
     shutil.copyfile(audio_path, dest)
     meta = _load_meta(store_dir, mid)
     meta["audio_files"].append(os.path.basename(dest))

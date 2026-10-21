@@ -24,3 +24,18 @@ def test_sweep_dry_run_deletes_nothing(tmp_path):
     assert would and all(os.path.exists(p) for p in would)
     gone = s.sweep(str(tmp_path))
     assert gone and all(not os.path.exists(p) for p in gone)
+
+def test_attach_audio_twice_keeps_both(tmp_path):
+    from iris import store
+    d = str(tmp_path / "store")
+    mid = store.new_meeting(d, "two parts")
+    a = tmp_path / "part1.wav"; a.write_bytes(b"first")
+    b = tmp_path / "part2.WAV"; b.write_bytes(b"second-larger")
+    p1 = store.attach_audio(d, mid, str(a))
+    p2 = store.attach_audio(d, mid, str(b))
+    assert p1 != p2
+    assert open(p1, "rb").read() == b"first"
+    assert open(p2, "rb").read() == b"second-larger"
+    import json, os
+    meta = json.load(open(os.path.join(d, mid, "meta.json")))
+    assert len(meta["audio_files"]) == 2
