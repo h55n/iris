@@ -331,7 +331,7 @@ def make_handler(store_dir: str):
             mp = os.path.join(store_dir, mid, "meta.json")
             if title and "/" not in mid and ".." not in mid and os.path.isfile(mp):
                 meta = json.load(open(mp))
-                meta["title"] = title
+                meta["title"] = title[:120]  # sidebar + h1 layouts assume sane titles
                 json.dump(meta, open(mp, "w"), indent=2)
             self.send_response(303)
             self.send_header("Location", f"/meeting/{mid}")

@@ -104,3 +104,9 @@ def test_raw_rejects_unknown_file(server):
     mid = _mk_search_meeting()
     body = _get(f"/raw/{mid}/secret.txt")
     assert "not found" in body
+
+def test_rename_caps_long_title(server):
+    mid = _mk_search_meeting()
+    _post(f"/rename/{mid}", {"title": "x" * 500})
+    meta = json.load(open(os.path.join(STORE, mid, "meta.json")))
+    assert len(meta["title"]) == 120
