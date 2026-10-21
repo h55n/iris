@@ -26,9 +26,13 @@ def _at_exists(at: str, segs: list[dict]) -> bool:
         return False
     return any(seg["start"] - 30 <= t <= seg["end"] + 30 for seg in segs)  # 30s tolerance
 
+GENERIC_OWNERS = {"everyone", "everybody", "team", "all", "we", "us", "the team"}
+
 def _owner_in_transcript(owner: str, transcript: str) -> bool:
     if not owner: return True
-    return owner.strip().lower() in transcript.lower()
+    o = owner.strip().lower()
+    if o in GENERIC_OWNERS: return True  # a group is not an invented name
+    return o in transcript.lower()
 
 def verify_notes(notes: dict, segs: list[dict]) -> dict:
     transcript = " ".join(s["text"] for s in segs)
