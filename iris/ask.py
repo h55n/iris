@@ -41,7 +41,8 @@ def ask(store_dir: str, question: str, key_path: str | None = None,
                 continue
             s = score_line(q, m.group(2))
             if s >= min_score:
+                quote = re.sub(r"(^[^:]+: )<[a-z]{2,8}> ", r"\1", m.group(2))  # drop language tags
                 hits.append({"meeting": mid, "title": title, "at": m.group(1),
-                             "quote": m.group(2), "score": round(s, 2)})
+                             "quote": quote, "score": round(s, 2)})
     hits.sort(key=lambda h: (-h["score"], h["meeting"], h["at"]))
     return hits[:limit]

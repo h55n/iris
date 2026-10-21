@@ -111,3 +111,16 @@ def test_transcript_chip_for_devanagari_name():
     mid = post("/new", {"title": "Hindi"})[1].split("/")[-1]
     open(os.path.join(STORE, mid, "transcript.md"), "w").write("[00:01] प्रिया: नमस्ते")
     assert 'data-spk="प्रिया"' in get(f"/meeting/{mid}")
+
+def test_language_tags_render_as_pills_not_raw_markup():
+    mid = post("/new", {"title": "Mixed"})[1].split("/")[-1]
+    open(os.path.join(STORE, mid, "transcript.md"), "w").write("[00:01] Speaker 1: <hinglish> kal meeting hai kya")
+    html = get(f"/meeting/{mid}")
+    assert 'class="lang lang-hinglish">hinglish</span>' in html and "&lt;hinglish&gt;" not in html
+
+def test_ask_hides_language_tags():
+    from iris import ask as A
+    mid = post("/new", {"title": "AskTag"})[1].split("/")[-1]
+    open(os.path.join(STORE, mid, "transcript.md"), "w").write("[00:01] Speaker 1: <hinglish> kal planning meeting hai kya")
+    hit = A.ask(STORE, "planning meeting kal")[0]
+    assert hit["quote"] == "Speaker 1: kal planning meeting hai kya"

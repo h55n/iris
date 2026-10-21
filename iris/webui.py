@@ -121,6 +121,7 @@ body{margin:0;font:16px/1.65 var(--font);-webkit-font-smoothing:antialiased;
 .inline button{padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:999px;background:var(--input-bg);color:var(--text)}
 .inline .danger{border-color:var(--danger-border);color:var(--danger)}.inline .primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .speaker{cursor:pointer}
+.lang{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;padding:1px 6px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-right:2px}
 .recent{max-width:560px;margin:34px auto 0;text-align:left}
 .card{display:block;padding:12px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;text-decoration:none;color:var(--text);background:var(--input-bg)}
 .card:hover{border-color:var(--accent)}.card .nav-title{font-size:15px}
@@ -284,6 +285,15 @@ def speaker_chip(n: int, label: str | None = None) -> str:
     return (f'<span class="speaker spk{n % N_SPEAKER_COLORS}" data-spk="{esc(lab)}" '
             f'title="Click to name this speaker">{esc(lab)}</span>')
 
+def lang_pill(text: str) -> str:
+    """'<hinglish> kal hai' -> small pill + text. Plain text passes through."""
+    import re
+    m = re.match(r"^<(hinglish|hi|[a-z]{2,3})> (.*)$", text)
+    if not m:
+        return esc(text)
+    tag, rest = m.groups()
+    return f'<span class="lang lang-{tag if tag in ("hinglish", "hi") else "x"}">{esc(tag)}</span> {esc(rest)}'
+
 def render_transcript_line(line: str) -> str:
     """[mm:ss] Speaker N: text / [mm:ss] Name: text -> timestamp + chip + text"""
     import re
@@ -293,7 +303,7 @@ def render_transcript_line(line: str) -> str:
         label = numbered or name
         idx = (int(numbered.split()[1]) - 1) if numbered else (sum(label.encode()) % N_SPEAKER_COLORS)
         chip = speaker_chip(idx, label)
-        return f'<span style="color:var(--faint)">{ts}</span>  {chip}{esc(text)}'
+        return f'<span style="color:var(--faint)">{ts}</span>  {chip}{lang_pill(text)}'
     m2 = re.match(r"^\[(\d\d:\d\d)\] (.*)$", line)
     if m2:
         return f'<span style="color:var(--faint)">{m2.group(1)}</span>  {esc(m2.group(2))}'
