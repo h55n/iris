@@ -106,6 +106,8 @@ License: MIT.
 
 ```
 python3 iris/cli.py key init                 # one-time: encryption key
+python3 iris/cli.py key info                 # where the key lives, when it was created
+python3 iris/cli.py key qr                   # ASCII QR of the secret key, for phone pairing
 python3 iris/cli.py ingest meeting.wav       # record/transcribe/verify/encrypt
 python3 iris/cli.py ingest meeting.wav --diarize --speakers 2  # + speaker labels (needs models/get-diarize-models.sh first)
 #   pass --speakers N when you know the headcount - auto mode may over-split (tested)
