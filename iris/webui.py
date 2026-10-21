@@ -455,7 +455,7 @@ def make_handler(store_dir: str):
                 fresh = 0 < (time.time() - meta.get("created", 0)) < 600
                 body = (confetti(mid) if fresh else "")
                 if fresh:
-                    body += ('<div class=empty style="padding-top:6px">' + mascot(80, "celebrate")
+                    body += ('<div class=empty style="padding-top:6px">' + mascot(124, "celebrate")
                              + '<div class=t>Meeting saved</div>'
                              + '<div class=s>encrypted, verified, and only on your devices</div></div>')
                 lock = ' &middot; <span style="color:var(--pill-ok)">encrypted at rest</span>' if meta.get("encrypted") else ""
