@@ -133,6 +133,9 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 - Important tested failure: a base.en pass DROPS Hindi turns from segmentation entirely (whole-file pass returned 1 segment). Mixed audio must use --multilingual.
 - `iris ingest meeting.wav --multilingual`; non-English lines get <hi> tags in the transcript.
 
+## Web UI robustness - tested Oct 21 evening
+- Live HTTP tests (19): 404 for unknown meeting/raw file, path traversal rejected on raw download AND sync pull, title XSS escaped, rename caps 120 chars, locked-meeting page when the key is missing (no 500), corrupt meta.json skipped on every page, search skips locked meetings without the key.
+
 ## Web UI dark mode - tested Oct 21 evening
 - prefers-color-scheme: dark switches the full Notion palette (bg #191919, sidebar #202020, same tokens). Pixel-verified on real screenshots at 1440px: home + meeting page.
 - First-pass bugs the screenshots caught and the fix commit addressed: sidebar active item, rename/delete buttons, rename input were hardcoded white. Light mode re-verified unchanged (body #fff, sidebar #f7f7f5).
