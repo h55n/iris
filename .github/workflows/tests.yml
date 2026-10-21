@@ -24,7 +24,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "17" }
-      - uses: android-actions/setup-android@v3
       - name: gradle unit tests
         working-directory: android
         run: ./gradlew --no-daemon testDebugUnitTest
