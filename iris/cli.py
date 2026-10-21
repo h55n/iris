@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""convo - private meeting notes. ingest | sweep | list | sync | key | encrypt | read | export | share | search | doctor"""
+"""Iris - private meeting notes. ingest | sweep | list | sync | key | encrypt | read | export | share | search | doctor"""
 import sys, os, json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from iris import transcribe as T, backends, verify, store, crypto as C, render, diarize as DZ
