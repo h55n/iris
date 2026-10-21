@@ -148,3 +148,10 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 - Motion: spring-eased page/list entrance, hover lifts, press scale; prefers-reduced-motion disables all of it (CSS media query, not JS).
 - Confetti "Meeting saved" moment: fires only for meetings <10 min old, once per meeting per browser (localStorage guard). Celebrate mascot verified on a real fresh meeting.
 - Mascot: geometric eye SVG REJECTED by Hassan; 3 hand-drawn-ink candidates (Scribble/Noctua/Echo) sent for his pick before wiring in.
+
+## Robustness passes - Oct 21 night
+- CLI argument validation: read/export/encrypt/share used to traceback or silently exit 0 on a bad meeting id; now one helper prints "no such meeting" + exit 1.
+- sweep --dry-run previews retention deletions without touching files (tested both paths).
+- Ingest server caps uploads at 500MB, checked on the Content-Length header before reading the body (413).
+- Web UI raw download endpoint: traversal attempts render "not found" and never touch the filesystem (tested).
+- CI: both jobs green on the same commit - pytest (89 tests) + Android JUnit (4 tests) on GitHub-hosted runners.
