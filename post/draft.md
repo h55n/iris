@@ -74,8 +74,8 @@ The invented task does not make it into your to-do list. It lands in an "unverif
 
 ```text
 $ python3 convo/cli.py sweep
-deleted store/20261013-0915-a1b2c3/audio.wav     # 8 days old
-# transcript.md and notes.md for the same meeting: untouched
+deleted store/old-meeting/audio.wav     # 8 days old
+# transcript.md and notes.md for the same meeting: untouched (verified after the run)
 ```
 
 ![Local web UI: notes with claim receipts and full speaker-labeled transcript](assets/ui-meeting.png)
