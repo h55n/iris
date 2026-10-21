@@ -512,7 +512,7 @@ def sidebar(store_dir: str, active: str | None, active_folder: str | None = None
             '<form method=post action="/new" class=newnote>'
             + (f'<input type=hidden name=folder value="{esc(active_folder)}">' if active_folder else "")
             + '<button>+ New note</button></form>'
-            + '<div class=nav>' + out + '</div>'
+            + '<div class=nav>' + out + '<a class=folder href="/trash"><span class=chev></span>Trash</a></div>'
             + '<div class=themes><span class=lbl>Theme</span>'
             + ''.join(f'<button class=dot data-t="{t}" title="{t or "blue"}" '
                       f'onclick="pickTheme(\'{t}\',this)"></button>'
@@ -566,8 +566,7 @@ def make_handler(store_dir: str):
             if self.path.startswith("/delete/"):
                 mid = self.path.split("/delete/", 1)[1].strip("/")
                 d = os.path.join(store_dir, mid)
-                if "/" not in mid and ".." not in mid and os.path.isdir(d):
-                    import shutil; shutil.rmtree(d)
+                L.trash_note(store_dir, mid)
                 self.send_response(303)
                 self.send_header("Location", "/")
                 return self.end_headers()
@@ -592,6 +591,10 @@ def make_handler(store_dir: str):
                     return go("/folder/" + parts[1])
                 if len(parts) == 3 and parts[2] == "delete":
                     L.delete_folder(store_dir, parts[1]); return go("/")
+            if len(parts) == 2 and parts[0] == "restore":
+                L.restore_note(store_dir, parts[1]); return go("/trash")
+            if self.path == "/trash/empty":
+                L.purge_trash(store_dir, older_than_days=0); return go("/trash")
             if len(parts) == 2 and parts[0] == "reorder" and parts[1] in ("folders", "notes"):
                 ids = [i for i in form.get("ids", "").split(",") if i]
                 if parts[1] == "folders": L.reorder_folders(store_dir, ids)
@@ -697,6 +700,20 @@ def make_handler(store_dir: str):
                     + (cards or '<div class=empty>' + mascot(88, "sleep")
                        + '<div class=t>Nothing in this folder yet</div>'
                        + '<div class=s>make a note here, or move one in from its page</div></div>'))
+            elif path == "/trash":
+                self._active = None
+                items = L.list_trash(store_dir)
+                rows = "".join(
+                    f'<div class=card style="display:flex;justify-content:space-between;align-items:center">'
+                    f'<div><div class=nav-title>{esc(t["title"])}</div>'
+                    f'<div class=nav-meta>deleted {_day_label(t["trashed_at"])}</div></div>'
+                    f'<form method=post action="/restore/{t["id"]}" class=inline style="margin:0"><button>Restore</button></form></div>'
+                    for t in items)
+                empty = ('<form method=post action="/trash/empty" class=inline '
+                         'onsubmit="return confirm(\'Permanently delete everything in Trash?\')">'
+                         '<button class=danger>Empty Trash</button></form>') if items else ""
+                self._html(f'<h1>Trash</h1><div class=doc-meta>Notes here are removed for good after 30 days.</div>' + empty
+                           + (rows or '<div class=empty>' + mascot(88, "sleep") + '<div class=t>Trash is empty</div></div>'))
             elif path == "/ask":
                 from iris import ask as A
                 q = U.parse_qs(U.urlparse(self.path).query).get("q", [""])[0].strip()
@@ -773,7 +790,7 @@ def make_handler(store_dir: str):
                       f'<form method=post action="/{"unpin" if pin else "pin"}/{mid}" class=propform>'
                       f'<button class="pinbtn{" on" if pin else ""}" title="{"Unpin" if pin else "Pin to top"}">{"&#9733; Pinned" if pin else "&#9734; Pin"}</button></form>'
                       f'<details class=more><summary>&middot;&middot;&middot;</summary><div class=menu>'
-                      f'<form method=post action="/delete/{mid}" onsubmit="return confirm(\'Delete this meeting? Notes and transcript are removed from this device.\')">'
+                      f'<form method=post action="/delete/{mid}" onsubmit="return confirm(\'Move this note to Trash? You can restore it for 30 days.\')">'
                       f'<button class=danger>Delete</button></form></div></details></div>')
                 notes_txt = texts.get("notes.md", "")
                 is_note = meta.get("kind") == "note" or not notes_txt.strip()

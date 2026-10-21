@@ -124,3 +124,16 @@ def test_ask_hides_language_tags():
     open(os.path.join(STORE, mid, "transcript.md"), "w").write("[00:01] Speaker 1: <hinglish> kal planning meeting hai kya")
     hit = A.ask(STORE, "planning meeting kal")[0]
     assert hit["quote"] == "Speaker 1: kal planning meeting hai kya"
+
+def test_delete_goes_to_trash_and_can_be_restored():
+    mid = post("/new", {"title": "Trash me"})[1].split("/")[-1]
+    post(f"/delete/{mid}", {})
+    assert not os.path.isdir(os.path.join(STORE, mid))
+    assert f"/restore/{mid}" in get("/trash") and f"/meeting/{mid}" not in get("/")
+    post(f"/restore/{mid}", {})
+    assert os.path.isdir(os.path.join(STORE, mid)) and f"/restore/{mid}" not in get("/trash")
+
+def test_empty_trash_is_permanent():
+    mid = post("/new", {"title": "Gone for good"})[1].split("/")[-1]
+    post(f"/delete/{mid}", {}); post("/trash/empty", {})
+    assert "Trash is empty" in get("/trash")

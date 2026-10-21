@@ -159,7 +159,7 @@ def test_locked_meeting_shows_friendly_page_not_500(server):
 def test_meeting_nav_links_neighbors(server):
     mid = _mk_search_meeting()
     html = urllib.request.urlopen(f"http://127.0.0.1:{PORT}/meeting/{mid}").read().decode()
-    ids = sorted(d for d in os.listdir(STORE) if os.path.isdir(os.path.join(STORE, d)))
+    ids = sorted(d for d in os.listdir(STORE) if os.path.isfile(os.path.join(STORE, d, "meta.json")))
     i = ids.index(mid)
     if i > 0:
         assert f'/meeting/{ids[i-1]}' in html

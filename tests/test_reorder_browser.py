@@ -23,7 +23,7 @@ def test_drag_folder_and_pinned_note_order_persists():
             pg = b.new_page(viewport={"width": 1440, "height": 900}); errs = []
             pg.on("pageerror", lambda e: errs.append(str(e)))
             pg.goto(f"http://127.0.0.1:{PORT}/")
-            names = lambda: pg.eval_on_selector_all(".folder", "els=>els.map(e=>e.textContent.replace(/[0-9▾▸]/g,'').trim())")
+            names = lambda: pg.eval_on_selector_all(".folder[data-fid]", "els=>els.map(e=>e.textContent.replace(/[0-9▾▸]/g,'').trim())")
             assert names() == ["Alpha", "Beta"]
             pg.drag_and_drop(f'[data-fid="{fb}"]', f'[data-fid="{fa}"]')
             pg.wait_for_load_state("load"); time.sleep(0.5)
