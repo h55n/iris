@@ -38,8 +38,10 @@ PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=
   [data-theme=pink]{ --accent:#e08ab5; --accent-soft:#33222b; }
   [data-theme=red]{ --accent:#e88a86; --accent-soft:#332020; }
 }
-.themes{display:flex;gap:10px;padding:12px 10px 8px;align-items:center;justify-content:center;margin-top:10px;border-top:1px solid var(--border-soft)}
-.themes .lbl{font-size:11px;color:var(--faint)}
+.themes{flex:none;display:flex;gap:9px;padding:10px 10px 6px;align-items:center;
+  margin-top:12px;border-top:1px solid var(--border-soft)}
+.themes .lbl{font-size:11px;color:var(--faint);flex:1}
+.dot{width:14px;height:14px}
 .dot{width:16px;height:16px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
 .dot.sel{border-color:var(--text)}
 .dot[data-t=""]{background:#2383e2}.dot[data-t=green]{background:#0f7b6c}
@@ -70,7 +72,9 @@ body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"SF Pro Text","Seg
   color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
 .layout{display:flex;min-height:100vh}
 .sidebar{width:264px;flex:none;background:var(--side);border-right:1px solid var(--border-soft);
-  padding:18px 12px;position:sticky;top:0;height:100vh;overflow:auto}
+  padding:18px 12px 10px;position:sticky;top:0;height:100vh;overflow:auto;
+  display:flex;flex-direction:column}
+.nav{flex:1 1 auto;min-height:0}
 .brand{font-weight:600;font-size:15px;padding:4px 10px 14px;letter-spacing:.1px}
 .brand span{color:var(--faint);font-weight:400;font-size:12px;display:block;margin-top:2px}
 .searchbox{margin:0 6px 12px}
@@ -262,10 +266,12 @@ def sidebar(store_dir: str, active: str | None) -> str:
             'if(el)el.textContent=t[i]})()</script>'
             '<form class=searchbox method=get action="/search">'
             '<input name=q placeholder="Search meetings"></form>'
+            + '<div class=nav">'
             + ("".join(items) or '<div class=empty>' + mascot(72, "sleep")
                + '<div class=t>No meetings yet</div>'
                + '<div class=s>record one and Iris will keep it safe</div></div>')
-            + '<div class=themes"><span class=lbl>theme</span>'
+            + '</div>'
+            + '<div class=themes"><span class=lbl>Theme</span>'
             + ''.join(f'<button class=dot data-t="{t}" title="{t or "blue"}" '
                       f'onclick="pickTheme(\'{t}\',this)"></button>'
                       for t in ("", "green", "purple", "orange", "pink", "red"))
