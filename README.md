@@ -88,7 +88,7 @@ License: MIT.
 
 | piece | file | what it does |
 |---|---|---|
-| CLI | `iris/cli.py` | ingest / sweep / list / sync / key / encrypt / read / export / share / search / enroll / voices / doctor |
+| CLI | `iris/cli.py` | ingest / sweep / list / sync / key / encrypt / read / export / share / search / ask / enroll / voices / doctor |
 | transcription | `iris/transcribe.py` | whisper.cpp + silero VAD, sentence timestamps |
 | notes backends | `iris/backends.py` | Ollama gemma3:4b (local default) or Ultramarine (hosted fallback) |
 | claim verifier | `iris/verify.py` | every decision/action item must quote the transcript; invented claims demoted |
@@ -116,6 +116,7 @@ python3 iris/sync_server.py --token T &      # relay (your own box)
 python3 iris/cli.py sync --server http://... # move notes between devices
 python3 iris/watch.py                        # nudge when Zoom/Meet/Teams opens (detection only)
 python3 iris/cli.py search "retention"       # full-text over all meetings (decrypts locally)
+python3 iris/cli.py ask "what did we decide about retention"   # quotes the exact transcript line + meeting + time; silent if nothing matches
 python3 iris/cli.py export <id> out.md       # shareable markdown bundle
 python3 iris/cli.py share <id> age1... out.md.age  # encrypted for one recipient
 ```
