@@ -140,7 +140,10 @@ def main(args):
     elif args[0] == "list":
         from iris import store as _S
         for mid in _S.list_meetings(STORE, reverse=True):
-            m = json.load(open(os.path.join(STORE, mid, "meta.json")))
+            try:
+                m = json.load(open(os.path.join(STORE, mid, "meta.json")))
+            except (OSError, json.JSONDecodeError):
+                print(f"{mid}  (unreadable meta.json)"); continue
             title = m.get("title", "")
             enc = " [encrypted]" if m.get("encrypted") else ""
             i = m.get("integrity") or {}
