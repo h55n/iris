@@ -36,3 +36,17 @@ def test_edit_triggers_repush():
     S.write_text(A, mid, "notes.md", "# changed")
     pushed, skipped = Y.push_changed(A, server, "t")
     assert pushed == [mid]
+
+def test_bundle_hash_stable(tmp_path):
+    from iris import sync as Y
+    mid = S.new_meeting(str(tmp_path), "hash me")
+    S.write_text(str(tmp_path), mid, "transcript.md", "[00:01] same bytes")
+    assert Y.bundle_hash(str(tmp_path), mid) == Y.bundle_hash(str(tmp_path), mid)
+
+def test_bundle_hash_changes_with_content(tmp_path):
+    from iris import sync as Y
+    mid = S.new_meeting(str(tmp_path), "hash me")
+    S.write_text(str(tmp_path), mid, "transcript.md", "[00:01] v1")
+    h1 = Y.bundle_hash(str(tmp_path), mid)
+    S.write_text(str(tmp_path), mid, "transcript.md", "[00:01] v2")
+    assert Y.bundle_hash(str(tmp_path), mid) != h1
