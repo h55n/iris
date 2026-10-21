@@ -126,3 +126,19 @@ def test_ultramarine_without_key_is_actionable():
     import pytest
     with pytest.raises(RuntimeError, match="IRIS_ULTRAMARINE_KEY"):
         B.UltramarineBackend(key="").notes("[00:01] hi")
+
+def test_parse_notes_malformed_json_named():
+    from iris import backends as B
+    import pytest
+    with pytest.raises(RuntimeError, match="malformed JSON"):
+        B._parse_notes("sure! here are your notes: ...")
+
+def test_parse_notes_fills_missing_keys():
+    from iris import backends as B
+    n = B._parse_notes('{"summary": "short"}')
+    assert n["decisions"] == [] and n["action_items"] == []
+
+def test_parse_notes_fenced_json():
+    from iris import backends as B
+    n = B._parse_notes('```json\n{"summary": "s", "decisions": [], "action_items": []}\n```')
+    assert n["summary"] == "s"

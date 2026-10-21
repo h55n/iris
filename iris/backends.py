@@ -22,7 +22,14 @@ def _parse_notes(raw: str) -> dict:
     if raw.startswith("```"):
         raw = raw.split("```")[1]
         if raw.startswith("json"): raw = raw[4:]
-    return json.loads(raw)
+    try:
+        notes = json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise RuntimeError(f"notes model returned malformed JSON: {e}; "
+                           f"first 120 chars: {raw[:120]!r}") from e
+    for k in ("summary", "decisions", "action_items"):
+        notes.setdefault(k, "" if k == "summary" else [])
+    return notes
 
 class OllamaBackend:
     name = "ollama"
