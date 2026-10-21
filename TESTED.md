@@ -93,7 +93,7 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 
 ## Local web UI (Iris/webui.py) - added Oct 21
 - TESTED LIVE: index lists meetings with encrypted badge + integrity counts; detail page renders the ENCRYPTED demo meeting's decrypted notes (claims with receipts as blockquotes) and full transcript.
-- Localhost-only bind by design - it serves decrypted content. No JS, no CDN, no auth (threat model: same-user same-machine). Exposing it on LAN is explicitly out of scope.
+- Localhost-only bind by design - it serves decrypted content. No CDN, no external requests, no auth (threat model: same-user same-machine). Small inline JS only: theme switcher (localStorage), confetti on first save, rotating taglines, `/` search focus. Exposing it on LAN is explicitly out of scope.
 
 ## Speaker labels (diarization) - TESTED, NOT SHIPPED (Oct 21)
 - Round 1 (synthetic): gTTS two-voice meeting + pitch-shifted variant -> ZERO [SPEAKER_TURN] markers. (whisper.cpp tinydiarize, ggml-small.en-tdrz, akashmjn/tinydiarize-whisper.cpp)
