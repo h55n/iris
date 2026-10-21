@@ -2,7 +2,7 @@
 meeting starts. DETECTION ONLY - it never starts recording by itself.
 Linux desktop notification via notify-send; other platforms: prints.
 
-  python3 convo/watch.py            # watch, notify on meeting start/end
+  python3 iris/watch.py            # watch, notify on meeting start/end
 """
 import subprocess, sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -12,7 +12,7 @@ def notify(title: str, body: str) -> str:
     """Desktop notification; returns what was shown (for tests/logs)."""
     msg = f"{title}: {body}"
     try:
-        subprocess.run(["notify-send", "-a", "convo", title, body],
+        subprocess.run(["notify-send", "-a", "Iris", title, body],
                        capture_output=True, timeout=5)
     except Exception:
         pass  # headless / no notify-send: stdout already covers it
@@ -22,9 +22,9 @@ def notify(title: str, body: str) -> str:
 def format_event(event: dict) -> tuple[str, str]:
     if event["type"] == "meeting_start":
         return (f"Meeting detected: {event['app']}",
-                "Tap to record: python3 convo/record.py (recording is always manual)")
+                "Tap to record: python3 iris/record.py (recording is always manual)")
     return (f"Meeting ended: {event.get('app', '')}",
-            "If you recorded, run: python3 convo/cli.py ingest <file>")
+            "If you recorded, run: python3 iris/cli.py ingest <file>")
 
 def main():
     d = Detector()
