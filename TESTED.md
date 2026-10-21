@@ -72,3 +72,9 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 ## Local web UI (convo/webui.py) - added Oct 21
 - TESTED LIVE: index lists meetings with encrypted badge + integrity counts; detail page renders the ENCRYPTED demo meeting's decrypted notes (claims with receipts as blockquotes) and full transcript.
 - Localhost-only bind by design - it serves decrypted content. No JS, no CDN, no auth (threat model: same-user same-machine). Exposing it on LAN is explicitly out of scope.
+
+## Speaker labels (diarization) - TESTED, NOT SHIPPED (Oct 21)
+- Tested whisper.cpp tinydiarize (ggml-small.en-tdrz from akashmjn/tinydiarize-whisper.cpp, --tinydiarize) on the two-voice synthetic meeting, including a pitch-shifted variant with acoustically distinct voices.
+- Result: ZERO [SPEAKER_TURN] markers detected on both runs. Transcription itself is unaffected.
+- Decision: speaker labels stay OUT of the product until they work on real audio. Hassan can re-test with a real two-person recording (whisper-cli -m ggml-small.en-tdrz.bin --tinydiarize -f meeting.wav); if real speech fires markers, wiring it into convo is ~20 lines.
+- Alternative if it stays dead: pyannote (needs HF account + heavier deps) - park unless he asks.
