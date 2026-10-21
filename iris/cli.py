@@ -105,12 +105,12 @@ if __name__ == "__main__":
     elif args[0] == "sweep":
         for p in store.sweep(STORE): print(f"deleted {p}")
     elif args[0] == "list":
-        import time as _t
-        for mid in sorted(os.listdir(STORE), reverse=True):
-            mp = os.path.join(STORE, mid, "meta.json")
-            if not os.path.isfile(mp): continue
-            m = json.load(open(mp))
+        from iris import store as _S
+        for mid in _S.list_meetings(STORE, reverse=True):
+            m = json.load(open(os.path.join(STORE, mid, "meta.json")))
+            title = m.get("title", "")
             enc = " [encrypted]" if m.get("encrypted") else ""
             i = m.get("integrity") or {}
             iv = f" ({i.get('passed')}/{i.get('checked')} verified)" if i else ""
-            print(f"{mid}  {m.get('title', '')}{enc}{iv}")
+            # untitled meetings store their id as the title; print it once
+            print(f"{mid}{('  ' + title) if title and title != mid else ''}{enc}{iv}")
