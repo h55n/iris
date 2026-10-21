@@ -38,7 +38,14 @@ if __name__ == "__main__":
     if not args or args[0] not in ("ingest", "sweep", "list", "sync", "key", "encrypt", "read", "export", "share", "search"):
         print(__doc__); sys.exit(1)
     if args[0] == "key":
-        print("public key:", C.generate_key() if len(args) > 1 and args[1] == "init" else C.public_key())
+        if len(args) > 1 and args[1] == "init":
+            print("public key:", C.generate_key())
+        elif len(args) > 1 and args[1] == "export":
+            print(C.export_secret())
+        elif len(args) > 1 and args[1] == "qr":
+            print(C.export_qr())
+        else:
+            print(C.public_key())
     elif args[0] == "encrypt":
         mids = [args[1]] if len(args) > 1 else [m for m in sorted(os.listdir(STORE)) if os.path.isdir(os.path.join(STORE, m))]
         for m in mids:

@@ -65,9 +65,32 @@ def decrypt_file(src: str, dst: str, key_path: str = DEFAULT_KEY) -> str:
         f.write(data)
     return dst
 
+def export_secret(path: str = DEFAULT_KEY) -> str:
+    """The AGE-SECRET-KEY-1... line, for pairing another device. Keep it as
+    private as the key file itself."""
+    with open(path) as f:
+        for line in f:
+            if line.startswith("AGE-SECRET-KEY-"):
+                return line.strip()
+    raise CryptoError(f"no secret key line in {path}")
+
+def export_qr(path: str = DEFAULT_KEY) -> str:
+    """ASCII QR of the secret key for phone pairing (scan with any scanner,
+    paste into the convo app). Rendered locally - the key never leaves."""
+    import io, qrcode
+    qr = qrcode.QRCode(border=1)
+    qr.add_data(export_secret(path))
+    buf = io.StringIO()
+    qr.print_ascii(out=buf, invert=True)
+    return buf.getvalue()
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "pubkey"
     if cmd == "init":
         print("public key:", generate_key())
     elif cmd == "pubkey":
         print(public_key())
+    elif cmd == "export":
+        print(export_secret())
+    elif cmd == "qr":
+        print(export_qr())
