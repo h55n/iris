@@ -137,3 +137,23 @@ def test_cli_sweep_purges_old_trash(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(cli, "STORE", d); monkeypatch.setattr("sys.argv", ["iris", "sweep"])
     cli.main([])
     assert "purged 1 note(s)" in capsys.readouterr().out and L.list_trash(d) == []
+
+def test_duplicate_keeps_folder_and_text_but_not_pin(tmp_path):
+    d = str(tmp_path); f = L.create_folder(d, "A")
+    mid = L.new_note(d, "Spec", folder=f["id"]); L.save_notes(d, mid, "hello"); L.set_pinned(d, mid, True)
+    cp = L.duplicate_note(d, mid)
+    m = S._load_meta(d, cp)
+    assert m["title"] == "Copy of Spec" and m["folder"] == f["id"] and "pinned" not in m
+    assert open(os.path.join(d, cp, "notes.md")).read() == "hello"
+
+def test_duplicate_of_encrypted_note_is_encrypted(tmp_path):
+    from iris import crypto as C
+    key = str(tmp_path / "k.txt"); C.generate_key(key)
+    d = str(tmp_path / "s"); os.makedirs(d)
+    mid = L.new_note(d, "sec"); L.save_notes(d, mid, "secret text"); S.encrypt_meeting(d, mid, key)
+    cp = L.duplicate_note(d, mid, key_path=key)
+    assert S.is_encrypted(d, cp) and not os.path.exists(os.path.join(d, cp, "notes.md"))
+    assert S.decrypt_meeting(d, cp, key)["notes.md"] == "secret text"
+
+def test_word_count_handles_hindi_and_markdown():
+    assert L.word_count("# Plan\n- ship plants\nकल मिलते हैं") == 6

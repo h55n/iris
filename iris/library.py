@@ -209,3 +209,19 @@ def purge_trash(store_dir: str, now: float | None = None, older_than_days: float
             shutil.rmtree(os.path.join(trash_dir(store_dir), t["id"]), ignore_errors=True)
             n += 1
     return n
+
+
+def duplicate_note(store_dir: str, mid: str, key_path: str | None = None) -> str:
+    """Copy a note's text (not audio or transcript) into a new note in the same
+    folder. A copy of an encrypted note is encrypted the same way."""
+    from iris import export as E
+    meta = S._load_meta(store_dir, mid)
+    texts = E._get_texts(store_dir, mid, key_path)
+    new = new_note(store_dir, f"Copy of {meta.get('title', mid)}"[:120], meta.get("folder"))
+    save_notes(store_dir, new, texts.get("notes.md", ""))
+    if meta.get("encrypted"):
+        S.encrypt_meeting(store_dir, new, key_path)
+    return new
+
+def word_count(text: str) -> int:
+    return len(re.findall(r"[\w\u0900-\u097F']+", text))
