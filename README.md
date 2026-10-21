@@ -62,6 +62,7 @@ curl -L -o models/ggml-silero-v6.2.0.bin https://huggingface.co/ggml-org/whisper
 python3 iris/cli.py ingest meeting.wav                      # local notes
 python3 iris/cli.py ingest meeting.wav --backend ultramarine  # hosted fallback
 python3 iris/cli.py sweep                                   # delete >7-day recordings
+python3 iris/cli.py sweep --dry-run                         # preview what would be deleted
 python3 iris/cli.py list
 python3 iris/cli.py sync --server http://YOUR-SERVER:8471   # sync notes between devices
 
