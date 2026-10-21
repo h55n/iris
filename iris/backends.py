@@ -46,6 +46,9 @@ class UltramarineBackend:
     def __init__(self, key=None):
         self.key = key or os.environ.get("IRIS_ULTRAMARINE_KEY", "")
     def notes(self, transcript_md: str) -> dict:
+        if not self.key:
+            raise RuntimeError("no Ultramarine key - set IRIS_ULTRAMARINE_KEY, "
+                               "or use the default local backend (ollama)")
         r = _chat("https://api.paperinstruments.com/v1/chat/completions",
                   {"model": "ultramarine-1-flash",
                    "messages": [{"role": "user", "content": PROMPT + transcript_md}]},

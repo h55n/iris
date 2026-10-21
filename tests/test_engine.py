@@ -120,3 +120,9 @@ def test_ollama_unreachable_error_is_actionable():
     import pytest
     with pytest.raises(RuntimeError, match="ollama serve"):
         be.notes("[00:01] hello")
+
+def test_ultramarine_without_key_is_actionable():
+    from iris import backends as B
+    import pytest
+    with pytest.raises(RuntimeError, match="IRIS_ULTRAMARINE_KEY"):
+        B.UltramarineBackend(key="").notes("[00:01] hi")
