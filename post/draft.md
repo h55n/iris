@@ -13,7 +13,8 @@ The full loop that shipped:
 - **Sync**: a tiny self-hostable relay (~100 lines, stdlib Python) moves only transcripts and notes between your devices - NEVER audio - and only as age ciphertext. The relay operator (also you) can't read a word.
 - **Reading**: `iris search` across every meeting (decrypts locally), a one-file markdown export, and encrypted sharing - sending notes to a colleague means re-encrypting them to THEIR age key, not uploading anything anywhere.
 - **Local web UI** at 127.0.0.1 only: browse meetings, see every claim's receipt inline.
-- **Speaker labels**: `ingest --diarize` labels each transcript line Speaker 1 / Speaker 2 / ... using local pyannote segmentation + ERes2Net speaker embeddings (sherpa-onnx). No cloud, no account.
+- **Speaker labels**: `ingest --diarize` labels each transcript line Speaker 1 / Speaker 2 / ... using local pyannote segmentation + ERes2Net speaker embeddings (sherpa-onnx). No cloud, no account. And `iris enroll Priya sample.wav` turns "Speaker 2" into "Priya" - voiceprints are 192-d embeddings stored locally, no audio kept.
+- **Hinglish, actually**: `--multilingual` detects the language per segment, so a meeting that switches between English and Hindi mid-sentence gets both scripts right in one transcript. (Tested: the English-only model silently DROPS the Hindi turns.)
 
 The part that makes it trustworthy: every decision and action item in the notes must quote the exact transcript lines it came from, with a timestamp. A small verifier checks every claim against the transcript before the note is saved. If the model invents a task or a name, the claim is demoted to an "unverified" section instead of silently becoming your to-do list.
 
