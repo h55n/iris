@@ -157,3 +157,13 @@ def test_duplicate_of_encrypted_note_is_encrypted(tmp_path):
 
 def test_word_count_handles_hindi_and_markdown():
     assert L.word_count("# Plan\n- ship plants\nकल मिलते हैं") == 6
+
+def test_folder_name_truncated_to_60(tmp_path):
+    assert len(L.create_folder(str(tmp_path), "x" * 200)["name"]) == 60
+
+def test_unknown_ids_are_harmless(tmp_path):
+    d = str(tmp_path)
+    assert L.delete_folder(d, "f-none") is False
+    assert L.rename_folder(d, "f-none", "n") is False
+    assert L.restore_note(d, "nope") is False
+    assert L.trash_note(d, "nope") is False
