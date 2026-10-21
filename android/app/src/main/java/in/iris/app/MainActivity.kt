@@ -99,7 +99,7 @@ class MainActivity : Activity() {
                 val res = SyncClient.uploadForIngest(laptop, token, f, f.nameWithoutExtension)
                 val integ = res.optJSONObject("integrity")
                 toast("transcribed: ${res.getString("meeting")} (${integ?.optInt("passed")}/${integ?.optInt("checked")} claims verified)")
-                runOnUiThread { status.text = "sent ${f.name} -> ${res.getString("meeting")}" }
+                runOnUiThread { status.text = "sent ${f.name} (${f.length() / 1024} KB) -> ${res.getString("meeting")}" }
             } catch (e: Exception) { toast("failed: ${e.message}"); runOnUiThread { status.text = "upload failed" } }
         }
     }
