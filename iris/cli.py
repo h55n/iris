@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Iris - private meeting notes. ingest | sweep | list | sync | key | encrypt | read | export | share | search | enroll | voices | doctor"""
+"""Iris - private meeting notes. ingest | sweep | list | sync | key | encrypt | read | export | share | search | ask | enroll | voices | doctor"""
 import sys, os, json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from iris import transcribe as T, backends, verify, store, crypto as C, render, diarize as DZ, voices as V
@@ -56,7 +56,7 @@ def main(args):
     args = sys.argv[1:]
     if args == ["--version"]:
         print(f"iris {__version__}"); sys.exit(0)
-    if not args or args[0] not in ("ingest", "sweep", "list", "sync", "key", "encrypt", "read", "export", "share", "search", "enroll", "voices", "doctor"):
+    if not args or args[0] not in ("ingest", "sweep", "list", "sync", "key", "encrypt", "read", "export", "share", "search", "ask", "enroll", "voices", "doctor"):
         print(__doc__); sys.exit(1)
     if args[0] == "enroll":
         if len(args) < 3 or not os.path.exists(args[2]):
@@ -90,6 +90,15 @@ def main(args):
             print("usage: iris search <words>", file=sys.stderr); sys.exit(1)
         for h in store.search(STORE, " ".join(args[1:])):
             print(f"{h['meeting']} ({h['file']}): {h['line']}")
+    elif args[0] == "ask":
+        if len(args) < 2:
+            print("usage: iris ask <question>", file=sys.stderr); sys.exit(1)
+        from iris import ask as A
+        hits = A.ask(STORE, " ".join(args[1:]))
+        if not hits:
+            print("nothing in your meetings answers that"); return
+        for h in hits:
+            print(f"[{h['at']}] {h['quote']}\n    - {h['title']} ({h['meeting']})")
     elif args[0] == "export":
         from iris import export as E
         print(E.export_meeting(STORE, _need_meeting(args), _need(args, 2, "output file")))

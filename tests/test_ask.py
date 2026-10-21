@@ -27,3 +27,17 @@ def test_ask_ranks_fuller_match_first(tmp_path):
     _meeting(tmp_path, "A", "[00:01] Speaker 1: sync is encrypted\n[00:02] Speaker 2: sync relay holds no plaintext")
     hits = ask.ask(str(tmp_path), "does the sync relay hold plaintext")
     assert hits[0]["at"] == "00:02"
+
+def test_cli_ask_prints_quote_and_source(tmp_path, monkeypatch, capsys):
+    from iris import cli
+    mid = _meeting(tmp_path, "Planning", "[00:05] Speaker 1: retention stays seven days")
+    monkeypatch.setattr(cli, "STORE", str(tmp_path))
+    monkeypatch.setattr("sys.argv", ["iris", "ask", "how long is retention"]); cli.main([])
+    out = capsys.readouterr().out
+    assert "[00:05] Speaker 1: retention stays seven days" in out and mid in out
+
+def test_cli_ask_no_answer(tmp_path, monkeypatch, capsys):
+    from iris import cli
+    monkeypatch.setattr(cli, "STORE", str(tmp_path))
+    monkeypatch.setattr("sys.argv", ["iris", "ask", "anything about unicorns"]); cli.main([])
+    assert "nothing in your meetings" in capsys.readouterr().out
