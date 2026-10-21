@@ -109,6 +109,7 @@ class MainActivity : Activity() {
         val key = prefs.getString("agekey", "") ?: ""
         if (relay.isBlank() || token.isBlank()) { toast("set relay URL + token first"); return }
         if (!SyncClient.validUrl(relay)) { toast("relay URL must start with http://"); return }
+        if (key.isNotBlank() && !AgeDecrypt.validSecretKey(key)) { toast("age key doesn't look right - paste the AGE-SECRET-KEY-1... line"); return }
         status.text = "syncing..."
         thread {
             try {

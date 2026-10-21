@@ -90,6 +90,15 @@ object AgeDecrypt {
 
     private val B64 = java.util.Base64.getMimeDecoder()
 
+    /** Shape check for an AGE-SECRET-KEY-1... string (bech32 charset, plausible
+     *  length). Not a cryptographic validation - just catches paste mistakes
+     *  before a sync run. */
+    fun validSecretKey(k: String): Boolean {
+        if (!k.startsWith("AGE-SECRET-KEY-1")) return false
+        val body = k.removePrefix("AGE-SECRET-KEY-1").lowercase()
+        return body.length in 50..70 && body.all { it in "qpzry9x8gf2tvdw0s3jn54khce6mua7l" }
+    }
+
     /** Decrypt an age-armored file with an AGE-SECRET-KEY-1... string. */
     fun decrypt(armored: String, secretKeyBech32: String): ByteArray {
         val b64 = armored.lines().filter { it.isNotBlank() && !it.startsWith("-----") }.joinToString("")
