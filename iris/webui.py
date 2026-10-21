@@ -128,6 +128,40 @@ pre.transcript{background:var(--side);border:1px solid var(--border-soft);border
 
 def esc(t): return html.escape(t or "")
 
+# Iris the eye - original SVG mascot drawn for this project (no third-party art)
+def mascot(size: int = 96, mood: str = "happy") -> str:
+    smile = ('<path d="M47 83 q13 11 26 0" stroke="currentColor" stroke-width="3.2" '
+             'fill="none" stroke-linecap="round"/>') if mood == "happy" else (
+            '<path d="M50 85 q10 5 20 0" stroke="currentColor" stroke-width="3.2" '
+            'fill="none" stroke-linecap="round" opacity=".65"/>'
+            '<text x="86" y="34" font-size="15" fill="var(--faint)" font-family="sans-serif">z</text>'
+            '<text x="95" y="24" font-size="11" fill="var(--faint)" font-family="sans-serif">z</text>')
+    return (f'<svg class=mascot width="{size}" height="{size}" viewBox="0 0 120 120" '
+            'fill="none" aria-hidden="true" style="color:var(--text)">'
+            '<ellipse cx="60" cy="64" rx="36" ry="32" fill="var(--accent-soft)"/>'
+            '<ellipse cx="60" cy="64" rx="36" ry="32" stroke="currentColor" stroke-width="3.2"/>'
+            '<path d="M24 60 q-8 -4 -6 -12" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>'
+            '<path d="M96 60 q8 -4 6 -12" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>'
+            '<circle cx="60" cy="60" r="15.5" fill="var(--bg)" stroke="currentColor" stroke-width="3.2"/>'
+            '<circle cx="62.5" cy="62.5" r="6.5" fill="var(--accent)"/>'
+            '<circle cx="59.5" cy="58" r="2.2" fill="var(--bg)"/>'
+            + smile +
+            '<path d="M45 95 l-3 9 M75 95 l3 9" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>'
+            '<circle cx="38" cy="76" r="3.4" fill="var(--accent)" opacity=".45"/>'
+            '<circle cx="82" cy="76" r="3.4" fill="var(--accent)" opacity=".45"/>'
+            '</svg>')
+
+ICONS = {
+    "summary": '<svg class=icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5h14M5 10h14M5 15h9"/></svg>',
+    "decisions": '<svg class=icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>',
+    "action items": '<svg class=icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>',
+    "unverified": '<svg class=icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17.2v.3"/></svg>',
+    "transcript": '<svg class=icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17c-2 0-3.5-1.6-3.5-3.5C3.5 9.6 6 7 9.5 6.5M17 17c-2 0-3.5-1.6-3.5-3.5 0-3.9 2.5-6.5 6-7"/></svg>',
+}
+
+def heading_icon(title: str) -> str:
+    return ICONS.get(title.strip().lower(), ICONS["summary"])
+
 N_SPEAKER_COLORS = 6
 
 def speaker_chip(n: int, label: str | None = None) -> str:
@@ -154,7 +188,8 @@ def render_notes_md(md: str) -> str:
         if line.startswith("# "):
             continue  # page title already shown
         if line.startswith("## "):
-            out.append(f"<h2>{esc(line[3:])}</h2>")
+            t = line[3:]
+            out.append(f"<h2>{heading_icon(t)}{esc(t)}</h2>")
         elif line.startswith("### "):
             out.append(f"<h3>{esc(line[4:])}</h3>")
         elif line.startswith("  > "):
@@ -192,7 +227,9 @@ def sidebar(store_dir: str, active: str | None) -> str:
     return ('<div class=brand>Iris<span>private meeting notes</span></div>'
             '<form class=searchbox method=get action="/search">'
             '<input name=q placeholder="Search meetings"></form>'
-            + ("".join(items) or '<div class=nav-meta style="padding:0 10px">No meetings yet.</div>')
+            + ("".join(items) or '<div class=empty>' + mascot(72, "sleep")
+               + '<div class=t>No meetings yet</div>'
+               + '<div class=s>record one and Iris will keep it safe</div></div>')
             + '<div class=themes"><span class=lbl>theme</span>'
             + ''.join(f'<button class=dot data-t="{t}" title="{t or "blue"}" '
                       f'onclick="pickTheme(\'{t}\',this)"></button>'
@@ -251,7 +288,9 @@ def make_handler(store_dir: str):
             if path == "/":
                 self._active = None
                 self._html('<h1 style="margin-top:24px">Meetings</h1>'
-                           '<p class=doc-meta>Pick a meeting on the left, or search above.</p>')
+                           '<div class=empty>' + mascot(120)
+                           + '<div class=t>Pick a meeting on the left</div>'
+                           + '<div class=s>or search across everything, even encrypted notes</div></div>')
             elif path == "/search":
                 q = U.parse_qs(U.urlparse(self.path).query).get("q", [""])[0].strip()
                 self._active = None
@@ -263,7 +302,9 @@ def make_handler(store_dir: str):
                     f'<div class=nav-meta>{esc(h["file"])}</div><p style="margin-top:2px">{esc(h["line"][:200])}</p></div>'
                     for h in hits)
                 self._html(f'<h1>Search</h1><p class=doc-meta>{len(hits)} result(s) for &ldquo;{esc(q)}&rdquo;</p>'
-                           + (rows or "<p>Nothing found.</p>"))
+                           + (rows or '<div class=empty>' + mascot(88, "sleep")
+                              + '<div class=t>Nothing found</div>'
+                              + '<div class=s>try another word - Iris only searches your own notes</div></div>'))
             elif path.startswith("/meeting/"):
                 mid = path.split("/meeting/", 1)[1].strip("/")
                 self._active = mid
