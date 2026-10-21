@@ -126,3 +126,4 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 - LIVE TEST (real audio): enrolled LibriSpeech speaker 1272 from a held-out clip, ran name_clusters on the 16-turn two-human mix -> correct cluster matched at cosine 0.844, other speaker at -0.002 (correctly unknown). Threshold default 0.5.
 - Voiceprints are 192-d float embeddings in ~/.iris/voices/*.npy - no audio stored, nothing leaves the machine.
 - Hassan's tests: enroll himself + a family member/friend, run a real meeting, tune threshold if needed.
+- E2E (same day): `iris enroll SpeakerA sample.wav` then `iris ingest two_humans.wav --diarize --speakers 2` -> transcript lines show "SpeakerA:" for the enrolled voice and "Speaker 2:" for the unknown one. Full pipeline: diarize -> cluster embeddings -> voice match -> named markdown.

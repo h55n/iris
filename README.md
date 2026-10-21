@@ -85,6 +85,14 @@ python3 iris/cli.py export <id> out.md       # shareable markdown bundle
 python3 iris/cli.py share <id> age1... out.md.age  # encrypted for one recipient
 ```
 
+## Voice enrollment (who said what, by name)
+
+```
+python3 iris/cli.py enroll Priya priya-10s-sample.wav   # teach Iris a voice (local embedding, no audio stored)
+python3 iris/cli.py voices                              # list enrolled voices
+python3 iris/cli.py ingest meeting.wav --diarize        # known voices appear as "Priya:", unknown as "Speaker 2:"
+```
+
 ## Phone -> laptop -> everywhere (the cross-device loop)
 
 1. Phone (android/): record in the app (or get nudged when Zoom/Meet/Teams opens).
