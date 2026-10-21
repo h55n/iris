@@ -48,11 +48,47 @@ def push_changed(store_dir, server, token):
     save_state(store_dir, st)
     return pushed, skipped
 
+def push_folders(store_dir, server, token):
+    """Project folders ride along as one tiny bundle. True when something was sent."""
+    from iris import library as L
+    folders = L.list_folders(store_dir)
+    st = state_file(store_dir)
+    h = hashlib.sha256(json.dumps(folders, sort_keys=True).encode()).hexdigest()
+    if st.get("folders_hash") == h:
+        return False
+    _req(f"{server}/push/_folders", token, {"id": "_folders", "folders": folders})
+    st["folders_hash"] = h
+    save_state(store_dir, st)
+    return True
+
+def merge_folders(store_dir, remote):
+    """Union by id. A folder renamed on one device keeps the local name;
+    folders never get deleted by a sync."""
+    from iris import library as L
+    local = L.list_folders(store_dir)
+    ids = {f["id"] for f in local}
+    add = [f for f in remote if isinstance(f, dict) and f.get("id") and f.get("name") and f["id"] not in ids]
+    if add:
+        L._save_folders(store_dir, local + add)
+    return len(add)
+
+def _newer_locally(d, remote_meta):
+    try:
+        local = json.load(open(os.path.join(d, "meta.json")))
+    except (OSError, json.JSONDecodeError):
+        return False
+    return local.get("edited", 0) > (remote_meta or {}).get("edited", 0)
+
 def pull_all(store_dir, server, token, since=0.0):
     got = []
     for m in _req(f"{server}/list?since={since}", token)["meetings"]:
         b = _req(f"{server}/pull/{m['id']}", token)
+        if m["id"] == "_folders":
+            merge_folders(store_dir, b.get("folders", []))
+            continue
         d = os.path.join(store_dir, m["id"])
+        if _newer_locally(d, b.get("meta")):
+            continue  # your edit here is newer than the copy on the relay
         os.makedirs(d, exist_ok=True)
         if "meta" in b: json.dump(b["meta"], open(os.path.join(d, "meta.json"), "w"), indent=2)
         for key, name in (("transcript", "transcript.md"), ("notes", "notes.md"),
