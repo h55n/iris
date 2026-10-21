@@ -72,10 +72,13 @@ def decrypt_file(src: str, dst: str, key_path: str = DEFAULT_KEY) -> str:
 def export_secret(path: str = DEFAULT_KEY) -> str:
     """The AGE-SECRET-KEY-1... line, for pairing another device. Keep it as
     private as the key file itself."""
-    with open(path) as f:
-        for line in f:
-            if line.startswith("AGE-SECRET-KEY-"):
-                return line.strip()
+    try:
+        with open(path) as f:
+            for line in f:
+                if line.startswith("AGE-SECRET-KEY-"):
+                    return line.strip()
+    except FileNotFoundError:
+        raise CryptoError(f"no key at {path} - run `iris key init` first") from None
     raise CryptoError(f"no secret key line in {path}")
 
 def export_qr(path: str = DEFAULT_KEY) -> str:

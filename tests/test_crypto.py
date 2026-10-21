@@ -40,3 +40,9 @@ def test_file_roundtrip(tmp_path):
     C.decrypt_file(enc, str(dec), KEY)
     assert dec.read_text() == src.read_text()
     assert "call Sam" not in open(enc).read()
+
+def test_export_secret_missing_key_named(tmp_path):
+    from iris import crypto as C
+    import pytest
+    with pytest.raises(C.CryptoError, match="key init"):
+        C.export_secret(str(tmp_path / "nope.txt"))
