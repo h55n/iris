@@ -50,12 +50,18 @@ def transcript_markdown(segs: list[dict], speaker_names: dict[int, str] | None =
     return "\n".join(lines)
 
 
+def transcribe_multilingual(audio_path: str, model: str = None) -> list[dict]:
+    """Mixed-language meetings (Hinglish): segment with the multilingual
+    model, then detect language per segment. A base.en pass drops non-English
+    speech entirely (tested: Hindi turns vanished from segmentation), so this
+    path always uses a multilingual model."""
+    model = model or os.environ.get("IRIS_WHISPER_MULTILINGUAL_MODEL", "models/ggml-small.bin")
+    segs = transcribe(audio_path, model=model, language="auto")
+    return detect_segment_languages(audio_path, segs, model)
+
 def detect_segment_languages(audio_path: str, segs: list[dict], model: str = None) -> list[dict]:
-    """Re-run whisper per segment with auto language detection. For mixed
-    Hinglish-style audio: the whole-file language guess loses; per-segment
-    wins. Adds seg['lang'] and replaces seg['text'] with the detected-language
-    transcription. Model should be multilingual (ggml-small.bin) - base.en
-    can't transcribe non-English at all."""
+    """Re-run whisper per segment with auto language detection. Adds seg['lang']
+    and replaces seg['text'] with the detected-language transcription."""
     model = model or os.environ.get("IRIS_WHISPER_MULTILINGUAL_MODEL", "models/ggml-small.bin")
     wav = to_wav16k(audio_path)
     out = []
