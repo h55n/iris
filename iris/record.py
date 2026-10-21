@@ -4,17 +4,17 @@ macOS (avfoundation):     python3 iris/record.py out.wav   # auto-detected
 Press Ctrl-C to stop. Add --ingest to run the full pipeline right after."""
 import subprocess, sys, os, threading, time
 
-def build_cmd(platform: str, out_wav: str) -> list[str]:
-    src = (["ffmpeg", "-f", "avfoundation", "-i", ":0"] if platform == "mac"
-           else ["ffmpeg", "-f", "pulse", "-i", "default"])
+def build_cmd(platform: str, out_wav: str, device: str = None) -> list[str]:
+    src = (["ffmpeg", "-f", "avfoundation", "-i", f":{device or '0'}"] if platform == "mac"
+           else ["ffmpeg", "-f", "pulse", "-i", device or "default"])
     return src + ["-ar", "16000", "-ac", "1", out_wav]
 
 def default_platform() -> str:
     return "mac" if sys.platform == "darwin" else "linux"
 
-def record(out_wav: str, platform: str = None) -> bool:
+def record(out_wav: str, platform: str = None, device: str = None) -> bool:
     platform = platform or default_platform()
-    cmd = build_cmd(platform, out_wav)
+    cmd = build_cmd(platform, out_wav, device)
     stop = threading.Event()
     t0 = time.time()
     def timer():
@@ -41,7 +41,8 @@ def record(out_wav: str, platform: str = None) -> bool:
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     out = args[0] if args else "meeting.wav"
-    if record(out):
+    dev = sys.argv[sys.argv.index("--device") + 1] if "--device" in sys.argv else None
+    if record(out, device=dev):
         if "--ingest" in sys.argv:
             from iris import cli
             cli.cmd_ingest(out)
