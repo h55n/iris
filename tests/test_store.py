@@ -39,3 +39,19 @@ def test_attach_audio_twice_keeps_both(tmp_path):
     import json, os
     meta = json.load(open(os.path.join(d, mid, "meta.json")))
     assert len(meta["audio_files"]) == 2
+
+def test_sweep_deletes_all_parts_of_old_recording(tmp_path):
+    from iris import store
+    import json, os, time
+    d = str(tmp_path / "store")
+    mid = store.new_meeting(d, "old two-parter")
+    a = tmp_path / "p1.wav"; a.write_bytes(b"one")
+    b = tmp_path / "p2.wav"; b.write_bytes(b"two")
+    store.attach_audio(d, mid, str(a)); store.attach_audio(d, mid, str(b))
+    mp = os.path.join(d, mid, "meta.json")
+    meta = json.load(open(mp)); meta["created"] = time.time() - 9 * 86400
+    json.dump(meta, open(mp, "w"))
+    deleted = store.sweep(d)
+    assert len(deleted) == 2
+    assert not [f for f in os.listdir(os.path.join(d, mid)) if f.endswith(".wav")]
+    assert os.path.exists(mp)  # meta stays
