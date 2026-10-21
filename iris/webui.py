@@ -7,6 +7,7 @@ machine. Design: Notion/Granola/macOS - calm document reading, soft neutrals.
 import argparse, html, json, os, sys, time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from iris import store as S
+from iris.mascot import mascot
 
 PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
 <title>Iris</title>
@@ -17,7 +18,7 @@ PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=
   --border:#e9e9e7; --border-soft:#ededeb; --accent:#2383e2;
   --quote-border:#d3d1cb; --pill-ok-bg:#eef7ee; --pill-ok:#2f6b31;
   --input-bg:#ffffff; --active-bg:#e3e3e0; --danger:#b83232; --danger-border:#e5c7c5;
-  --accent-soft:#e7f0fb;
+  --accent-soft:#e7f0fb; --ink:#3b2a20;
 }
 [data-theme=green]{ --accent:#0f7b6c; --accent-soft:#e2f1ee; }
 [data-theme=purple]{ --accent:#6940a5; --accent-soft:#efeaf7; }
@@ -30,7 +31,7 @@ PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=
     --border:#2f2f2f; --border-soft:#2a2a2a; --accent:#529cca;
     --quote-border:#4a4a47; --pill-ok-bg:#1e2b1e; --pill-ok:#6aaa6f;
     --input-bg:#252525; --active-bg:#373737; --danger:#e08a8a; --danger-border:#5a3535;
-    --accent-soft:#1c2f3d;
+    --accent-soft:#1c2f3d; --ink:#e9dcc8;
   }
   [data-theme=green]{ --accent:#4dab9a; --accent-soft:#1d2f2b; }
   [data-theme=purple]{ --accent:#a98fd4; --accent-soft:#2a2436; }
@@ -160,39 +161,6 @@ def read_meeting_texts(store_dir: str, mid: str):
                       for n in S.PLAINTEXT_FILES if os.path.exists(os.path.join(store_dir, mid, n))})
     except C.CryptoError:
         return None
-
-# Iris the eye - original SVG mascot drawn for this project (no third-party art)
-def mascot(size: int = 96, mood: str = "happy") -> str:
-    smile = ('<path d="M47 83 q13 11 26 0" stroke="currentColor" stroke-width="3.2" '
-             'fill="none" stroke-linecap="round"/>') if mood == "happy" else (
-            '<path d="M50 85 q10 5 20 0" stroke="currentColor" stroke-width="3.2" '
-            'fill="none" stroke-linecap="round" opacity=".65"/>'
-            '<text x="86" y="34" font-size="15" fill="var(--faint)" font-family="sans-serif">z</text>'
-            '<text x="95" y="24" font-size="11" fill="var(--faint)" font-family="sans-serif">z</text>')
-    if mood == "celebrate":
-        smile = ('<path d="M45 82 q15 13 30 0" stroke="currentColor" stroke-width="3.2" '
-                 'fill="none" stroke-linecap="round"/>'
-                 '<path d="M52 30 L60 6 L68 30 Z" fill="var(--accent)" stroke="currentColor" '
-                 'stroke-width="2.6" stroke-linejoin="round"/>'
-                 '<circle cx="60" cy="6" r="3.4" fill="var(--accent)"/>'
-                 '<path d="M20 24 l4 4 M100 22 l-4 4 M14 44 l5 2 M106 42 l-5 2" '
-                 'stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>'
-                 '<circle cx="28" cy="14" r="3" fill="var(--accent)" opacity=".7"/>'
-                 '<circle cx="94" cy="12" r="3" fill="var(--accent)" opacity=".7"/>')
-    return (f'<svg class=mascot width="{size}" height="{size}" viewBox="0 0 120 120" '
-            'fill="none" aria-hidden="true" style="color:var(--text)">'
-            '<ellipse cx="60" cy="64" rx="36" ry="32" fill="var(--accent-soft)"/>'
-            '<ellipse cx="60" cy="64" rx="36" ry="32" stroke="currentColor" stroke-width="3.2"/>'
-            '<path d="M24 60 q-8 -4 -6 -12" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>'
-            '<path d="M96 60 q8 -4 6 -12" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>'
-            '<circle cx="60" cy="60" r="15.5" fill="var(--bg)" stroke="currentColor" stroke-width="3.2"/>'
-            '<circle cx="62.5" cy="62.5" r="6.5" fill="var(--accent)"/>'
-            '<circle cx="59.5" cy="58" r="2.2" fill="var(--bg)"/>'
-            + smile +
-            '<path d="M45 95 l-3 9 M75 95 l3 9" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>'
-            '<circle cx="38" cy="76" r="3.4" fill="var(--accent)" opacity=".45"/>'
-            '<circle cx="82" cy="76" r="3.4" fill="var(--accent)" opacity=".45"/>'
-            '</svg>')
 
 def confetti(mid: str) -> str:
     """One-time celebrate burst the first time a fresh (<10 min) meeting is opened."""
