@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Iris - private meeting notes. ingest | sweep | list | sync | key | encrypt | read | export | share | search | doctor"""
+"""Iris - private meeting notes. ingest | sweep | list | sync | key | encrypt | read | export | share | search | enroll | voices | doctor"""
 import sys, os, json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from iris import transcribe as T, backends, verify, store, crypto as C, render, diarize as DZ
+from iris import transcribe as T, backends, verify, store, crypto as C, render, diarize as DZ, voices as V
 
 STORE = os.environ.get("IRIS_STORE", "store")
 
@@ -10,14 +10,18 @@ def cmd_ingest(audio, backend_name="ollama", title="", diarize=False, speakers=0
     mid = store.new_meeting(STORE, title)
     store.attach_audio(STORE, mid, audio)
     segs = T.transcribe(audio)
+    tmd = None
     if diarize:
         if not DZ.available():
             print("diarize models missing - run models/get-diarize-models.sh")
         else:
             dia = DZ.diarize(T.to_wav16k(audio), num_speakers=speakers)
             segs = DZ.assign_speakers(segs, dia)
-            print(f"speakers: {len(set(d['speaker'] for d in dia))}")
-    tmd = T.transcript_markdown(segs)
+            names = V.name_clusters(T.to_wav16k(audio), dia) if V.available() and V.load_voices() else {}
+            print(f"speakers: {len(set(d['speaker'] for d in dia))}" + (f" ({', '.join(names.values())})" if names else ""))
+            tmd = T.transcript_markdown(segs, speaker_names=names)
+    if tmd is None:
+        tmd = T.transcript_markdown(segs)
     store.write_text(STORE, mid, "transcript.md", tmd)
     backend = backends.get_backend(backend_name)
     notes = backend.notes(tmd)
@@ -35,9 +39,13 @@ def cmd_ingest(audio, backend_name="ollama", title="", diarize=False, speakers=0
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    if not args or args[0] not in ("ingest", "sweep", "list", "sync", "key", "encrypt", "read", "export", "share", "search", "doctor"):
+    if not args or args[0] not in ("ingest", "sweep", "list", "sync", "key", "encrypt", "read", "export", "share", "search", "enroll", "voices", "doctor"):
         print(__doc__); sys.exit(1)
-    if args[0] == "doctor":
+    if args[0] == "enroll":
+        print(V.enroll(args[1], args[2]))
+    elif args[0] == "voices":
+        for n in V.load_voices(): print(n)
+    elif args[0] == "doctor":
         from iris import doctor; doctor.main()
     elif args[0] == "key":
         if len(args) > 1 and args[1] == "init":
