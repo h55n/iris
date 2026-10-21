@@ -5,7 +5,7 @@ back to the phone through the normal relay as ciphertext.
 
   python3 iris/ingest_server.py --token S3CRET --port 8472
 
-POST /ingest  (body = raw audio bytes, X-Convo-Token, optional X-Convo-Title)
+POST /ingest  (body = raw audio bytes, X-Convo-Token, optional X-Iris-Title)
   -> {"meeting": "<id>", "integrity": {...}}
 Audio lands in store/<mid>/audio.* and is swept by the 7-day retention like
 any other recording.
@@ -30,7 +30,7 @@ def make_handler(store_dir, token, backend):
             if self.path != "/ingest": return self._send(404, {})
             audio = self.rfile.read(int(self.headers["Content-Length"]))
             if len(audio) < 1000: return self._send(400, {"error": "audio too small"})
-            title = self.headers.get("X-Convo-Title", "")
+            title = self.headers.get("X-Iris-Title", self.headers.get("X-Convo-Title", ""))
             mid = store.new_meeting(store_dir, title)
             tmp = os.path.join(store_dir, mid, "audio.wav")
             with open(tmp, "wb") as f: f.write(audio)
