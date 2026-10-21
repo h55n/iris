@@ -125,6 +125,11 @@ body{margin:0;font:16px/1.65 var(--font);-webkit-font-smoothing:antialiased;
 .inline input{padding:5px 9px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--input-bg);color:var(--text)}
 .inline button{padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:999px;background:var(--input-bg);color:var(--text)}
 .inline .danger{border-color:var(--danger-border);color:var(--danger)}.inline .primary{background:var(--accent);border-color:var(--accent);color:#fff}
+#qs{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.28);display:flex;justify-content:center;padding-top:14vh}
+#qs[hidden]{display:none}
+.qsbox{width:min(520px,92vw);height:fit-content;background:var(--bg);border:1px solid var(--border);border-radius:12px;box-shadow:0 18px 60px rgba(0,0,0,.25);overflow:hidden}
+#qsin{width:100%;border:0;border-bottom:1px solid var(--border-soft);padding:14px 16px;font-size:16px;background:transparent;color:var(--text);outline:0;box-shadow:none}
+.qsi{padding:9px 16px;font-size:14.5px;cursor:pointer}.qsi.on,.qsi:hover{background:var(--active-bg)}.qsnone{padding:14px 16px;color:var(--faint);font-size:14px}
 .speaker{cursor:pointer}
 .dragging{opacity:.4}
 .dropbefore{box-shadow:0 -2px 0 var(--accent)}
@@ -471,6 +476,22 @@ def _recent_cards(store_dir: str, mids: list, limit: int = 8) -> str:
                 + (f'<div class=nav-meta>{esc(pv)}</div>' if pv else "") + '</a>')
     return out + "</div>"
 
+def _switcher(metas) -> str:
+    """Ctrl/Cmd+K: jump to any note by typing part of its title."""
+    data = json.dumps([{"id": m, "t": x.get("title", m)} for m, x in metas]).replace("<", "\\u003c")
+    return ("<div id=qs hidden><div class=qsbox><input id=qsin placeholder='Jump to a note...' autocomplete=off>"
+            "<div id=qslist></div></div></div><script>(function(){var D=" + data + ";"
+            "var b=document.getElementById('qs'),i=document.getElementById('qsin'),l=document.getElementById('qslist'),sel=0,cur=[];"
+            "function draw(){var q=i.value.toLowerCase();cur=D.filter(function(n){return n.t.toLowerCase().indexOf(q)!==-1}).slice(0,8);sel=Math.min(sel,Math.max(0,cur.length-1));"
+            "l.innerHTML=cur.map(function(n,k){var d=document.createElement('div');d.textContent=n.t;return '<div class=\"qsi'+(k===sel?' on':'')+'\" data-id=\"'+n.id+'\">'+d.innerHTML+'</div>'}).join('')||'<div class=qsnone>No notes match</div>'}"
+            "function open(){b.hidden=false;i.value='';sel=0;draw();i.focus()}function close(){b.hidden=true}"
+            "document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();b.hidden?open():close()}"
+            "else if(!b.hidden){if(e.key==='Escape')close();else if(e.key==='ArrowDown'){e.preventDefault();sel=Math.min(sel+1,cur.length-1);draw()}"
+            "else if(e.key==='ArrowUp'){e.preventDefault();sel=Math.max(sel-1,0);draw()}"
+            "else if(e.key==='Enter'&&cur[sel]){location.href='/meeting/'+cur[sel].id}}});"
+            "i.addEventListener('input',function(){sel=0;draw()});"
+            "b.addEventListener('mousedown',function(e){var it=e.target.closest('.qsi');if(it)location.href='/meeting/'+it.dataset.id;else if(e.target===b)close()});})()</script>")
+
 def sidebar(store_dir: str, active: str | None, active_folder: str | None = None) -> str:
     metas = []
     for mid in S.list_meetings(store_dir, reverse=True):
@@ -512,6 +533,7 @@ def sidebar(store_dir: str, active: str | None, active_folder: str | None = None
             '<form method=post action="/new" class=newnote>'
             + (f'<input type=hidden name=folder value="{esc(active_folder)}">' if active_folder else "")
             + '<button>+ New note</button></form>'
+            + _switcher(metas)
             + '<div class=nav>' + out + '<a class=folder href="/trash"><span class=chev></span>Trash</a></div>'
             + '<div class=themes><span class=lbl>Theme</span>'
             + ''.join(f'<button class=dot data-t="{t}" title="{t or "blue"}" '
