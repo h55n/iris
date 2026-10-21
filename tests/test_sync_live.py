@@ -57,3 +57,20 @@ def test_sync_auth_header_preference():
     assert _authed({"X-Iris-Token": "tok", "X-Convo-Token": "tok"}, "tok")  # both present, new matches
     assert not _authed({"X-Iris-Token": "wrong", "X-Convo-Token": "tok"}, "tok")  # new header wins, so deny
     assert not _authed({}, "tok")
+
+def _raw_get(path, token="t0ken"):
+    import urllib.request, urllib.error
+    req = urllib.request.Request(f"http://127.0.0.1:{PORT}{path}")
+    req.add_header("X-Iris-Token", token)
+    try:
+        return urllib.request.urlopen(req).getcode()
+    except urllib.error.HTTPError as e:
+        return e.code
+
+def test_pull_traversal_rejected():
+    assert _raw_get("/pull/..") == 400
+    assert _raw_get("/pull/a/b") == 400
+
+def test_list_bad_since_400_not_crash():
+    assert _raw_get("/list?since=abc") == 400
+    assert _raw_get("/list?since=0") == 200  # server still alive after the 400

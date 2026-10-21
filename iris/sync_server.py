@@ -38,7 +38,10 @@ def make_handler(root, token):
             if self.path.startswith("/list"):
                 since = 0.0
                 if "since=" in self.path:
-                    since = float(self.path.split("since=")[1].split("&")[0])
+                    try:
+                        since = float(self.path.split("since=")[1].split("&")[0])
+                    except ValueError:
+                        return self._send(400, {"error": "bad since"})
                 out = []
                 for mid in sorted(os.listdir(root)):
                     p = os.path.join(root, mid, "bundle.json")
@@ -49,6 +52,7 @@ def make_handler(root, token):
                 return self._send(200, {"meetings": out})
             if self.path.startswith("/pull/"):
                 mid = self.path.split("/pull/", 1)[1].strip("/")
+                if "/" in mid or ".." in mid: return self._send(400, {"error": "bad id"})
                 p = os.path.join(root, mid, "bundle.json")
                 if not os.path.isfile(p): return self._send(404, {})
                 return self._send(200, json.load(open(p)))
