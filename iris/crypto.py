@@ -98,3 +98,9 @@ if __name__ == "__main__":
         print(export_secret())
     elif cmd == "qr":
         print(export_qr())
+    elif cmd == "info":
+        import time
+        st = os.stat(DEFAULT_KEY)
+        print("key file:", DEFAULT_KEY)
+        print("created:", time.strftime("%Y-%m-%d %H:%M", time.localtime(st.st_ctime)))
+        print("public:", public_key())
