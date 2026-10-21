@@ -88,3 +88,7 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 
 ## Full-text search (convo search) - added Oct 21
 - TESTED LIVE: `convo search Priya` on the ENCRYPTED demo meeting decrypts locally and finds matches in both transcript and notes. Case-insensitive, searches all meetings.
+
+### Diarization on non-English synthetic (proxy test, same day)
+- hi+ta two-voice synthetic mix (4 turns): turn boundaries found, but 2 of 4 turns had their first half attributed to the WRONG speaker (both TTS voices are similar-pitch female voices; short segments give weak embeddings).
+- Read: diarization is solid on distinct real voices (LibriSpeech 16/16 turns), degrades on acoustically similar voices. Real Hindi meeting test stays on Hassan's list; don't promise speaker labels for his calls until that passes.
