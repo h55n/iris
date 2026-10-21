@@ -61,7 +61,8 @@ from convo import crypto as C
 
 PLAINTEXT_FILES = ("transcript.md", "notes.md")
 
-def encrypt_meeting(store_dir: str, mid: str, key_path: str = C.DEFAULT_KEY) -> list[str]:
+def encrypt_meeting(store_dir: str, mid: str, key_path: str = None) -> list[str]:
+    key_path = key_path or C.DEFAULT_KEY
     pub = C.public_key(key_path)
     done = []
     d = os.path.join(store_dir, mid)
@@ -76,7 +77,8 @@ def encrypt_meeting(store_dir: str, mid: str, key_path: str = C.DEFAULT_KEY) -> 
     _save_meta(store_dir, mid, meta)
     return done
 
-def decrypt_meeting(store_dir: str, mid: str, key_path: str = C.DEFAULT_KEY) -> dict:
+def decrypt_meeting(store_dir: str, mid: str, key_path: str = None) -> dict:
+    key_path = key_path or C.DEFAULT_KEY
     out = {}
     d = os.path.join(store_dir, mid)
     for name in PLAINTEXT_FILES:
