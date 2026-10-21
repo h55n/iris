@@ -18,6 +18,14 @@ class AgeDecryptTest {
     }
 
     @Test
+    fun bech32DecodesRealAgeKey() {
+        // throwaway key generated with age-keygen for this test vector
+        val raw = AgeDecrypt.bech32Decode(
+            "AGE-SECRET-KEY-1QQ44ZAQFNH5TYV22N00WU74Y8E5FNYFFWHXARAQHMSPDLAJC6JVS2C4H4D")
+        assertEquals(32, raw.size)
+    }
+
+    @Test
     fun bech32AlphabetIsComplete() {
         // the age/Bech32 charset has exactly 32 distinct symbols
         val chars = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
