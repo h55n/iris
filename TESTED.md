@@ -10,7 +10,7 @@ Every claim the product makes is tied to a test that actually ran. Anything not 
 | Hindi transcription (ggml-small) | TESTED synthetic; real speech = Hassan |
 | Tamil/Spanish | TESTED synthetic |
 | Bengali | FAILS (wrong script) - unsupported |
-| claim verifier | 39+ unit/e2e tests + live demotions |
+| claim verifier | 8 edge-case tests + pipeline demotion tests + live demotions |
 | retention sweep | unit-tested + demoed |
 | encryption (age) | unit + live roundtrip |
 | sync relay | live two-store roundtrip, zero plaintext at relay |
@@ -25,7 +25,7 @@ Every claim the product makes is tied to a test that actually ran. Anything not 
 ## Tested live in the dev sandbox (2026-10-20/21)
 - whisper.cpp built from source (CPU only); transcribes English WAV/MP3/video audio to timestamped segments. tiny.en and base.en both run.
 - Full pipeline on a 54-second two-voice meeting (gTTS-synthesized, clean audio): transcript -> notes via the hosted fallback (Ultramarine ultramarine-1-flash) -> integrity pass -> 6/6 decisions+action items verified against the transcript.
-- Integrity pass unit tests: fabricated evidence quotes, out-of-range timestamps and invented owner names are caught and demoted to "unverified" (7/7 tests incl. sync).
+- Integrity pass unit tests: fabricated evidence quotes, out-of-range timestamps, invented owner names, empty evidence, clause-trimmed quotes and garbage timestamp formats are caught and demoted to "unverified" (8 edge tests + pipeline tests incl. sync).
 - Retention sweep: recordings older than 7 days deleted, transcripts and notes kept; fresh recordings untouched (unit test).
 - Sync: server + client pass a loopback test - two local "devices" exchange transcripts/notes through the server; audio confirmed absent server-side; bad token rejected.
 - Hindi tested with multilingual models on synthetic gTTS audio (details below).
