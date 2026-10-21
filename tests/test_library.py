@@ -47,3 +47,37 @@ def test_save_notes_keeps_encrypted_meeting_encrypted(tmp_path):
     assert not os.path.exists(os.path.join(d, mid, "notes.md"))
     assert S.decrypt_meeting(d, mid, key)["notes.md"] == "launch code is plants"
     assert b"plants" not in open(os.path.join(d, mid, "notes.md.age"), "rb").read()
+
+def _tm(tmp_path, tr, notes="x"):
+    d = str(tmp_path); mid = L.new_note(d, "m")
+    S.write_text(d, mid, "transcript.md", tr); S.write_text(d, mid, "notes.md", notes)
+    return d, mid
+
+def test_rename_speaker_only_touches_labels(tmp_path):
+    d, mid = _tm(tmp_path, "[00:01] Speaker 2: I told Speaker 2: hi\n[00:05] Speaker 1: ok\n[00:09] Speaker 22: no",
+                 "## Summary\nSpeaker 2 owns the plan. Speaker 22 stays.")
+    assert L.rename_speaker(d, mid, "Speaker 2", "Priya") == 1
+    tr = open(os.path.join(d, mid, "transcript.md")).read()
+    assert tr.splitlines()[0] == "[00:01] Priya: I told Speaker 2: hi"
+    assert "[00:09] Speaker 22: no" in tr and "[00:05] Speaker 1: ok" in tr
+    notes = open(os.path.join(d, mid, "notes.md")).read()
+    assert "Priya owns the plan" in notes and "Speaker 22 stays" in notes
+
+def test_rename_speaker_rejects_bad_names(tmp_path):
+    d, mid = _tm(tmp_path, "[00:01] Speaker 2: hi")
+    for bad in ("", "a<script>", "x" * 40, "-lead"):
+        with pytest.raises(ValueError):
+            L.rename_speaker(d, mid, "Speaker 2", bad)
+
+def test_rename_speaker_supports_devanagari_and_encrypted(tmp_path):
+    from iris import crypto as C
+    key = str(tmp_path / "k.txt"); C.generate_key(key)
+    d, mid = _tm(tmp_path, "[00:01] Speaker 1: namaste")
+    S.encrypt_meeting(d, mid, key)
+    assert L.rename_speaker(d, mid, "Speaker 1", "प्रिया", key_path=key) == 1
+    assert not os.path.exists(os.path.join(d, mid, "transcript.md"))
+    assert S.decrypt_meeting(d, mid, key)["transcript.md"].startswith("[00:01] प्रिया: ")
+
+def test_rename_speaker_unknown_label_changes_nothing(tmp_path):
+    d, mid = _tm(tmp_path, "[00:01] Speaker 1: hi")
+    assert L.rename_speaker(d, mid, "Speaker 9", "Ravi") == 0
