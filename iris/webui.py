@@ -120,6 +120,7 @@ body{margin:0;font:16px/1.65 var(--font);-webkit-font-smoothing:antialiased;
 .inline input{padding:5px 9px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--input-bg);color:var(--text)}
 .inline button{padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:999px;background:var(--input-bg);color:var(--text)}
 .inline .danger{border-color:var(--danger-border);color:var(--danger)}.inline .primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.speaker{cursor:pointer}
 .recent{max-width:560px;margin:34px auto 0;text-align:left}
 .card{display:block;padding:12px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;text-decoration:none;color:var(--text);background:var(--input-bg)}
 .card:hover{border-color:var(--accent)}.card .nav-title{font-size:15px}
@@ -241,6 +242,13 @@ if(!ed.value&&eb&&!eb.hidden)setTimeout(function(){ed.focus()},50);
 window.addEventListener('load',fit);fit();
 })()</script>"""
 
+SPEAKER_JS = """<script>(function(){
+document.addEventListener('click',function(e){var c=e.target.closest&&e.target.closest('.speaker');if(!c)return;
+var old=c.dataset.spk,nm=prompt('Who is '+old+'?',old.indexOf('Speaker ')===0?'':old);
+if(!nm||!nm.trim()||nm.trim()===old)return;var mid=location.pathname.split('/').pop();
+fetch('/speaker/'+mid,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({old:old,new:nm.trim()})})
+.then(function(r){if(r.ok)location.reload();else r.text().then(function(t){alert(t)})})})})()</script>"""
+
 def confetti(mid: str) -> str:
     """One-time celebrate burst the first time a fresh (<10 min) meeting is opened."""
     return (f"<script>(function(){{try{{if(localStorage.getItem('iris-party-{mid}'))return;"
@@ -272,12 +280,14 @@ def heading_icon(title: str) -> str:
 N_SPEAKER_COLORS = 6
 
 def speaker_chip(n: int, label: str | None = None) -> str:
-    return f'<span class="speaker spk{n % N_SPEAKER_COLORS}">{esc(label or "Speaker " + str(n + 1))}</span>'
+    lab = label or "Speaker " + str(n + 1)
+    return (f'<span class="speaker spk{n % N_SPEAKER_COLORS}" data-spk="{esc(lab)}" '
+            f'title="Click to name this speaker">{esc(lab)}</span>')
 
 def render_transcript_line(line: str) -> str:
     """[mm:ss] Speaker N: text / [mm:ss] Name: text -> timestamp + chip + text"""
     import re
-    m = re.match(r"^\[(\d\d:\d\d)\] (?:(Speaker \d+)|([A-Za-z][\w-]*)): (.*)$", line)
+    m = re.match(r"^\[(\d\d:\d\d)\] (?:(Speaker \d+)|([A-Za-z\u0900-\u097F][\w\u0900-\u097F -]{0,29})): (.*)$", line)
     if m:
         ts, numbered, name, text = m.groups()
         label = numbered or name
@@ -500,6 +510,13 @@ def make_handler(store_dir: str):
                     return go("/folder/" + parts[1])
                 if len(parts) == 3 and parts[2] == "delete":
                     L.delete_folder(store_dir, parts[1]); return go("/")
+            if len(parts) == 2 and parts[0] == "speaker" and ok_mid(parts[1]):
+                try:
+                    n = L.rename_speaker(store_dir, parts[1], form.get("old", ""), form.get("new", ""))
+                except ValueError as e:
+                    self.send_response(400); self.end_headers(); self.wfile.write(str(e).encode()); return
+                self.send_response(200); self.send_header("Content-Type", "application/json"); self.end_headers()
+                self.wfile.write(json.dumps({"changed": n}).encode()); return
             if len(parts) == 2 and parts[0] in ("pin", "unpin", "move", "notes") and ok_mid(parts[1]):
                 mid = parts[1]
                 if parts[0] == "notes":
@@ -683,7 +700,7 @@ def make_handler(store_dir: str):
                     lines = "<br>".join(render_transcript_line(l) for l in texts["transcript.md"].splitlines())
                     body += (f'<p style="font-size:12.5px"><a class=back href="/raw/{mid}/notes.md">download notes.md</a> &middot; <a class=back href="/raw/{mid}/transcript.md">download transcript.md</a></p>'
                          f'<details class=tdrawer{"" if is_note and False else (" open" if not notes_txt.strip() else "")}><summary>{heading_icon("transcript")}Transcript</summary>'
-                             f'<pre class=transcript>{lines}</pre></details>')
+                             f'<pre class=transcript>{lines}</pre></details>' + SPEAKER_JS)
                 body += meeting_nav(store_dir, mid)
                 self._html(body)
             else:

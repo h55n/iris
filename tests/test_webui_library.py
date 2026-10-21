@@ -92,3 +92,22 @@ def test_preview_skips_headings():
     mid = post("/new", {"title": "Preview skip"})[1].split("/")[-1]
     post(f"/notes/{mid}", {"text": "## Summary\nThe real first sentence"})
     assert "The real first sentence" in get("/")
+
+def test_speaker_rename_over_http():
+    mid = post("/new", {"title": "Call"})[1].split("/")[-1]
+    open(os.path.join(STORE, mid, "transcript.md"), "w").write("[00:01] Speaker 2: hello there\n[00:04] Speaker 1: hi")
+    req = urllib.request.Request(BASE + f"/speaker/{mid}", method="POST",
+        data=urllib.parse.urlencode({"old": "Speaker 2", "new": "Priya Sharma"}).encode())
+    assert json.load(urllib.request.urlopen(req))["changed"] == 1
+    html = get(f"/meeting/{mid}")
+    assert 'data-spk="Priya Sharma"' in html and "hello there" in html
+    bad = urllib.request.Request(BASE + f"/speaker/{mid}", method="POST",
+        data=urllib.parse.urlencode({"old": "Speaker 1", "new": "<b>"}).encode())
+    with pytest.raises(urllib.error.HTTPError) as e:
+        urllib.request.urlopen(bad)
+    assert e.value.code == 400
+
+def test_transcript_chip_for_devanagari_name():
+    mid = post("/new", {"title": "Hindi"})[1].split("/")[-1]
+    open(os.path.join(STORE, mid, "transcript.md"), "w").write("[00:01] प्रिया: नमस्ते")
+    assert 'data-spk="प्रिया"' in get(f"/meeting/{mid}")
