@@ -14,7 +14,7 @@ import io, os, json, argparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 def make_handler(store_dir, token, backend):
-    from convo import transcribe as T, backends as B, verify, store, crypto as C
+    from convo import transcribe as T, backends as B, verify, store, crypto as C, render
     class H(BaseHTTPRequestHandler):
         def _auth(self):
             return self.headers.get("X-Convo-Token") == token
@@ -41,7 +41,7 @@ def make_handler(store_dir, token, backend):
             tmd = T.transcript_markdown(segs)
             store.write_text(store_dir, mid, "transcript.md", tmd)
             notes = verify.verify_notes(B.get_backend(backend).notes(tmd), segs)
-            store.write_text(store_dir, mid, "notes.md", json.dumps(notes, indent=2))
+            store.write_text(store_dir, mid, "notes.md", render.render_notes(mid, notes, segs))
             if os.path.exists(C.DEFAULT_KEY):
                 store.encrypt_meeting(store_dir, mid)
             self._send(200, {"meeting": mid, "integrity": notes.get("integrity")})
