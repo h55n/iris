@@ -152,6 +152,21 @@ def make_handler(store_dir: str):
             self.end_headers()
             self.wfile.write(data)
         _active = None
+        def do_POST(self):
+            import urllib.parse as U
+            if not self.path.startswith("/rename/"):
+                self.send_response(404); return self.end_headers()
+            mid = self.path.split("/rename/", 1)[1].strip("/")
+            length = int(self.headers.get("Content-Length", 0))
+            title = U.parse_qs(self.rfile.read(length).decode()).get("title", [""])[0].strip()
+            mp = os.path.join(store_dir, mid, "meta.json")
+            if title and "/" not in mid and ".." not in mid and os.path.isfile(mp):
+                meta = json.load(open(mp))
+                meta["title"] = title
+                json.dump(meta, open(mp, "w"), indent=2)
+            self.send_response(303)
+            self.send_header("Location", f"/meeting/{mid}")
+            self.end_headers()
         def do_GET(self):
             import urllib.parse as U
             path = U.urlparse(self.path).path
@@ -181,7 +196,10 @@ def make_handler(store_dir: str):
                          else {n: open(os.path.join(store_dir, mid, n)).read()
                                for n in S.PLAINTEXT_FILES if os.path.exists(os.path.join(store_dir, mid, n))})
                 when = time.strftime("%B %-d, %Y at %-I:%M %p", time.localtime(meta.get("created", 0)))
-                body = (f'<h1>{esc(meta.get("title", mid))}</h1><div class=doc-meta>{when} &middot; {mid}</div>')
+                body = (f'<h1>{esc(meta.get("title", mid))}</h1><div class=doc-meta>{when} &middot; {mid}</div>'
+                        f'<form method=post action="/rename/{mid}" style="margin-bottom:18px">'
+                        f'<input name=title placeholder="Rename meeting" style="padding:5px 9px;font-size:13px;border:1px solid var(--border);border-radius:6px;width:220px"> '
+                        f'<button style="padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:#fff">rename</button></form>')
                 if "notes.md" in texts:
                     body += render_notes_md(texts["notes.md"])
                 if "transcript.md" in texts:
