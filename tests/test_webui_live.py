@@ -175,3 +175,7 @@ def test_corrupt_meeting_meta_does_not_break_ui(server):
         assert "Iris" in html
     finally:
         import shutil; shutil.rmtree(bad)
+
+def test_script_tags_balanced(server):
+    html = urllib.request.urlopen(f"http://127.0.0.1:{PORT}/").read().decode()
+    assert html.count("<script") == html.count("</script>")

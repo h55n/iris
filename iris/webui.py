@@ -328,7 +328,7 @@ def sidebar(store_dir: str, active: str | None) -> str:
             + '</div>'
             + '<script>document.addEventListener("click",function(e){'
               'var m=e.target.closest&&e.target.closest(".mascot");'
-              'if(m){m.classList.remove("wink");void m.offsetWidth;m.classList.add("wink")}});'
+              'if(m){m.classList.remove("wink");void m.offsetWidth;m.classList.add("wink")}});</script>'
             + '<script>document.addEventListener("keydown",function(e){'
               'if(e.key==="/"&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){'
               'e.preventDefault();var q=document.querySelector(".searchbox input");if(q)q.focus()}'
