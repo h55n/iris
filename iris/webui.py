@@ -272,12 +272,12 @@ def sidebar(store_dir: str, active: str | None) -> str:
             'if(el)el.textContent=t[i]})()</script>'
             '<form class=searchbox method=get action="/search">'
             '<input name=q placeholder="Search meetings"></form>'
-            + '<div class=nav">'
+            + '<div class=nav>'
             + ("".join(items) or '<div class=empty>' + mascot(72, "sleep")
                + '<div class=t>No meetings yet</div>'
                + '<div class=s>record one and Iris will keep it safe</div></div>')
             + '</div>'
-            + '<div class=themes"><span class=lbl>Theme</span>'
+            + '<div class=themes><span class=lbl>Theme</span>'
             + ''.join(f'<button class=dot data-t="{t}" title="{t or "blue"}" '
                       f'onclick="pickTheme(\'{t}\',this)"></button>'
                       for t in ("", "green", "purple", "orange", "pink", "red"))
