@@ -100,7 +100,7 @@ Read the demo transcript above again: the speaker said "we ship on Friday" and W
 ## Prize Categories
 
 - Best Use of Gemma - notes written by gemma3:4b running locally via Ollama
-- Best Use of Ultramarine - hosted fallback notes backend ($X.XX spent, Y runs)
+- Best Use of Ultramarine - hosted fallback notes backend; usage is logged locally per run (`~/.convo/hosted-usage.jsonl`) so the spend claim is real, not estimated [CONFIRM DASHBOARD TOTAL BEFORE PUBLISH]
 - Best Use of Temporal - [if it lands: durable ingest pipeline]
 - Best Use of MongoDB Atlas - [if it lands: sync store]
 - Best Use of a .tech Domain - [demo page if deployed]
