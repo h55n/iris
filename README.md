@@ -98,7 +98,11 @@ License: MIT.
 | LAN ingest | `iris/ingest_server.py` | phone posts recordings to your own laptop for transcription |
 | speaker labels | `iris/diarize.py` | sherpa-onnx: pyannote-seg + ERes2Net, `ingest --diarize` |
 | meeting detect | `iris/detect.py` | laptop: Zoom/Meet/Teams/Webex via process+window+mic signals, debounced |
-| local web UI | `iris/webui.py` | browse meetings at 127.0.0.1:8473 (localhost only, serves decrypted content) |
+| local web UI | `iris/webui.py` | Notion x Granola style notes at 127.0.0.1:8473 (localhost only): editor, pins, folders, drag reorder, ask, click-to-name speakers |
+| library | `iris/library.py` | pins, project folders, blank notes, free editing, speaker rename, manual order (all synced, encryption-safe) |
+| ask | `iris/ask.py` | questions across meetings answered only with quoted transcript lines + time |
+| Hinglish | `iris/lang.py` | text-only Hinglish detection (Roman Hindi, Devanagari + English); tagged in transcripts |
+| plants | `iris/mascot.py` | hand-drawn plants for empty states and the meeting-saved bloom |
 | Android app | `android/` | recorder, meeting nudges, relay sync, on-device age decryption |
 | DEV post draft | `post/draft.md` | Hacktoberfest Week 3 submission (unpublished) |
 

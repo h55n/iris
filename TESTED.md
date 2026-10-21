@@ -158,3 +158,13 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 - Ingest server caps uploads at 500MB, checked on the Content-Length header before reading the body (413).
 - Web UI raw download endpoint: traversal attempts render "not found" and never touch the filesystem (tested).
 - CI: both jobs green on the same commit - pytest (89 tests) + Android JUnit (4 tests) on GitHub-hosted runners.
+
+## Notion x Granola upgrade - tested Oct 21 night
+- Real Chrome (Playwright) tests, all green: "/" slash menu inserts blocks, Esc keeps text, Ctrl/Cmd+B/I/E toggle bold/italic/code, list continuation (Enter continues, empty item exits), autosave reaches disk with no JS errors, drag reorder of folders and pinned notes persists across reload, the saved-meeting plant runs grow + pop and prefers-reduced-motion turns every animation off.
+- Frame capture of the saved-meeting moment (grow, confetti, bloom, twinkle) checked by eye, not just by CSS names.
+- Editing an encrypted note or renaming a speaker re-encrypts to the same key; tests assert no plaintext file is left behind.
+- Folders, pins and manual order sync between two stores; a newer local edit is never overwritten by a pull (two-device test).
+- Speaker rename touches only line-start labels (a spoken "Speaker 2:" inside a sentence and "Speaker 22" are untouched), accepts Devanagari and multi-word names, rejects markup.
+- Hinglish detection is heuristic text classification (word list), 11 table cases incl. false-positive guards ("to", "the", "sir"). Not tested on real Hinglish speech; that is a Hassan test.
+- Bug found by the tests: the confetti script had a JS syntax error from day one, so the celebration never ran. Fixed; every inline script is now syntax-checked in CI.
+- Not covered: real typing latency on a phone, Android UI for folders/pins (web only so far).
