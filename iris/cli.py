@@ -13,7 +13,8 @@ def cmd_ingest(audio, backend_name="ollama", title="", diarize=False, speakers=0
     tmd = None
     if diarize:
         if not DZ.available():
-            print("diarize models missing - run models/get-diarize-models.sh")
+            print("warning: diarize models missing - run models/get-diarize-models.sh "
+                  "(continuing without speaker labels)", file=sys.stderr)
         else:
             dia = DZ.diarize(T.to_wav16k(audio), num_speakers=speakers)
             segs = DZ.assign_speakers(segs, dia)
