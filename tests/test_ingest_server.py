@@ -1,5 +1,5 @@
 """Live ingest-server guard rails: auth, path, size checks (no whisper needed)."""
-import os, subprocess, time, urllib.request, urllib.error
+import json, os, subprocess, time, urllib.request, urllib.error
 import pytest
 
 STORE = "/tmp/iris-ingest-store"
@@ -82,3 +82,13 @@ def test_bad_content_length_400_not_crash(server):
     conn.close()
     assert code == 400
     assert _post("/nope", token="t0ken") == 404  # server still alive
+
+def test_pipeline_failure_returns_500_keeps_audio(server):
+    # 2KB of garbage is a valid-size upload but not transcribable audio
+    code = _post("/ingest", body=b"garbage" * 400, token="t0ken", title="broken")
+    assert code == 500
+    import glob
+    meetings = [d for d in glob.glob(os.path.join(STORE, "*")) if os.path.isdir(d)]
+    broken = [d for d in meetings
+              if json.load(open(os.path.join(d, "meta.json"))).get("title") == "broken"]
+    assert broken and os.path.exists(os.path.join(broken[0], "audio.wav"))  # audio kept

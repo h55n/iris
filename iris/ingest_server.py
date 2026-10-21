@@ -50,13 +50,17 @@ def make_handler(store_dir, token, backend):
             meta = json.load(open(os.path.join(store_dir, mid, "meta.json")))
             meta["audio_files"] = ["audio.wav"]; meta["source"] = "phone-lan"
             json.dump(meta, open(os.path.join(store_dir, mid, "meta.json"), "w"), indent=2)
-            segs = T.transcribe(tmp)
-            tmd = T.transcript_markdown(segs)
-            store.write_text(store_dir, mid, "transcript.md", tmd)
-            notes = verify.verify_notes(B.get_backend(backend).notes(tmd), segs)
-            store.write_text(store_dir, mid, "notes.md", render.render_notes(mid, notes, segs))
-            if os.path.exists(C.DEFAULT_KEY):
-                store.encrypt_meeting(store_dir, mid)
+            try:
+                segs = T.transcribe(tmp)
+                tmd = T.transcript_markdown(segs)
+                store.write_text(store_dir, mid, "transcript.md", tmd)
+                notes = verify.verify_notes(B.get_backend(backend).notes(tmd), segs)
+                store.write_text(store_dir, mid, "notes.md", render.render_notes(mid, notes, segs))
+                if os.path.exists(C.DEFAULT_KEY):
+                    store.encrypt_meeting(store_dir, mid)
+            except Exception as e:
+                # audio is kept on disk; the phone gets a real answer, not a dropped socket
+                return self._send(500, {"error": f"{type(e).__name__}: {e}", "meeting": mid})
             self._send(200, {"meeting": mid, "integrity": notes.get("integrity")})
         def log_message(self, *a): pass
     return H
