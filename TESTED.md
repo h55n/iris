@@ -132,3 +132,12 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 - Synthetic 4-turn file (en/hi/en/hi): `transcribe_multilingual` segments with the multilingual model, detects language per segment. Result: all 4 turns correct language, Hindi in Devanagari. Small-model word errors on names (Priya->PREO, Hassan->वहसन) noted honestly.
 - Important tested failure: a base.en pass DROPS Hindi turns from segmentation entirely (whole-file pass returned 1 segment). Mixed audio must use --multilingual.
 - `iris ingest meeting.wav --multilingual`; non-English lines get <hi> tags in the transcript.
+
+## Web UI dark mode - tested Oct 21 evening
+- prefers-color-scheme: dark switches the full Notion palette (bg #191919, sidebar #202020, same tokens). Pixel-verified on real screenshots at 1440px: home + meeting page.
+- First-pass bugs the screenshots caught and the fix commit addressed: sidebar active item, rename/delete buttons, rename input were hardcoded white. Light mode re-verified unchanged (body #fff, sidebar #f7f7f5).
+
+## Android unit tests - added Oct 21 evening
+- `gradle testDebugUnitTest`: AgeDecryptTest 2/2 green (bech32 rejects garbage, bech32 charset complete). JVM-only, no emulator needed.
+- Upload retry (2 retries, 1.5s/3s backoff) + X-Iris-Title header: compiles into a clean APK; runtime retry behavior is on Hassan's device test list.
+- Ingest server accepts X-Iris-Title and falls back to X-Convo-Title for older app builds (unit-covered via handler tests? no - verified by reading; live POST test is on the device list).
