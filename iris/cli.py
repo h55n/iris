@@ -37,11 +37,17 @@ def cmd_ingest(audio, backend_name="ollama", title="", diarize=False, speakers=0
     print(f"meeting: {mid}\nbackend: {backend.name}\nintegrity: {notes['integrity']}")
     print(f"notes: {os.path.join(STORE, mid, 'notes.md')}")
 
+__version__ = "0.2.0"
+
 if __name__ == "__main__":
     args = sys.argv[1:]
+    if args == ["--version"]:
+        print(f"iris {__version__}"); sys.exit(0)
     if not args or args[0] not in ("ingest", "sweep", "list", "sync", "key", "encrypt", "read", "export", "share", "search", "enroll", "voices", "doctor"):
         print(__doc__); sys.exit(1)
     if args[0] == "enroll":
+        if len(args) < 3 or not os.path.exists(args[2]):
+            print("usage: iris enroll <name> <sample.wav>"); sys.exit(1)
         print(V.enroll(args[1], args[2]))
     elif args[0] == "voices":
         for n in V.load_voices(): print(n)
@@ -84,6 +90,8 @@ if __name__ == "__main__":
         st["last_pull"] = __import__("time").time(); S.save_state(STORE, st)
         print(f"pushed {len(pushed)}, pulled {len(got)}: {got}")
     elif args[0] == "ingest":
+        if len(args) < 2 or not os.path.exists(args[1]):
+            print("usage: iris ingest <audio-file> [--backend ollama|ultramarine] [--diarize [--speakers N]] [--multilingual] [--title T]"); sys.exit(1)
         backend = "ollama"
         if "--backend" in args:
             i = args.index("--backend"); backend = args[i + 1]; del args[i:i + 2]
