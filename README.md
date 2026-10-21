@@ -74,7 +74,27 @@ License: MIT.
 ```
 python3 convo/cli.py key init                 # one-time: encryption key
 python3 convo/cli.py ingest meeting.wav       # record/transcribe/verify/encrypt
+python3 convo/cli.py ingest meeting.wav --diarize   # + speaker labels (needs models/get-diarize-models.sh first)
 python3 convo/webui.py                        # browse at 127.0.0.1:8473
 python3 convo/sync_server.py --token T &      # relay (your own box)
 python3 convo/cli.py sync --server http://... # move notes between devices
+python3 convo/watch.py                        # nudge when Zoom/Meet/Teams opens (detection only)
+python3 convo/cli.py search "retention"       # full-text over all meetings (decrypts locally)
+python3 convo/cli.py export <id> out.md       # shareable markdown bundle
+python3 convo/cli.py share <id> age1... out.md.age  # encrypted for one recipient
 ```
+
+## Phone -> laptop -> everywhere (the cross-device loop)
+
+1. Phone (android/): record in the app (or get nudged when Zoom/Meet/Teams opens).
+2. Tap "Send to laptop": the WAV goes over your LAN to `convo/ingest_server.py` on your own machine - never a third party.
+3. Laptop transcribes, verifies, encrypts, and pushes ciphertext to your relay.
+4. Phone and other devices pull from the relay and decrypt with your key.
+
+## Build the Android app
+
+```
+cd android
+gradle assembleDebug   # JDK 11+, Android SDK 33; APK at app/build/outputs/apk/debug/
+```
+
