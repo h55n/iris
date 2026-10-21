@@ -93,6 +93,25 @@ body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"SF Pro Text","Seg
 .newnote{margin:0 6px 4px}.newnote button{width:100%;text-align:left;padding:7px 10px;border:0;border-radius:6px;
   background:transparent;color:var(--text);font-size:14px;font-weight:500}
 .newnote button:hover{background:var(--active-bg)}
+.title{display:block;width:100%;border:0;background:transparent;font-size:38px;font-weight:700;letter-spacing:-.6px;color:var(--text);padding:2px 0;margin:6px 0 4px;outline:0;font-family:inherit}
+.title:focus{box-shadow:none}.title::placeholder{color:var(--faint)}
+.crumb{font-size:13px;color:var(--muted)}.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--text)}
+.props{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-bottom:22px}
+.propform{display:inline-block;margin:0}
+.props select,.pinbtn{font-size:13px;color:var(--muted);background:transparent;border:1px solid transparent;border-radius:6px;padding:3px 8px;font-family:inherit}
+.props select:hover,.pinbtn:hover{background:var(--active-bg)}.pinbtn.on{color:#c98b1d}
+.more{position:relative}.more summary{list-style:none;cursor:pointer;padding:3px 8px;border-radius:6px}.more summary:hover{background:var(--active-bg)}
+.more summary::-webkit-details-marker{display:none}
+.menu{position:absolute;z-index:5;left:0;top:28px;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:4px;box-shadow:0 6px 24px rgba(0,0,0,.12)}
+.menu .danger{border:0;background:transparent;color:var(--danger);padding:6px 14px;font-size:13px;border-radius:6px;white-space:nowrap}.menu .danger:hover{background:var(--active-bg)}
+#ed{width:100%;min-height:160px;border:0;resize:none;background:transparent;color:var(--text);font:inherit;font-size:16px;line-height:1.65;outline:0;padding:0;box-shadow:none}
+.edmeta{display:flex;justify-content:space-between;font-size:12px;color:var(--faint);margin-top:6px}
+.ghost{border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:999px;padding:4px 14px;font-size:13px;margin:10px 0}
+.ghost:empty{display:none}
+.tdrawer{margin-top:28px;border-top:1px solid var(--border-soft);padding-top:14px}
+.tdrawer summary{cursor:pointer;font-size:15px;font-weight:600;color:var(--muted);list-style:none}
+.tdrawer summary::-webkit-details-marker{display:none}
+[hidden]{display:none!important}
 .inline{display:inline-block;margin:0 6px 18px 0}
 .inline input{padding:5px 9px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--input-bg);color:var(--text)}
 .inline button{padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:999px;background:var(--input-bg);color:var(--text)}
@@ -188,10 +207,29 @@ def read_meeting_texts(store_dir: str, mid: str):
     except C.CryptoError:
         return None
 
+EDITOR_JS = """<script>(function(){
+var ed=document.getElementById('ed'),t=document.getElementById('title'),sv=document.getElementById('saved');
+var tg=document.getElementById('toggle'),vw=document.getElementById('view'),eb=document.getElementById('edit');
+if(!ed||!t)return;
+function fit(){ed.style.height='auto';ed.style.height=Math.max(160,ed.scrollHeight)+'px'}
+function post(url,data){return fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-Fetch':'1'},body:new URLSearchParams(data)})}
+var tm,dirty=false;
+function save(){dirty=false;sv.textContent='Saving...';post('/notes/'+ed.dataset.mid,{text:ed.value}).then(function(){sv.textContent='Saved'}).catch(function(){sv.textContent='Not saved - retrying'})}
+ed.addEventListener('input',function(){fit();dirty=true;sv.textContent='Editing...';clearTimeout(tm);tm=setTimeout(save,500)});
+ed.addEventListener('keydown',function(e){if(e.key==='Tab'){e.preventDefault();var s=ed.selectionStart;ed.setRangeText('  ',s,ed.selectionEnd,'end');ed.dispatchEvent(new Event('input'))}
+ if(e.key==='Enter'){var v=ed.value,s=ed.selectionStart,ls=v.lastIndexOf('\\n',s-1)+1,line=v.slice(ls,s),m=line.match(/^(\\s*)(- \\[[ x]\\] |- |\\d+\\. )/);
+  if(m){e.preventDefault();if(line.trim()===m[2].trim()){ed.setRangeText('',ls,s,'end')}else{var nx=m[2].match(/^\\d+/)?(parseInt(m[2])+1)+'. ':m[2].replace('[x]','[ ]');ed.setRangeText('\\n'+m[1]+nx,s,s,'end')}ed.dispatchEvent(new Event('input'))}}});
+var tt;t.addEventListener('input',function(){clearTimeout(tt);tt=setTimeout(function(){post('/rename/'+t.dataset.mid,{title:t.value||'Untitled'})},400)});
+t.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();ed.focus()}});
+if(tg)tg.addEventListener('click',function(){if(eb.hidden){vw.hidden=true;eb.hidden=false;tg.textContent='Done';fit();ed.focus()}else{if(dirty){clearTimeout(tm);save()}setTimeout(function(){location.reload()},120)}});
+if(!ed.value&&eb&&!eb.hidden)setTimeout(function(){ed.focus()},50);
+window.addEventListener('load',fit);fit();
+})()</script>"""
+
 def confetti(mid: str) -> str:
     """One-time celebrate burst the first time a fresh (<10 min) meeting is opened."""
     return (f"<script>(function(){{try{{if(localStorage.getItem('iris-party-{mid}'))return;"
-            "localStorage.setItem('iris-party-" + mid + "','1')}catch(e){{}}"
+            "localStorage.setItem('iris-party-" + mid + "','1')}catch(e){}"
             "var C=['#2383e2','#0f7b6c','#6940a5','#d9730d','#c14c8a','#d44c47'];"
             "for(var i=0;i<42;i++){var d=document.createElement('div');"
             "d.style.cssText='position:fixed;top:-12px;left:'+(Math.random()*100)+'vw;width:'+"
@@ -203,7 +241,7 @@ def confetti(mid: str) -> str:
             "requestAnimationFrame(function(el){return function(){"
             "el.style.transform='translateY('+(window.innerHeight+40)+'px) rotate('+(360+Math.random()*720)+'deg)';"
             "el.style.opacity='0'}}(d));"
-            "setTimeout(function(el){return function(){el.remove()}}(d),3200)}}})();</script>")
+            "setTimeout(function(el){return function(){el.remove()}}(d),3200)}})();</script>")
 
 ICONS = {
     "summary": '<svg class=icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5h14M5 10h14M5 15h9"/></svg>',
@@ -430,6 +468,8 @@ def make_handler(store_dir: str):
                 meta = json.load(open(mp))
                 meta["title"] = title[:120]  # sidebar + h1 layouts assume sane titles
                 json.dump(meta, open(mp, "w"), indent=2)
+            if self.headers.get("X-Fetch"):
+                self.send_response(204); return self.end_headers()
             self.send_response(303)
             self.send_header("Location", f"/meeting/{mid}")
             self.end_headers()
@@ -558,19 +598,39 @@ def make_handler(store_dir: str):
                              + '<div class=t>Meeting saved</div>'
                              + '<div class=s>encrypted, verified, and only on your devices</div></div>')
                 lock = ' &middot; <span style="color:var(--pill-ok)">encrypted at rest</span>' if meta.get("encrypted") else ""
-                body += (f'<h1>{esc(meta.get("title", mid))}</h1><div class=doc-meta>{when} &middot; {mid}{lock}</div>'
-                        f'<form method=post action="/rename/{mid}" style="margin-bottom:18px">'
-                        f'<input name=title placeholder="Rename meeting" style="padding:5px 9px;font-size:13px;border:1px solid var(--border);border-radius:6px;width:220px;background:var(--input-bg);color:var(--text)"> '
-                        f'<button style="padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:999px;background:var(--input-bg);color:var(--text)">rename</button></form>'
-                        f'<form method=post action="/delete/{mid}" onsubmit="return confirm(\'Delete this meeting? Notes and transcript are removed from this device.\')" style="margin-bottom:24px">'
-                        f'<button style="padding:5px 12px;font-size:13px;border:1px solid var(--danger-border);border-radius:999px;background:var(--input-bg);color:var(--danger)">delete meeting</button></form>')
-                if "notes.md" in texts:
-                    body += render_notes_md(texts["notes.md"])
+                fl = L.list_folders(store_dir)
+                cur = meta.get("folder")
+                crumb = ""
+                if cur and any(f["id"] == cur for f in fl):
+                    fname = [f["name"] for f in fl if f["id"] == cur][0]
+                    crumb = f'<div class=crumb><a href="/folder/{cur}">{esc(fname)}</a> / </div>'
+                    self._folder = cur
+                opts = '<option value="">No folder</option>' + "".join(
+                    f'<option value="{f["id"]}"{" selected" if f["id"] == cur else ""}>{esc(f["name"])}</option>' for f in fl)
+                pin = bool(meta.get("pinned"))
+                body += (crumb
+                    + f'<input id=title class=title value="{esc(meta.get("title", mid))}" maxlength=120 '
+                      f'placeholder="Untitled" aria-label="Title" data-mid="{mid}">'
+                    + f'<div class=props><span>{when}{lock}</span>'
+                      f'<form method=post action="/move/{mid}" class=propform><select name=folder onchange="this.form.submit()" aria-label="Folder">{opts}</select></form>'
+                      f'<form method=post action="/{"unpin" if pin else "pin"}/{mid}" class=propform>'
+                      f'<button class="pinbtn{" on" if pin else ""}" title="{"Unpin" if pin else "Pin to top"}">{"&#9733; Pinned" if pin else "&#9734; Pin"}</button></form>'
+                      f'<details class=more><summary>&middot;&middot;&middot;</summary><div class=menu>'
+                      f'<form method=post action="/delete/{mid}" onsubmit="return confirm(\'Delete this meeting? Notes and transcript are removed from this device.\')">'
+                      f'<button class=danger>Delete</button></form></div></details></div>')
+                notes_txt = texts.get("notes.md", "")
+                is_note = meta.get("kind") == "note" or not notes_txt.strip()
+                body += (f'<div id=view{" hidden" if is_note else ""}>{render_notes_md(notes_txt) if notes_txt.strip() else ""}</div>'
+                         f'<div id=edit{"" if is_note else " hidden"}>'
+                         f'<textarea id=ed data-mid="{mid}" spellcheck=true placeholder="Write notes. # heading, - list, - [ ] task, > quote">{esc(notes_txt)}</textarea>'
+                         f'<div class=edmeta><span id=saved>Saved</span><span>Markdown. Saved on this device only.</span></div></div>'
+                         f'<button id=toggle class=ghost>{"Done" if is_note and notes_txt.strip() else ("Edit notes" if not is_note else "")}</button>'
+                         + EDITOR_JS)
                 if "transcript.md" in texts:
                     lines = "<br>".join(render_transcript_line(l) for l in texts["transcript.md"].splitlines())
                     body += (f'<p style="font-size:12.5px"><a class=back href="/raw/{mid}/notes.md">download notes.md</a> &middot; <a class=back href="/raw/{mid}/transcript.md">download transcript.md</a></p>'
-                         f'<hr class=divider><h2>{heading_icon("transcript")}Transcript</h2>'
-                             f'<pre class=transcript>{lines}</pre>')
+                         f'<details class=tdrawer{"" if is_note and False else (" open" if not notes_txt.strip() else "")}><summary>{heading_icon("transcript")}Transcript</summary>'
+                             f'<pre class=transcript>{lines}</pre></details>')
                 body += meeting_nav(store_dir, mid)
                 self._html(body)
             else:

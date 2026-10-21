@@ -60,3 +60,12 @@ def test_folder_lifecycle_and_move():
 def test_bad_ids_rejected():
     assert post("/notes/..%2Fetc", {"text": "x"})[0] == 404
     assert post("/pin/nope", {})[0] == 404
+
+def test_inline_scripts_are_valid_js():
+    import re, subprocess, tempfile
+    mid = post("/new", {})[1].split("/")[-1]
+    html = get(f"/meeting/{mid}")
+    for i, sc in enumerate(re.findall(r"<script>(.*?)</script>", html, re.S)):
+        f = tempfile.NamedTemporaryFile("w", suffix=".js", delete=False); f.write(sc); f.close()
+        r = subprocess.run(["node", "--check", f.name], capture_output=True, text=True)
+        assert r.returncode == 0, f"script {i}: {r.stderr[:200]}"
