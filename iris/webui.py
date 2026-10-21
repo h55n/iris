@@ -107,6 +107,11 @@ body{margin:0;font:16px/1.65 var(--font);-webkit-font-smoothing:antialiased;
 .more summary::-webkit-details-marker{display:none}
 .menu{position:absolute;z-index:5;left:0;top:28px;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:4px;box-shadow:0 6px 24px rgba(0,0,0,.12)}
 .menu .danger{border:0;background:transparent;color:var(--danger);padding:6px 14px;font-size:13px;border-radius:6px;white-space:nowrap}.menu .danger:hover{background:var(--active-bg)}
+#slash{position:absolute;z-index:6;min-width:230px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:4px;box-shadow:0 8px 28px rgba(0,0,0,.14)}
+.slash-item{display:flex;justify-content:space-between;gap:18px;padding:6px 10px;border-radius:6px;font-size:14px;cursor:pointer}
+.slash-item span{color:var(--faint);font-family:var(--mono);font-size:12px}
+.slash-item.on,.slash-item:hover{background:var(--active-bg)}
+.edwrap{position:relative}
 #ed{width:100%;min-height:160px;border:0;resize:none;background:transparent;color:var(--text);font:inherit;font-size:16px;line-height:1.65;outline:0;padding:0;box-shadow:none}
 .edmeta{display:flex;justify-content:space-between;font-size:12px;color:var(--faint);margin-top:6px}
 .ghost{border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:999px;padding:4px 14px;font-size:13px;margin:10px 0}
@@ -255,6 +260,32 @@ var old=c.dataset.spk,nm=prompt('Who is '+old+'?',old.indexOf('Speaker ')===0?''
 if(!nm||!nm.trim()||nm.trim()===old)return;var mid=location.pathname.split('/').pop();
 fetch('/speaker/'+mid,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({old:old,new:nm.trim()})})
 .then(function(r){if(r.ok)location.reload();else r.text().then(function(t){alert(t)})})})})()</script>"""
+
+EDITOR_FMT_JS = "<script>" + open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "static_editor.js")).read() + """
+(function(){var ed=document.getElementById('ed');if(!ed)return;
+var menu=document.createElement('div');menu.id='slash';menu.hidden=true;ed.parentNode.insertBefore(menu,ed.nextSibling);
+var items=[],sel=0,ctx=null;
+function fire(){ed.dispatchEvent(new Event('input'))}
+function close(){menu.hidden=true;ctx=null}
+function render(){menu.innerHTML=items.map(function(b,i){return '<div class="slash-item'+(i===sel?' on':'')+'" data-i="'+i+'">'+b.k+'<span>'+b.p.trim()+'</span></div>'}).join('')}
+function place(){var lh=parseFloat(getComputedStyle(ed).lineHeight)||26;var n=ed.value.slice(0,ed.selectionStart).split(String.fromCharCode(10)).length;
+ menu.style.top=(ed.offsetTop+n*lh+4)+'px'}
+function update(){var q=irisSlashQuery(ed.value,ed.selectionStart);if(!q){close();return}
+ items=irisBlocks(q.q);if(!items.length){close();return}ctx=q;sel=0;render();place();menu.hidden=false}
+function choose(i){var r=irisApplyBlock(ed.value,ed.selectionStart,ctx.from,items[i]);ed.value=r.v;ed.setSelectionRange(r.c,r.c);close();fire()}
+ed.addEventListener('input',update);
+ed.addEventListener('keydown',function(e){
+ if(!menu.hidden){
+  if(e.key==='ArrowDown'){e.preventDefault();e.stopImmediatePropagation();sel=(sel+1)%items.length;render();return}
+  if(e.key==='ArrowUp'){e.preventDefault();e.stopImmediatePropagation();sel=(sel-1+items.length)%items.length;render();return}
+  if(e.key==='Enter'||e.key==='Tab'){e.preventDefault();e.stopImmediatePropagation();choose(sel);return}
+  if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();close();return}}
+ if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey){var m={b:'**',i:'*',e:'`'}[e.key.toLowerCase()];
+  if(m){e.preventDefault();var r=irisWrap(ed.value,ed.selectionStart,ed.selectionEnd,m);ed.value=r.v;ed.setSelectionRange(r.s,r.e);fire()}}
+},true);
+menu.addEventListener('mousedown',function(e){var it=e.target.closest('.slash-item');if(it){e.preventDefault();choose(+it.dataset.i)}});
+ed.addEventListener('blur',function(){setTimeout(close,120)});
+})()</script>"""
 
 def confetti(mid: str) -> str:
     """One-time celebrate burst the first time a fresh (<10 min) meeting is opened."""
@@ -729,11 +760,11 @@ def make_handler(store_dir: str):
                 notes_txt = texts.get("notes.md", "")
                 is_note = meta.get("kind") == "note" or not notes_txt.strip()
                 body += (f'<div id=view{" hidden" if is_note else ""}>{render_notes_md(notes_txt, skip_title=meta.get("kind") != "note") if notes_txt.strip() else ""}</div>'
-                         f'<div id=edit{"" if is_note else " hidden"}>'
+                         f'<div id=edit class=edwrap{"" if is_note else " hidden"}>'
                          f'<textarea id=ed data-mid="{mid}" spellcheck=true placeholder="Write notes. # heading, - list, - [ ] task, > quote">{esc(notes_txt)}</textarea>'
                          f'<div class=edmeta><span id=saved>Saved</span><span>Markdown. Saved on this device only.</span></div></div>'
                          f'<button id=toggle class=ghost>{"Done" if is_note and notes_txt.strip() else ("Edit notes" if not is_note else "")}</button>'
-                         + EDITOR_JS)
+                         + EDITOR_JS + EDITOR_FMT_JS)
                 if "transcript.md" in texts:
                     lines = "<br>".join(render_transcript_line(l) for l in texts["transcript.md"].splitlines())
                     body += (f'<p style="font-size:12.5px"><a class=back href="/raw/{mid}/notes.md">download notes.md</a> &middot; <a class=back href="/raw/{mid}/transcript.md">download transcript.md</a></p>'
