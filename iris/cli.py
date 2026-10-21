@@ -67,7 +67,10 @@ if __name__ == "__main__":
         from iris import doctor; doctor.main()
     elif args[0] == "key":
         if len(args) > 1 and args[1] == "init":
-            print("public key:", C.generate_key())
+            try:
+                print("public key:", C.generate_key())
+            except C.CryptoError as e:
+                print(f"error: {e}", file=sys.stderr); sys.exit(1)
         elif len(args) > 1 and args[1] == "export":
             print(C.export_secret())
         elif len(args) > 1 and args[1] == "qr":
