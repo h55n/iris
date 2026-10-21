@@ -17,10 +17,6 @@ The full loop that shipped:
 
 The part that makes it trustworthy: every decision and action item in the notes must quote the exact transcript lines it came from, with a timestamp. A small verifier checks every claim against the transcript before the note is saved. If the model invents a task or a name, the claim is demoted to an "unverified" section instead of silently becoming your to-do list.
 
-Iris is a local-first meeting notetaker for people whose meetings don't happen in one place. Phone call on the way in, a Google Meet at the desk, an in-person chat in the hallway - it records (when you tell it to), transcribes on your own machine with open-weight Whisper, and writes the notes with a local open-weight model. Recordings delete themselves after 7 days; transcripts and notes stay on your devices, encrypted, syncing only between hardware you own.
-
-The part that makes it trustworthy: every decision and action item in the notes must quote the exact transcript lines it came from, with a timestamp. A small verifier checks every claim against the transcript before the note is saved. If the model invents a task or a name, the claim is demoted to an "unverified" section instead of silently becoming your to-do list.
-
 ## Demo
 
 ### 1. Ingest a meeting (54 seconds of audio, base model, CPU only)
