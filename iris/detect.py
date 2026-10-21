@@ -28,6 +28,9 @@ MEETING_PROCESSES = {
     "CiscoCollabHost": "Webex",
     "skype": "Skype",
     "slack": "Slack (huddle?)",
+    "discord": "Discord (call?)",
+    "jitsi-meet": "Jitsi Meet",
+    "zoho meeting": "Zoho Meeting",
 }
 MEETING_URL_PATTERNS = [
     (re.compile(r"meet\.google\.com", re.I), "Google Meet"),
@@ -36,6 +39,9 @@ MEETING_URL_PATTERNS = [
     (re.compile(r"teams\.microsoft\.com|teams\.live\.com", re.I), "Microsoft Teams (web)"),
     (re.compile(r"zoom\.us/(j|wc)/", re.I), "Zoom (web)"),
     (re.compile(r"\.webex\.com/(meet|join)", re.I), "Webex (web)"),
+    (re.compile(r"meet\.jit\.si", re.I), "Jitsi Meet (web)"),
+    (re.compile(r"whereby\.com/", re.I), "Whereby (web)"),
+    (re.compile(r"discord\.com/channels", re.I), "Discord (web)"),
 ]
 
 @dataclass

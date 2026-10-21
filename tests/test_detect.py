@@ -50,3 +50,18 @@ def test_transient_glitch_does_not_fire():
     d._procs = []          # one glitchy poll
     d.tick(); d.tick()
     assert not d.in_meeting
+
+def test_discord_process_detected():
+    d = Fake(procs=["discord"])
+    d.tick(); e = d.tick()["event"]
+    assert e and "Discord" in e["app"]
+
+def test_jitsi_window_title():
+    d = Fake(procs=["firefox"], titles=["Daily standup | meet.jit.si - Firefox"])
+    d.tick(); e = d.tick()["event"]
+    assert e and "Jitsi" in e["app"]
+
+def test_whereby_window_title():
+    d = Fake(procs=["chrome"], titles=["Whereby - room/chat"])
+    d.tick(); e = d.tick()["event"]
+    assert e and "Whereby" in e["app"]
