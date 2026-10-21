@@ -35,7 +35,10 @@ def push_changed(store_dir, server, token):
     for mid in sorted(os.listdir(store_dir)):
         if not os.path.isdir(os.path.join(store_dir, mid)):
             continue
-        h = bundle_hash(store_dir, mid)
+        try:
+            h = bundle_hash(store_dir, mid)
+        except (OSError, ValueError):
+            skipped.append(mid); continue  # unreadable meeting: skip, never push garbage
         if hashes.get(mid) == h:
             skipped.append(mid); continue
         push(store_dir, mid, server, token)

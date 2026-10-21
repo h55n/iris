@@ -50,3 +50,18 @@ def test_bundle_hash_changes_with_content(tmp_path):
     h1 = Y.bundle_hash(str(tmp_path), mid)
     S.write_text(str(tmp_path), mid, "transcript.md", "[00:01] v2")
     assert Y.bundle_hash(str(tmp_path), mid) != h1
+
+def test_push_changed_skips_corrupt_meeting(tmp_path, monkeypatch):
+    from iris import sync as Y
+    import os, json
+    d = str(tmp_path / "store")
+    _mk(d, "good-one")
+    # make a corrupt meeting alongside
+    bad = os.path.join(d, "20261010-0000-corrupt")
+    os.makedirs(bad, exist_ok=True)
+    open(os.path.join(bad, "meta.json"), "w").write("{broken")
+    pushed_to = []
+    monkeypatch.setattr(Y, "push", lambda sd, mid, srv, tok: pushed_to.append(mid))
+    pushed, skipped = Y.push_changed(d, "http://x", "t")
+    assert "20261010-0000-corrupt" in skipped and "20261010-0000-corrupt" not in pushed_to
+    assert pushed_to  # the good meeting still pushed
