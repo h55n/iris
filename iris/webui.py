@@ -365,7 +365,9 @@ def _preview(store_dir: str, mid: str, meta: dict) -> str:
         return "Encrypted"
     try:
         for line in open(os.path.join(store_dir, mid, "notes.md")).read().splitlines():
-            t = line.strip().lstrip("#-> []x").strip()
+            raw = line.strip()
+            if raw.startswith("#"): continue  # headings make poor previews
+            t = raw.lstrip("-> [x]").strip() if raw[:1] in "->" else raw
             if t: return t[:110]
     except OSError:
         pass

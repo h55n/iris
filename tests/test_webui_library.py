@@ -85,5 +85,10 @@ def test_home_lists_recent_notes_with_preview_and_pinned_first():
     post(f"/notes/{mid}", {"text": "# Heading line\nbody"})
     post(f"/pin/{mid}", {})
     html = get("/")
-    assert "Home preview note" in html and "Heading line" in html
+    assert "Home preview note" in html and "body" in html
     assert html.index(">Pinned<") < html.index("Home preview note")
+
+def test_preview_skips_headings():
+    mid = post("/new", {"title": "Preview skip"})[1].split("/")[-1]
+    post(f"/notes/{mid}", {"text": "## Summary\nThe real first sentence"})
+    assert "The real first sentence" in get("/")
