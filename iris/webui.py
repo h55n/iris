@@ -38,7 +38,7 @@ PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=
   [data-theme=pink]{ --accent:#e08ab5; --accent-soft:#33222b; }
   [data-theme=red]{ --accent:#e88a86; --accent-soft:#332020; }
 }
-.themes{display:flex;gap:8px;padding:10px 10px 4px;align-items:center}
+.themes{display:flex;gap:8px;padding:14px 10px 6px;align-items:center;margin-top:8px;border-top:1px solid var(--border-soft)}
 .themes .lbl{font-size:11px;color:var(--faint);margin-right:2px}
 .dot{width:16px;height:16px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
 .dot.sel{border-color:var(--text)}
@@ -109,7 +109,11 @@ blockquote .ts{color:var(--faint);font-size:12.5px}
   .spk4{background:#2b2138;color:#c0a3e8}.spk5{background:#16302d;color:#6ec9bf}
 }
 h2 .icon, h3 .icon{width:18px;height:18px;vertical-align:-3px;margin-right:7px;color:var(--accent)}
-.mascot{display:block;margin:26px auto 10px}
+.mascot{display:block;margin:26px auto 10px;cursor:pointer;
+  animation:floaty 3.6s ease-in-out infinite;transform-origin:center 70%}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.mascot.wink{animation:wink .5s var(--snap)}
+@keyframes wink{30%{transform:scaleY(.82) translateY(4px)}60%{transform:scaleY(1.06)}}
 .empty{text-align:center;color:var(--muted);padding:28px 12px 8px}
 .empty .t{font-size:15px;color:var(--text);font-weight:500;margin-top:6px}
 .empty .s{font-size:13px;margin-top:2px}
@@ -136,6 +140,16 @@ def mascot(size: int = 96, mood: str = "happy") -> str:
             'fill="none" stroke-linecap="round" opacity=".65"/>'
             '<text x="86" y="34" font-size="15" fill="var(--faint)" font-family="sans-serif">z</text>'
             '<text x="95" y="24" font-size="11" fill="var(--faint)" font-family="sans-serif">z</text>')
+    if mood == "celebrate":
+        smile = ('<path d="M45 82 q15 13 30 0" stroke="currentColor" stroke-width="3.2" '
+                 'fill="none" stroke-linecap="round"/>'
+                 '<path d="M52 30 L60 6 L68 30 Z" fill="var(--accent)" stroke="currentColor" '
+                 'stroke-width="2.6" stroke-linejoin="round"/>'
+                 '<circle cx="60" cy="6" r="3.4" fill="var(--accent)"/>'
+                 '<path d="M20 24 l4 4 M100 22 l-4 4 M14 44 l5 2 M106 42 l-5 2" '
+                 'stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>'
+                 '<circle cx="28" cy="14" r="3" fill="var(--accent)" opacity=".7"/>'
+                 '<circle cx="94" cy="12" r="3" fill="var(--accent)" opacity=".7"/>')
     return (f'<svg class=mascot width="{size}" height="{size}" viewBox="0 0 120 120" '
             'fill="none" aria-hidden="true" style="color:var(--text)">'
             '<ellipse cx="60" cy="64" rx="36" ry="32" fill="var(--accent-soft)"/>'
@@ -150,6 +164,23 @@ def mascot(size: int = 96, mood: str = "happy") -> str:
             '<circle cx="38" cy="76" r="3.4" fill="var(--accent)" opacity=".45"/>'
             '<circle cx="82" cy="76" r="3.4" fill="var(--accent)" opacity=".45"/>'
             '</svg>')
+
+def confetti(mid: str) -> str:
+    """One-time celebrate burst the first time a fresh (<10 min) meeting is opened."""
+    return (f"<script>(function(){{try{{if(localStorage.getItem('iris-party-{mid}'))return;"
+            "localStorage.setItem('iris-party-" + mid + "','1')}catch(e){{}}"
+            "var C=['#2383e2','#0f7b6c','#6940a5','#d9730d','#c14c8a','#d44c47'];"
+            "for(var i=0;i<42;i++){var d=document.createElement('div');"
+            "d.style.cssText='position:fixed;top:-12px;left:'+(Math.random()*100)+'vw;width:'+"
+            "(5+Math.random()*6)+'px;height:'+(8+Math.random()*8)+'px;background:'+C[i%6]+';"
+            "border-radius:2px;z-index:99;pointer-events:none;"
+            "transform:rotate('+(Math.random()*360)+'deg);"
+            "transition:transform '+(1.6+Math.random()*1.4)+'s cubic-bezier(.22,1,.36,1),opacity .4s 2.4s;';"
+            "document.body.appendChild(d);"
+            "requestAnimationFrame(function(el){return function(){"
+            "el.style.transform='translateY('+(window.innerHeight+40)+'px) rotate('+(360+Math.random()*720)+'deg)';"
+            "el.style.opacity='0'}}(d));"
+            "setTimeout(function(el){return function(){el.remove()}}(d),3200)}}})();</script>")
 
 ICONS = {
     "summary": '<svg class=icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5h14M5 10h14M5 15h9"/></svg>',
@@ -224,7 +255,11 @@ def sidebar(store_dir: str, active: str | None) -> str:
         items.append(f'<a class="{cls}" href="/meeting/{mid}">'
                      f'<div class=nav-title>{esc(meta.get("title", mid))}</div>'
                      f'<div class=nav-meta>{when}{iv}</div></a>')
-    return ('<div class=brand>Iris<span>private meeting notes</span></div>'
+    return ('<div class=brand>Iris<span id=tagline>private meeting notes</span></div>'
+            '<script>(function(){var t=["private meeting notes","your meetings, your machines",'
+            '"nothing leaves your devices","notes that keep receipts","always local, always yours"];'
+            'var i=Math.floor(Math.random()*t.length),el=document.getElementById("tagline");'
+            'if(el)el.textContent=t[i]})()</script>'
             '<form class=searchbox method=get action="/search">'
             '<input name=q placeholder="Search meetings"></form>'
             + ("".join(items) or '<div class=empty>' + mascot(72, "sleep")
@@ -235,7 +270,10 @@ def sidebar(store_dir: str, active: str | None) -> str:
                       f'onclick="pickTheme(\'{t}\',this)"></button>'
                       for t in ("", "green", "purple", "orange", "pink", "red"))
             + '</div>'
-            + '<script>function pickTheme(t,b){'
+            + '<script>document.addEventListener("click",function(e){'
+              'var m=e.target.closest&&e.target.closest(".mascot");'
+              'if(m){m.classList.remove("wink");void m.offsetWidth;m.classList.add("wink")}});'
+              'function pickTheme(t,b){'
               'if(t)document.documentElement.dataset.theme=t;'
               'else delete document.documentElement.dataset.theme;'
               'try{localStorage.setItem("iris-theme",t)}catch(e){}'
@@ -289,8 +327,8 @@ def make_handler(store_dir: str):
                 self._active = None
                 self._html('<h1 style="margin-top:24px">Meetings</h1>'
                            '<div class=empty>' + mascot(120)
-                           + '<div class=t>Pick a meeting on the left</div>'
-                           + '<div class=s>or search across everything, even encrypted notes</div></div>')
+                           + '<div class=t>Pick a meeting</div>'
+                           + '<div class=s>from the list, or search across everything - even encrypted notes</div></div>')
             elif path == "/search":
                 q = U.parse_qs(U.urlparse(self.path).query).get("q", [""])[0].strip()
                 self._active = None
@@ -315,7 +353,9 @@ def make_handler(store_dir: str):
                          else {n: open(os.path.join(store_dir, mid, n)).read()
                                for n in S.PLAINTEXT_FILES if os.path.exists(os.path.join(store_dir, mid, n))})
                 when = time.strftime("%B %-d, %Y at %-I:%M %p", time.localtime(meta.get("created", 0)))
-                body = (f'<h1>{esc(meta.get("title", mid))}</h1><div class=doc-meta>{when} &middot; {mid}</div>'
+                fresh = 0 < (time.time() - meta.get("created", 0)) < 600
+                body = (confetti(mid) if fresh else "")
+                body += (f'<h1>{esc(meta.get("title", mid))}</h1><div class=doc-meta>{when} &middot; {mid}</div>'
                         f'<form method=post action="/rename/{mid}" style="margin-bottom:18px">'
                         f'<input name=title placeholder="Rename meeting" style="padding:5px 9px;font-size:13px;border:1px solid var(--border);border-radius:6px;width:220px;background:var(--input-bg);color:var(--text)"> '
                         f'<button style="padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:999px;background:var(--input-bg);color:var(--text)">rename</button></form>'
