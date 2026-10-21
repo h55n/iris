@@ -63,3 +63,19 @@ def test_autosave_reaches_disk_and_no_js_errors(page):
     time.sleep(1.0)
     assert notes_on_disk(page) == "saved **bold**"
     assert page.errs == []
+
+def test_quick_switcher_jumps_to_note(page):
+    page.fill("#title", "Switcher target"); time.sleep(0.8)
+    other = page.evaluate("location.href")
+    page.goto(f"http://127.0.0.1:{PORT}/")
+    page.keyboard.press("Control+k")
+    assert page.is_visible("#qs")
+    page.keyboard.type("switcher")
+    assert page.inner_text(".qsi.on") == "Switcher target"
+    page.keyboard.press("Enter")
+    page.wait_for_url("**/meeting/*")
+    assert page.url == other
+    page.keyboard.press("Control+k"); page.keyboard.type("zzzz")
+    assert "No notes match" in page.inner_text("#qs")
+    page.keyboard.press("Escape")
+    assert not page.is_visible("#qs") and page.errs == []

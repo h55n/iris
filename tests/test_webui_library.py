@@ -86,7 +86,8 @@ def test_home_lists_recent_notes_with_preview_and_pinned_first():
     post(f"/pin/{mid}", {})
     html = get("/")
     assert "Home preview note" in html and "body" in html
-    assert html.index(">Pinned<") < html.index("Home preview note")
+    recent = html.split("<div class=recent>", 1)[1]
+    assert recent.index(">Pinned<") < recent.index("Home preview note")
 
 def test_preview_skips_headings():
     mid = post("/new", {"title": "Preview skip"})[1].split("/")[-1]
