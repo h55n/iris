@@ -68,3 +68,23 @@ def test_verifier_demotes_invented_claim_in_pipeline(tmp_path, monkeypatch):
     notes = store.decrypt_meeting(store_dir, mid, key)["notes.md"]
     assert "Buy servers" in notes and "Unverified" in notes   # demoted, not deleted
     assert "- [ ] Buy servers" not in notes.split("Unverified")[0]  # not in the trusted list
+
+def test_transcript_markdown_speaker_numbering():
+    from iris import transcribe as T
+    md = T.transcript_markdown([{"start": 0, "text": "hi", "speaker": 0},
+                                {"start": 61.2, "text": "yo", "speaker": 1}])
+    lines = md.splitlines()
+    assert lines[0] == "[00:00] Speaker 1: hi"
+    assert lines[1] == "[01:01] Speaker 2: yo"
+
+def test_transcript_markdown_custom_names_and_lang():
+    from iris import transcribe as T
+    md = T.transcript_markdown(
+        [{"start": 5, "text": "namaste", "speaker": 2, "lang": "hi"}],
+        speaker_names={2: "Hassan"})
+    assert md == "[00:05] Hassan: <hi> namaste"
+
+def test_transcript_markdown_no_speaker_no_lang():
+    from iris import transcribe as T
+    md = T.transcript_markdown([{"start": 0, "text": "plain"}])
+    assert md == "[00:00] plain"
