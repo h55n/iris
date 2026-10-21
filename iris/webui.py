@@ -369,7 +369,8 @@ def make_handler(store_dir: str):
                     body += render_notes_md(texts["notes.md"])
                 if "transcript.md" in texts:
                     lines = "<br>".join(render_transcript_line(l) for l in texts["transcript.md"].splitlines())
-                    body += f'<hr class=divider><h2>Transcript</h2><pre class=transcript>{lines}</pre>'
+                    body += (f'<hr class=divider><h2>{heading_icon("transcript")}Transcript</h2>'
+                             f'<pre class=transcript>{lines}</pre>')
                 self._html(body)
             else:
                 self.send_response(404); self.end_headers()
