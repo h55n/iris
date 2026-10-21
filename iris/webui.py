@@ -126,6 +126,8 @@ body{margin:0;font:16px/1.65 var(--font);-webkit-font-smoothing:antialiased;
 .inline button{padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:999px;background:var(--input-bg);color:var(--text)}
 .inline .danger{border-color:var(--danger-border);color:var(--danger)}.inline .primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .speaker{cursor:pointer}
+.dragging{opacity:.4}
+.dropbefore{box-shadow:0 -2px 0 var(--accent)}
 h2.big{font-size:26px;margin-top:28px}
 .todo.done span:last-child{text-decoration:line-through;color:var(--faint)}
 .box.on{background:var(--accent);border-color:var(--accent)}
@@ -422,14 +424,14 @@ def _title_in(store_dir: str, mid: str) -> str:
     except Exception:
         return mid
 
-def _nav_item(mid, meta, active):
+def _nav_item(mid, meta, active, group=""):
     integ = meta.get("integrity") or {}
     iv = f' &middot; {integ.get("passed")}/{integ.get("checked")} verified' if integ else ""
     when = time.strftime("%b %-d, %-I:%M %p", time.localtime(meta.get("created", 0)))
     cls = "nav-item active" if mid == active else "nav-item"
     kind = "note" if meta.get("kind") == "note" else ("locked" if meta.get("encrypted") else "")
     tail = f' &middot; {kind}' if kind else ""
-    return (f'<a class="{cls}" href="/meeting/{mid}">'
+    return (f'<a class="{cls}" href="/meeting/{mid}" data-mid="{mid}" data-group="{group}" draggable="true">'
             f'<div class=nav-title>{esc(meta.get("title", mid))}</div>'
             f'<div class=nav-meta>{when}{tail}{iv}</div></a>')
 
@@ -477,21 +479,21 @@ def sidebar(store_dir: str, active: str | None, active_folder: str | None = None
             metas.append((mid, meta))
     folders = L.list_folders(store_dir)
     fids = {f["id"] for f in folders}
-    pinned = [(m, x) for m, x in metas if x.get("pinned")]
+    pinned = sorted([(m, x) for m, x in metas if x.get("pinned")], key=lambda t: L.order_key(t[1]))
     loose = [(m, x) for m, x in metas if x.get("folder") not in fids]
     sec = lambda t: f'<div class=nav-sec>{t}</div>'
     out = ""
     if pinned:
-        out += sec("Pinned") + "".join(_nav_item(m, x, active) for m, x in pinned)
+        out += sec("Pinned") + "".join(_nav_item(m, x, active, "pinned") for m, x in pinned)
     out += sec("Folders")
     for f in folders:
-        inside = [(m, x) for m, x in metas if x.get("folder") == f["id"]]
+        inside = sorted([(m, x) for m, x in metas if x.get("folder") == f["id"]], key=lambda t: L.order_key(t[1]))
         open_ = f["id"] == active_folder or any(m == active for m, _ in inside)
-        out += (f'<a class="folder{" on" if f["id"] == active_folder else ""}" href="/folder/{f["id"]}">'
+        out += (f'<a class="folder{" on" if f["id"] == active_folder else ""}" href="/folder/{f["id"]}" data-fid="{f["id"]}" data-group="folders" draggable="true">'
                 f'<span class=chev>{"&#9662;" if open_ else "&#9656;"}</span>{esc(f["name"])}'
                 f'<span class=count>{len(inside)}</span></a>')
         if open_:
-            out += '<div class=indent>' + "".join(_nav_item(m, x, active) for m, x in inside) + '</div>'
+            out += '<div class=indent>' + "".join(_nav_item(m, x, active, f["id"]) for m, x in inside) + '</div>'
     out += ('<form class=newfolder method=post action="/folders/new">'
             '<input name=name placeholder="+ New folder" maxlength=60 autocomplete=off></form>')
     out += sec("Notes") + ("".join(_nav_item(m, x, active) for m, x in loose) or "")
@@ -516,6 +518,17 @@ def sidebar(store_dir: str, active: str | None, active_folder: str | None = None
                       f'onclick="pickTheme(\'{t}\',this)"></button>'
                       for t in ("", "blue", "purple", "orange", "pink", "red"))
             + '</div>'
+            + '<script>(function(){var drag=null;'
+              'document.addEventListener("dragstart",function(e){var a=e.target.closest&&e.target.closest("[data-group]");if(!a)return;drag=a;a.classList.add("dragging");e.dataTransfer.effectAllowed="move";try{e.dataTransfer.setData("text/plain","x")}catch(x){}});'
+              'document.addEventListener("dragend",function(){if(drag)drag.classList.remove("dragging");document.querySelectorAll(".dropbefore").forEach(function(n){n.classList.remove("dropbefore")});drag=null});'
+              'document.addEventListener("dragover",function(e){if(!drag)return;var t=e.target.closest&&e.target.closest("[data-group]");'
+              'if(!t||t===drag||t.dataset.group!==drag.dataset.group)return;e.preventDefault();'
+              'document.querySelectorAll(".dropbefore").forEach(function(n){n.classList.remove("dropbefore")});t.classList.add("dropbefore")});'
+              'document.addEventListener("drop",function(e){if(!drag)return;var t=e.target.closest&&e.target.closest("[data-group]");'
+              'if(!t||t===drag||t.dataset.group!==drag.dataset.group)return;e.preventDefault();'
+              't.parentNode.insertBefore(drag,t);var g=drag.dataset.group,sib=Array.prototype.filter.call(t.parentNode.children,function(n){return n.dataset&&n.dataset.group===g});'
+              'var isF=g==="folders";var ids=sib.map(function(n){return isF?n.dataset.fid:n.dataset.mid});'
+              'fetch("/reorder/"+(isF?"folders":"notes"),{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({ids:ids.join(",")})}).then(function(){location.reload()})});})()</script>'
             + '<script>document.addEventListener("click",function(e){'
               'var m=e.target.closest&&e.target.closest(".mascot");'
               'if(m){m.classList.remove("wink");void m.offsetWidth;m.classList.add("wink")}});</script>'
@@ -579,6 +592,11 @@ def make_handler(store_dir: str):
                     return go("/folder/" + parts[1])
                 if len(parts) == 3 and parts[2] == "delete":
                     L.delete_folder(store_dir, parts[1]); return go("/")
+            if len(parts) == 2 and parts[0] == "reorder" and parts[1] in ("folders", "notes"):
+                ids = [i for i in form.get("ids", "").split(",") if i]
+                if parts[1] == "folders": L.reorder_folders(store_dir, ids)
+                else: L.reorder_notes(store_dir, ids)
+                self.send_response(204); return self.end_headers()
             if len(parts) == 2 and parts[0] == "speaker" and ok_mid(parts[1]):
                 try:
                     n = L.rename_speaker(store_dir, parts[1], form.get("old", ""), form.get("new", ""))
