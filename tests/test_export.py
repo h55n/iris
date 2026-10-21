@@ -1,8 +1,8 @@
 import os
 from iris import store as S, crypto as C, export as E
 
-KEY = "/tmp/convo-export-key.txt"; RKEY = "/tmp/convo-export-rkey.txt"
-STORE = "/tmp/convo-export-store"
+KEY = "/tmp/iris-export-key.txt"; RKEY = "/tmp/iris-export-rkey.txt"
+STORE = "/tmp/iris-export-store"
 
 def setup_module(m):
     os.system(f"rm -rf {STORE} {KEY} {RKEY} /tmp/exp*.md*")

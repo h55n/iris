@@ -1,7 +1,7 @@
 import os
 from iris import crypto as C
 
-K = "/tmp/convo-export2-key.txt"
+K = "/tmp/iris-export2-key.txt"
 
 def test_export_secret_line():
     if not os.path.exists(K): C.generate_key(K)

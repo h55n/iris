@@ -1,8 +1,8 @@
 import os, json
 from iris import store as S, crypto as C
 
-KEY = "/tmp/convo-store-test-key.txt"
-STORE = "/tmp/convo-store-test"
+KEY = "/tmp/iris-store-test-key.txt"
+STORE = "/tmp/iris-store-test"
 
 def setup_module(m):
     os.system(f"rm -rf {STORE} {KEY}")

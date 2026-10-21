@@ -1,7 +1,7 @@
 import os, subprocess
 import iris.crypto as C
 
-KEY = "/tmp/convo-test-key.txt"
+KEY = "/tmp/iris-test-key.txt"
 
 def setup_module(m):
     if os.path.exists(KEY): os.remove(KEY)
@@ -24,7 +24,7 @@ def test_roundtrip():
     assert C.decrypt_bytes(blob, KEY) == b"decision: ship Friday, owner Priya"
 
 def test_wrong_key_fails():
-    other = "/tmp/convo-test-key2.txt"
+    other = "/tmp/iris-test-key2.txt"
     if os.path.exists(other): os.remove(other)
     C.generate_key(other)
     blob = C.encrypt_bytes(b"secret", C.public_key(KEY))

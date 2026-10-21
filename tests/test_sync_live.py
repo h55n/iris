@@ -4,8 +4,8 @@ import os, subprocess, time, json
 import pytest
 from iris import store as S, crypto as C, sync as Y
 
-KEY = "/tmp/convo-synctest-key.txt"
-A = "/tmp/convo-synctest-A"; B = "/tmp/convo-synctest-B"; RELAY = "/tmp/convo-synctest-relay"
+KEY = "/tmp/iris-synctest-key.txt"
+A = "/tmp/iris-synctest-A"; B = "/tmp/iris-synctest-B"; RELAY = "/tmp/iris-synctest-relay"
 PORT = 18471
 
 @pytest.fixture(scope="module", autouse=True)
