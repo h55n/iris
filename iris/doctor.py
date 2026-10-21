@@ -1,4 +1,4 @@
-"""convo doctor - one command to check a machine is ready to run everything.
+"""iris doctor - one command to check a machine is ready to run everything.
 Prints OK / MISSING per dependency with the fix. Exit 1 if anything core is missing."""
 import os, shutil, subprocess, sys
 
@@ -7,7 +7,7 @@ def _ok(name, yes, fix=""):
     return yes
 
 def main():
-    print("convo doctor")
+    print("iris doctor")
     core = True
     core &= _ok("ffmpeg", shutil.which("ffmpeg") is not None, "apt install ffmpeg / brew install ffmpeg")
     core &= _ok("whisper-cli", os.path.exists("vendor/whisper.cpp/build/bin/whisper-cli"),
