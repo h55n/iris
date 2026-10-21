@@ -108,10 +108,22 @@ if __name__ == "__main__":
             print("usage: iris ingest <audio-file> [--backend ollama|ultramarine] [--diarize [--speakers N]] [--multilingual] [--title T]"); sys.exit(1)
         backend = "ollama"
         if "--backend" in args:
-            i = args.index("--backend"); backend = args[i + 1]; del args[i:i + 2]
+            i = args.index("--backend")
+            backend = args[i + 1] if i + 1 < len(args) else ""
+            if backend not in ("ollama", "ultramarine"):
+                print(f"unknown backend: {backend or '(missing)'} (ollama|ultramarine)", file=sys.stderr); sys.exit(1)
+            del args[i:i + 2]
         dia = "--diarize" in args
-        spk = int(args[args.index("--speakers") + 1]) if "--speakers" in args else 0
-        title = args[args.index("--title") + 1] if "--title" in args else ""
+        spk = 0
+        if "--speakers" in args:
+            i = args.index("--speakers")
+            try:
+                spk = int(args[i + 1])
+            except (IndexError, ValueError):
+                print("--speakers needs a number, e.g. --speakers 2", file=sys.stderr); sys.exit(1)
+            if not 0 < spk < 20:
+                print("--speakers must be 1-19", file=sys.stderr); sys.exit(1)
+        title = args[args.index("--title") + 1] if "--title" in args and args.index("--title") + 1 < len(args) else ""
         ml = "--multilingual" in args
         cmd_ingest(args[1], backend, title=title, diarize=dia, speakers=spk, multilingual=ml)
     elif args[0] == "sweep":
