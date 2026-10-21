@@ -67,3 +67,18 @@ def test_legacy_convo_title_header_preference():
     assert _meeting_title({"X-Iris-Title": "standup", "X-Convo-Title": "old"}) == "standup"
     assert _meeting_title({"X-Convo-Title": "old-apk title"}) == "old-apk title"
     assert _meeting_title({}) == ""
+
+def test_bad_content_length_400_not_crash(server):
+    import http.client
+    conn = http.client.HTTPConnection("127.0.0.1", PORT)
+    conn.putrequest("POST", "/ingest")
+    conn.putheader("X-Iris-Token", "t0ken")
+    conn.putheader("Content-Length", "not-a-number")
+    conn.endheaders(b"x" * 2000)
+    try:
+        code = conn.getresponse().status
+    except Exception:
+        code = None
+    conn.close()
+    assert code == 400
+    assert _post("/nope", token="t0ken") == 404  # server still alive

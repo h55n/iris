@@ -35,7 +35,10 @@ def make_handler(store_dir, token, backend):
         def do_POST(self):
             if not self._auth(): return self._send(403, {"error": "bad token"})
             if self.path != "/ingest": return self._send(404, {})
-            size = int(self.headers["Content-Length"])
+            try:
+                size = int(self.headers["Content-Length"])
+            except (TypeError, ValueError):
+                return self._send(400, {"error": "bad Content-Length"})
             if size > 500 * 1024 * 1024:  # 500 MB sanity cap (~9h of 16k mono wav)
                 return self._send(413, {"error": "audio too large"})
             audio = self.rfile.read(size)
