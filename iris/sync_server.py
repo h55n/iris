@@ -1,6 +1,6 @@
 """Tiny self-hostable sync server. Moves transcripts, notes and meta between
 your devices. NEVER audio - recordings never leave the device they were made on.
-stdlib only: python3 convo/sync_server.py --dir syncdata --token S3CRET --port 8471"""
+stdlib only: python3 iris/sync_server.py --dir syncdata --token S3CRET --port 8471"""
 import json, os, time, argparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 

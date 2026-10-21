@@ -3,7 +3,7 @@ the user's OWN laptop (never a third-party relay); the laptop runs the full
 pipeline (transcribe -> notes -> verify -> encrypt) and the result syncs
 back to the phone through the normal relay as ciphertext.
 
-  python3 convo/ingest_server.py --token S3CRET --port 8472
+  python3 iris/ingest_server.py --token S3CRET --port 8472
 
 POST /ingest  (body = raw audio bytes, X-Convo-Token, optional X-Convo-Title)
   -> {"meeting": "<id>", "integrity": {...}}
