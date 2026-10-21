@@ -85,11 +85,14 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun validUrl(u: String) = u.startsWith("http://") || u.startsWith("https://")
+
     private fun sendToLaptop() {
         val laptop = prefs.getString("laptop", "") ?: ""
         val token = prefs.getString("token", "") ?: ""
         val f = RecorderService.lastFile ?: run { toast("no recording yet"); return }
         if (laptop.isBlank() || token.isBlank()) { toast("set laptop URL + token first"); return }
+        if (!validUrl(laptop)) { toast("laptop URL must start with http://"); return }
         status.text = "uploading to your laptop..."
         thread {
             try {
@@ -106,6 +109,7 @@ class MainActivity : Activity() {
         val token = prefs.getString("token", "") ?: ""
         val key = prefs.getString("agekey", "") ?: ""
         if (relay.isBlank() || token.isBlank()) { toast("set relay URL + token first"); return }
+        if (!validUrl(relay)) { toast("relay URL must start with http://"); return }
         status.text = "syncing..."
         thread {
             try {
