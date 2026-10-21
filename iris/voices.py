@@ -41,9 +41,15 @@ def embedding_of(wav_path: str) -> np.ndarray:
     n = np.linalg.norm(v)
     return v / n if n else v
 
+MIN_ENROLL_SECONDS = 3.0
+
 def enroll(name: str, wav_path: str, voices_dir: str = VOICES_DIR) -> str:
     if not name.replace("-", "").replace("_", "").isalnum():
         raise ValueError("name must be alphanumeric (- and _ allowed)")
+    audio = _read_wav16(wav_path)
+    if len(audio) < MIN_ENROLL_SECONDS * 16000:
+        raise ValueError(f"sample too short: need at least {MIN_ENROLL_SECONDS:.0f}s of speech "
+                         f"({len(audio) / 16000:.1f}s given)")
     os.makedirs(voices_dir, exist_ok=True)
     dest = os.path.join(voices_dir, name + ".npy")
     np.save(dest, embedding_of(wav_path))
