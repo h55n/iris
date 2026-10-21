@@ -135,3 +135,23 @@ def test_raw_download_missing_file_404s(server):
         assert False, "unknown meeting should 404"
     except urllib.error.HTTPError as e:
         assert e.code == 404
+
+def test_locked_meeting_shows_friendly_page_not_500(server):
+    from iris import store as S, crypto as C
+    key = "/tmp/iris-webui-lock-test.txt"
+    if os.path.exists(key): os.remove(key)
+    C.generate_key(key)
+    mid = _mk_search_meeting()
+    S.encrypt_meeting(STORE, mid, key)
+    html = urllib.request.urlopen(f"http://127.0.0.1:{PORT}/meeting/{mid}").read().decode()
+    assert "locked" in html.lower() and "Traceback" not in html
+    # restore plaintext so later tests see the meeting again
+    texts = S.decrypt_meeting(STORE, mid, key)
+    for n, t in texts.items():
+        open(os.path.join(STORE, mid, n), "w").write(t)
+        p = os.path.join(STORE, mid, n + ".age")
+        if os.path.exists(p): os.remove(p)
+    mp = os.path.join(STORE, mid, "meta.json")
+    m = json.load(open(mp)); m["encrypted"] = False
+    json.dump(m, open(mp, "w"))
+

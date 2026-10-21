@@ -142,6 +142,17 @@ pre.transcript{background:var(--side);border:1px solid var(--border-soft);border
 
 def esc(t): return html.escape(t or "")
 
+def read_meeting_texts(store_dir: str, mid: str):
+    """Plaintext dict, or None when the meeting is encrypted and the local key
+    can't open it (wrong/missing key)."""
+    from iris import crypto as C
+    try:
+        return (S.decrypt_meeting(store_dir, mid) if S.is_encrypted(store_dir, mid)
+                else {n: open(os.path.join(store_dir, mid, n)).read()
+                      for n in S.PLAINTEXT_FILES if os.path.exists(os.path.join(store_dir, mid, n))})
+    except C.CryptoError:
+        return None
+
 # Iris the eye - original SVG mascot drawn for this project (no third-party art)
 def mascot(size: int = 96, mood: str = "happy") -> str:
     smile = ('<path d="M47 83 q13 11 26 0" stroke="currentColor" stroke-width="3.2" '
@@ -388,9 +399,9 @@ def make_handler(store_dir: str):
                 if ("/" in mid or ".." in mid or fname not in S.PLAINTEXT_FILES
                         or not os.path.isdir(os.path.join(store_dir, mid))):
                     self._html("<p>not found</p>", status=404); return
-                texts = (S.decrypt_meeting(store_dir, mid) if S.is_encrypted(store_dir, mid)
-                         else {n: open(os.path.join(store_dir, mid, n)).read()
-                               for n in S.PLAINTEXT_FILES if os.path.exists(os.path.join(store_dir, mid, n))})
+                texts = read_meeting_texts(store_dir, mid)
+                if texts is None:
+                    self._html("<p>this meeting is locked on this device</p>", status=403); return
                 if fname not in texts:
                     self._html("<p>not found</p>", status=404); return
                 body_b = texts[fname].encode()
@@ -406,9 +417,13 @@ def make_handler(store_dir: str):
                 if "/" in mid or ".." in mid or not os.path.isdir(os.path.join(store_dir, mid)):
                     self._html("<p>not found</p>", status=404); return
                 meta = json.load(open(os.path.join(store_dir, mid, "meta.json")))
-                texts = (S.decrypt_meeting(store_dir, mid) if S.is_encrypted(store_dir, mid)
-                         else {n: open(os.path.join(store_dir, mid, n)).read()
-                               for n in S.PLAINTEXT_FILES if os.path.exists(os.path.join(store_dir, mid, n))})
+                texts = read_meeting_texts(store_dir, mid)
+                if texts is None:
+                    self._active = mid
+                    self._html('<div class=empty>' + mascot(72, "sleep")
+                               + '<div class=t>This meeting is locked</div>'
+                               + '<div class=s>the key that sealed it is not on this device</div></div>')
+                    return
                 when = time.strftime("%B %-d, %Y at %-I:%M %p", time.localtime(meta.get("created", 0)))
                 fresh = 0 < (time.time() - meta.get("created", 0)) < 600
                 body = (confetti(mid) if fresh else "")
