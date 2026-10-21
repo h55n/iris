@@ -39,6 +39,18 @@ def cmd_ingest(audio, backend_name="ollama", title="", diarize=False, speakers=0
 
 __version__ = "0.2.0"
 
+def _need(args, i, what):
+    if len(args) <= i:
+        print(f"missing {what}", file=sys.stderr); sys.exit(1)
+    return args[i]
+
+def _need_meeting(args):
+    mid = _need(args, 1, "meeting id")
+    if not os.path.isdir(os.path.join(STORE, mid)):
+        print(f"no such meeting: {mid}", file=sys.stderr)
+        print("try: iris list", file=sys.stderr); sys.exit(1)
+    return mid
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     if args == ["--version"]:
@@ -65,7 +77,7 @@ if __name__ == "__main__":
         else:
             print(C.public_key())
     elif args[0] == "encrypt":
-        mids = [args[1]] if len(args) > 1 else [m for m in sorted(os.listdir(STORE)) if os.path.isdir(os.path.join(STORE, m))]
+        mids = [_need_meeting(args)] if len(args) > 1 else store.list_meetings(STORE)
         for m in mids:
             if not store.is_encrypted(STORE, m):
                 print(m, "->", ", ".join(store.encrypt_meeting(STORE, m)))
@@ -74,16 +86,12 @@ if __name__ == "__main__":
             print(f"{h['meeting']} ({h['file']}): {h['line']}")
     elif args[0] == "export":
         from iris import export as E
-        print(E.export_meeting(STORE, args[1], args[2]))
+        print(E.export_meeting(STORE, _need_meeting(args), _need(args, 2, "output file")))
     elif args[0] == "share":
         from iris import export as E
-        print(E.share_meeting(STORE, args[1], args[2], args[3]))
+        print(E.share_meeting(STORE, _need_meeting(args), _need(args, 2, "their public key"), _need(args, 3, "output file")))
     elif args[0] == "read":
-        if len(args) < 2 or not os.path.isdir(os.path.join(STORE, args[1])):
-            print(f"no such meeting: {args[1] if len(args) > 1 else '(missing id)'}", file=sys.stderr)
-            print("try: iris list", file=sys.stderr)
-            sys.exit(1)
-        for name, text in store.decrypt_meeting(STORE, args[1]).items():
+        for name, text in store.decrypt_meeting(STORE, _need_meeting(args)).items():
             print(f"--- {name} ---\n{text}")
     elif args[0] == "sync":
         import getpass
