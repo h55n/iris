@@ -30,3 +30,9 @@
 ## Not built yet (honest scope)
 - Encryption at rest (transcripts are plain files today; age-based encryption is v1.5).
 - iOS anything.
+
+## Meeting auto-detect (convo/detect.py) - added Oct 21
+- TESTED (unit, 7 fake-probe tests): Zoom/Teams/Webex/Slack process detection, Google Meet browser window-title detection (incl. "Meet - abc-defg-hij" title form), 2-poll confirmation (a 1-poll glitch does NOT fire), meeting-end after silence, no duplicate start events, mic signal only attached when a meeting app is present.
+- DETECTION ONLY: it never joins or reads the meeting. Recording still starts with a manual confirm.
+- Hassan's real-device tests pending: live Zoom + Meet detection on his laptop (X11 vs Wayland - window titles only work on X11; Wayland needs process/mic signals), mic-in-use check on his audio stack.
+- Phone (honest limits, built into docs not code): Android can only see the FOREGROUND app name via Usage Access - it cannot see another app's mic or audio (Play policy, May 2022). iOS: no detection possible. Android companion app will use the foreground-app signal with a "meeting? tap to record" notification.
