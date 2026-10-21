@@ -102,8 +102,11 @@ def test_raw_rejects_traversal(server):
 
 def test_raw_rejects_unknown_file(server):
     mid = _mk_search_meeting()
-    body = _get(f"/raw/{mid}/secret.txt")
-    assert "not found" in body
+    try:
+        _get(f"/raw/{mid}/secret.txt")
+        assert False, "unknown file should 404"
+    except urllib.error.HTTPError as e:
+        assert e.code == 404
 
 def test_rename_caps_long_title(server):
     mid = _mk_search_meeting()
@@ -123,5 +126,12 @@ def test_missing_meeting_is_a_real_404(server):
     try:
         urllib.request.urlopen(f"http://127.0.0.1:{PORT}/meeting/20990101-0000-ffffff")
         assert False, "should 404"
+    except urllib.error.HTTPError as e:
+        assert e.code == 404
+
+def test_raw_download_missing_file_404s(server):
+    try:
+        urllib.request.urlopen(f"http://127.0.0.1:{PORT}/raw/20990101-0000-ffffff/notes.md")
+        assert False, "unknown meeting should 404"
     except urllib.error.HTTPError as e:
         assert e.code == 404

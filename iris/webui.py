@@ -387,12 +387,12 @@ def make_handler(store_dir: str):
                 fname = parts[1] if len(parts) > 1 else ""
                 if ("/" in mid or ".." in mid or fname not in S.PLAINTEXT_FILES
                         or not os.path.isdir(os.path.join(store_dir, mid))):
-                    self._html("<p>not found</p>"); return
+                    self._html("<p>not found</p>", status=404); return
                 texts = (S.decrypt_meeting(store_dir, mid) if S.is_encrypted(store_dir, mid)
                          else {n: open(os.path.join(store_dir, mid, n)).read()
                                for n in S.PLAINTEXT_FILES if os.path.exists(os.path.join(store_dir, mid, n))})
                 if fname not in texts:
-                    self._html("<p>not found</p>"); return
+                    self._html("<p>not found</p>", status=404); return
                 body_b = texts[fname].encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "text/markdown; charset=utf-8")
