@@ -396,7 +396,8 @@ def make_handler(store_dir: str):
                     body += ('<div class=empty style="padding-top:6px">' + mascot(80, "celebrate")
                              + '<div class=t>Meeting saved</div>'
                              + '<div class=s>encrypted, verified, and only on your devices</div></div>')
-                body += (f'<h1>{esc(meta.get("title", mid))}</h1><div class=doc-meta>{when} &middot; {mid}</div>'
+                lock = ' &middot; <span style="color:var(--pill-ok)">encrypted at rest</span>' if meta.get("encrypted") else ""
+                body += (f'<h1>{esc(meta.get("title", mid))}</h1><div class=doc-meta>{when} &middot; {mid}{lock}</div>'
                         f'<form method=post action="/rename/{mid}" style="margin-bottom:18px">'
                         f'<input name=title placeholder="Rename meeting" style="padding:5px 9px;font-size:13px;border:1px solid var(--border);border-radius:6px;width:220px;background:var(--input-bg);color:var(--text)"> '
                         f'<button style="padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:999px;background:var(--input-bg);color:var(--text)">rename</button></form>'
