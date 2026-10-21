@@ -30,9 +30,15 @@ class OllamaBackend:
         self.model = model or os.environ.get("IRIS_OLLAMA_MODEL", "gemma3:4b")
         self.base = base
     def notes(self, transcript_md: str) -> dict:
-        r = _chat(f"{self.base}/api/generate",
-                  {"model": self.model, "prompt": PROMPT + transcript_md,
-                   "stream": False, "format": "json"})
+        try:
+            r = _chat(f"{self.base}/api/generate",
+                      {"model": self.model, "prompt": PROMPT + transcript_md,
+                       "stream": False, "format": "json"})
+        except Exception as e:
+            raise RuntimeError(
+                f"local notes backend unreachable ({self.base}) - is ollama running? "
+                f"Fix: `ollama serve` + `ollama pull {self.model}`, "
+                f"or use --backend ultramarine. ({type(e).__name__})") from e
         return _parse_notes(r["response"])
 
 class UltramarineBackend:

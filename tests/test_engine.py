@@ -113,3 +113,10 @@ def test_transcript_markdown_speaker_names():
     segs = [{"start": 5.0, "text": "hi", "speaker": 0, "lang": "en"}]
     md = T.transcript_markdown(segs, speaker_names={0: "Priya"})
     assert "Priya:" in md and "Speaker 1" not in md
+
+def test_ollama_unreachable_error_is_actionable():
+    from iris import backends as B
+    be = B.OllamaBackend(base="http://127.0.0.1:9")  # nothing listens on port 9
+    import pytest
+    with pytest.raises(RuntimeError, match="ollama serve"):
+        be.notes("[00:01] hello")
