@@ -26,6 +26,15 @@ class AgeDecryptTest {
     }
 
     @Test
+    fun validUrlRules() {
+        assertTrue(SyncClient.validUrl("http://192.168.1.5:8472"))
+        assertTrue(SyncClient.validUrl("https://relay.example.com"))
+        assertTrue(!SyncClient.validUrl("192.168.1.5"))
+        assertTrue(!SyncClient.validUrl(""))
+        assertTrue(!SyncClient.validUrl("ftp://x"))
+    }
+
+    @Test
     fun bech32AlphabetIsComplete() {
         // the age/Bech32 charset has exactly 32 distinct symbols
         val chars = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"

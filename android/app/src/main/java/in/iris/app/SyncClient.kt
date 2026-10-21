@@ -32,6 +32,9 @@ object SyncClient {
         return code to bytes
     }
 
+    /** Only http(s) URLs are accepted for laptop/relay endpoints. */
+    fun validUrl(u: String) = u.startsWith("http://") || u.startsWith("https://")
+
     fun listMeetings(relay: String, token: String, since: Double = 0.0): List<Meeting> {
         val (code, bytes) = req("$relay/list?since=$since", token)
         if (code != 200) throw Exception("list failed: $code")
