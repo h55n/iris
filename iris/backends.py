@@ -47,7 +47,7 @@ class UltramarineBackend:
         _log_usage(r)
         return _parse_notes(r["choices"][0]["message"]["content"])
 
-USAGE_LOG = os.environ.get("IRIS_USAGE_LOG", os.path.expanduser("~/.convo/hosted-usage.jsonl"))
+USAGE_LOG = os.environ.get("IRIS_USAGE_LOG", os.path.expanduser("~/.iris/hosted-usage.jsonl"))
 
 def _log_usage(response: dict):
     """Track hosted-backend token usage locally, so the real spend is visible

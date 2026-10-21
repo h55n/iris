@@ -18,7 +18,7 @@ def main():
         "download ggml-silero-v6.2.0.bin from hf.co/ggml-org/whisper-vad")
     _ok("multilingual model (small, for Hindi)", os.path.exists("models/ggml-small.bin"),
         "download ggml-small.bin - needed for non-English meetings")
-    _ok("encryption key", os.path.exists(os.path.expanduser("~/.convo/key.txt")),
+    _ok("encryption key", os.path.exists(os.path.expanduser("~/.iris/key.txt")),
         "python3 convo/cli.py key init")
     _ok("diarization models", os.path.exists("models/pyannote-seg-3-0.onnx") and os.path.exists("models/eres2net_en.onnx"),
         "models/get-diarize-models.sh")

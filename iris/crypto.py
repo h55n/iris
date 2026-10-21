@@ -6,7 +6,7 @@ expose them. Each device holds the same user keypair (private key file
 chmod 600, generated once, copied via QR/manual - never over the wire).
 The sync relay only ever sees .age ciphertext.
 
-Key file: ~/.convo/key.txt  (age secret key; the public key line inside
+Key file: ~/.iris/key.txt  (age secret key; the public key line inside
 is the "device fingerprint" users compare when pairing devices.)
 """
 from __future__ import annotations
@@ -14,7 +14,11 @@ import os, subprocess, sys
 
 AGE = os.environ.get("IRIS_AGE", os.path.join(os.path.dirname(__file__), "..", "vendor", "age"))
 AGE_KEYGEN = os.environ.get("IRIS_AGE_KEYGEN", os.path.join(os.path.dirname(__file__), "..", "vendor", "age-keygen"))
-DEFAULT_KEY = os.path.expanduser(os.environ.get("IRIS_KEY", "~/.convo/key.txt"))
+def _legacy(new_path, old_path):
+    return new_path if os.path.exists(new_path) or not os.path.exists(old_path) else old_path
+
+DEFAULT_KEY = _legacy(os.path.expanduser(os.environ.get("IRIS_KEY", "~/.iris/key.txt")),
+                      os.path.expanduser("~/.convo/key.txt"))
 
 class CryptoError(RuntimeError):
     pass
