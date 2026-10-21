@@ -15,26 +15,28 @@ PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=
 <script>try{var t=localStorage.getItem("iris-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>
 :root{
-  --bg:#fdfdfc; --side:#f7f7f2; --text:#37352f; --muted:#73726e; --faint:#a3a29e;
-  --border:#e9e9e7; --border-soft:#ededeb; --accent:#2383e2;
+  --bg:#fcfbf8; --side:#f4f2ec; --text:#2f2d29; --muted:#76736b; --faint:#a8a49a;
+  --border:#e8e5dc; --border-soft:#eeebe3; --accent:#3f8f4f;
+  --font:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
   --quote-border:#d3d1cb; --pill-ok-bg:#eef7ee; --pill-ok:#2f6b31;
   --input-bg:#ffffff; --active-bg:#e3e3e0; --danger:#b83232; --danger-border:#e5c7c5;
-  --accent-soft:#e7f0fb; --ink:#3b2a20;
+  --accent-soft:#e6f1e3; --ink:#3b2a20; --active-bg:#e9e6dd;
 }
-[data-theme=green]{ --accent:#0f7b6c; --accent-soft:#e2f1ee; }
+[data-theme=blue]{ --accent:#2383e2; --accent-soft:#e7f0fb; }
 [data-theme=purple]{ --accent:#6940a5; --accent-soft:#efeaf7; }
 [data-theme=orange]{ --accent:#d9730d; --accent-soft:#faebdd; }
 [data-theme=pink]{ --accent:#c14c8a; --accent-soft:#f8e9f1; }
 [data-theme=red]{ --accent:#d44c47; --accent-soft:#fae9e8; }
 @media (prefers-color-scheme: dark){
   :root{
-    --bg:#191919; --side:#202020; --text:#d4d4d2; --muted:#9b9b98; --faint:#6f6f6c;
-    --border:#2f2f2f; --border-soft:#2a2a2a; --accent:#529cca;
+    --bg:#191918; --side:#1f1f1d; --text:#dcdad3; --muted:#a09d94; --faint:#706d65;
+    --border:#31302c; --border-soft:#2a2927; --accent:#6bb37a;
     --quote-border:#4a4a47; --pill-ok-bg:#1e2b1e; --pill-ok:#6aaa6f;
     --input-bg:#252525; --active-bg:#373737; --danger:#e08a8a; --danger-border:#5a3535;
-    --accent-soft:#1c2f3d; --ink:#e9dcc8;
+    --accent-soft:#1f2e22; --ink:#e9dcc8; --active-bg:#2e2d29;
   }
-  [data-theme=green]{ --accent:#4dab9a; --accent-soft:#1d2f2b; }
+  [data-theme=blue]{ --accent:#529cca; --accent-soft:#1c2f3d; }
   [data-theme=purple]{ --accent:#a98fd4; --accent-soft:#2a2436; }
   [data-theme=orange]{ --accent:#e8a35c; --accent-soft:#332a1e; }
   [data-theme=pink]{ --accent:#e08ab5; --accent-soft:#33222b; }
@@ -46,7 +48,7 @@ PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=
 .dot{width:14px;height:14px}
 .dot{width:16px;height:16px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
 .dot.sel{border-color:var(--text)}
-.dot[data-t=""]{background:#2383e2}.dot[data-t=green]{background:#0f7b6c}
+.dot[data-t=""]{background:#3f8f4f}.dot[data-t=blue]{background:#2383e2}
 .dot[data-t=purple]{background:#6940a5}.dot[data-t=orange]{background:#d9730d}
 .dot[data-t=pink]{background:#c14c8a}.dot[data-t=red]{background:#d44c47}
 *{box-sizing:border-box}
@@ -61,6 +63,7 @@ button:hover{transform:translateY(-1px)}
 button:active{transform:scale(.94)}
 .dot{transition:transform .25s var(--snap)}
 .dot:hover{transform:scale(1.25)}
+input,select,button,textarea{font-family:var(--font)}
 input{transition:border-color .25s var(--spring),box-shadow .25s var(--spring)}
 input:focus{box-shadow:0 0 0 3px var(--accent-soft)}
 .bullet,.todo,blockquote,.nav-item,h2,h3,.pill{animation:rise .5s var(--spring) both}
@@ -70,7 +73,7 @@ input:focus{box-shadow:0 0 0 3px var(--accent-soft)}
 .rise:nth-child(n+8){animation-delay:.28s}
 @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
-body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+body{margin:0;font:16px/1.65 var(--font);-webkit-font-smoothing:antialiased;
   color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
 .layout{display:flex;min-height:100vh}
 .sidebar{width:264px;flex:none;background:var(--side);border-right:1px solid var(--border-soft);
@@ -111,6 +114,7 @@ body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"SF Pro Text","Seg
 .tdrawer{margin-top:28px;border-top:1px solid var(--border-soft);padding-top:14px}
 .tdrawer summary{cursor:pointer;font-size:15px;font-weight:600;color:var(--muted);list-style:none}
 .tdrawer summary::-webkit-details-marker{display:none}
+.tdrawer summary .icon{width:18px;height:18px;vertical-align:-3px;margin-right:7px;color:var(--accent)}
 [hidden]{display:none!important}
 .inline{display:inline-block;margin:0 6px 18px 0}
 .inline input{padding:5px 9px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--input-bg);color:var(--text)}
@@ -119,7 +123,7 @@ body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"SF Pro Text","Seg
 .card{display:block;padding:12px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;text-decoration:none;color:var(--text);background:var(--input-bg)}
 .card:hover{border-color:var(--accent)}.card .nav-title{font-size:15px}
 .nav-item{display:block;padding:6px 10px;border-radius:6px;color:var(--text);text-decoration:none;margin-bottom:1px}
-.nav-item:hover{background:#ececea}
+.nav-item:hover{background:var(--active-bg)}
 .nav-item.active{background:var(--active-bg)}
 .nav-title{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nav-meta{font-size:11.5px;color:var(--faint);margin-top:1px}
@@ -178,11 +182,21 @@ pre.transcript{background:var(--side);border:1px solid var(--border-soft);border
 .back{color:var(--muted);text-decoration:none;font-size:13.5px}
 .back:hover{color:var(--text)}
 .divider{border:none;border-top:1px solid var(--border-soft);margin:40px 0}
+.menubtn{display:none;float:right;font-size:13px;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:3px 12px;cursor:pointer;margin-top:2px}
+#navtoggle{position:absolute;opacity:0;pointer-events:none}
 @media (max-width:900px){
   .layout{flex-direction:column}
   .sidebar{width:100%;height:auto;position:static;border-right:none;border-bottom:1px solid var(--border-soft)}
   .doc{padding:32px 22px 80px}
   h1{font-size:25px}
+  .title{font-size:30px}
+  .menubtn{display:inline-block}
+  .sidebar .nav,.sidebar .themes,.sidebar .newnote{display:none}
+  #navtoggle:checked ~ .nav{display:block}
+  #navtoggle:checked ~ .themes{display:flex}
+  #navtoggle:checked ~ .newnote{display:block}
+  .sidebar{padding:12px 14px;display:block}
+  .brand{display:inline-block;padding-bottom:8px}
 }
 </style>"""
 
@@ -369,7 +383,8 @@ def sidebar(store_dir: str, active: str | None, active_folder: str | None = None
         out += ('<div class=empty>' + mascot(72, "sleep")
                 + '<div class=t>No meetings yet</div>'
                 + '<div class=s>record one and Iris will keep it safe</div></div>')
-    return ('<div class=brand>Iris<span id=tagline>private meeting notes</span></div>'
+    return ('<input type=checkbox id=navtoggle><label for=navtoggle class=menubtn>Menu</label>'
+            '<div class=brand>Iris<span id=tagline>private meeting notes</span></div>'
             '<script>(function(){var t=["private meeting notes","your meetings, your machines",'
             '"nothing leaves your devices","notes that keep receipts","always local, always yours"];'
             'var i=Math.floor(Math.random()*t.length),el=document.getElementById("tagline");'
@@ -383,7 +398,7 @@ def sidebar(store_dir: str, active: str | None, active_folder: str | None = None
             + '<div class=themes><span class=lbl>Theme</span>'
             + ''.join(f'<button class=dot data-t="{t}" title="{t or "blue"}" '
                       f'onclick="pickTheme(\'{t}\',this)"></button>'
-                      for t in ("", "green", "purple", "orange", "pink", "red"))
+                      for t in ("", "blue", "purple", "orange", "pink", "red"))
             + '</div>'
             + '<script>document.addEventListener("click",function(e){'
               'var m=e.target.closest&&e.target.closest(".mascot");'

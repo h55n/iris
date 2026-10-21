@@ -69,3 +69,13 @@ def test_inline_scripts_are_valid_js():
         f = tempfile.NamedTemporaryFile("w", suffix=".js", delete=False); f.write(sc); f.close()
         r = subprocess.run(["node", "--check", f.name], capture_output=True, text=True)
         assert r.returncode == 0, f"script {i}: {r.stderr[:200]}"
+
+def test_palette_and_fonts_are_notion_granola():
+    html = get("/")
+    assert "--accent:#3f8f4f" in html            # Granola-style green default
+    assert "ui-sans-serif" in html and "BlinkMacSystemFont" in html
+    assert 'data-t="blue"' in html               # old blue stays as a theme
+
+def test_mobile_menu_toggle_present():
+    html = get("/")
+    assert 'id=navtoggle' in html and 'class=menubtn' in html
