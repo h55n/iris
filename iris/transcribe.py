@@ -48,3 +48,30 @@ def transcript_markdown(segs: list[dict], speaker_names: dict[int, str] | None =
             who = f"Speaker {spk + 1}: "
         lines.append(f"[{mmss(s['start'])}] {who}{s['text']}")
     return "\n".join(lines)
+
+
+def detect_segment_languages(audio_path: str, segs: list[dict], model: str = None) -> list[dict]:
+    """Re-run whisper per segment with auto language detection. For mixed
+    Hinglish-style audio: the whole-file language guess loses; per-segment
+    wins. Adds seg['lang'] and replaces seg['text'] with the detected-language
+    transcription. Model should be multilingual (ggml-small.bin) - base.en
+    can't transcribe non-English at all."""
+    model = model or os.environ.get("IRIS_WHISPER_MULTILINGUAL_MODEL", "models/ggml-small.bin")
+    wav = to_wav16k(audio_path)
+    out = []
+    for s in segs:
+        dur = s["end"] - s["start"]
+        if dur < 0.3:
+            out.append(s); continue
+        clip = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
+        subprocess.run(["ffmpeg", "-y", "-i", wav, "-ss", str(s["start"]), "-t", str(dur), "-c", "copy", clip],
+                       check=True, capture_output=True)
+        out_prefix = tempfile.NamedTemporaryFile(delete=False).name
+        subprocess.run([WHISPER_CLI, "-m", model, "-f", clip, "-l", "auto", "-oj", "-of", out_prefix],
+                       check=True, capture_output=True)
+        with open(out_prefix + ".json") as f:
+            data = json.load(f)
+        text = " ".join(x["text"].strip() for x in data["transcription"]).strip()
+        lang = (data.get("result") or {}).get("language", "")
+        out.append({**s, "text": text or s["text"], "lang": lang})
+    return out
