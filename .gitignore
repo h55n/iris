@@ -1,0 +1,6 @@
+models/
+store/
+vendor/
+syncdata/
+__pycache__/
+*.pyc
