@@ -60,7 +60,11 @@ def load_voices(voices_dir: str = VOICES_DIR) -> dict[str, np.ndarray]:
     if os.path.isdir(voices_dir):
         for f in sorted(os.listdir(voices_dir)):
             if f.endswith(".npy"):
-                out[f[:-4]] = np.load(os.path.join(voices_dir, f))
+                try:
+                    out[f[:-4]] = np.load(os.path.join(voices_dir, f))
+                except Exception:
+                    print(f"warning: unreadable voiceprint skipped: {f}",
+                          file=__import__("sys").stderr)
     return out
 
 def cosine(a: np.ndarray, b: np.ndarray) -> float:

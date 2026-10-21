@@ -43,3 +43,11 @@ def test_enroll_rejects_short_audio(tmp_path):
         w.writeframes(struct.pack("<1600h", *([0] * 1600)))  # 0.1s
     with pytest.raises(ValueError, match="too short"):
         V.enroll("Priya", wav, str(tmp_path / "voices"))
+
+def test_load_voices_skips_corrupt_file(tmp_path):
+    from iris import voices as V
+    import numpy as np
+    np.save(str(tmp_path / "good.npy"), np.ones(8, dtype=np.float32))
+    (tmp_path / "bad.npy").write_bytes(b"not a numpy file at all")
+    v = V.load_voices(str(tmp_path))
+    assert set(v) == {"good"}
