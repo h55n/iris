@@ -17,3 +17,14 @@ jobs:
           chmod +x vendor/age vendor/age-keygen
       - name: run tests
         run: python3 -m pytest tests/ -q
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - uses: android-actions/setup-android@v3
+      - name: gradle unit tests
+        working-directory: android
+        run: ./gradlew --no-daemon testDebugUnitTest
