@@ -74,7 +74,8 @@ License: MIT.
 ```
 python3 convo/cli.py key init                 # one-time: encryption key
 python3 convo/cli.py ingest meeting.wav       # record/transcribe/verify/encrypt
-python3 convo/cli.py ingest meeting.wav --diarize   # + speaker labels (needs models/get-diarize-models.sh first)
+python3 convo/cli.py ingest meeting.wav --diarize --speakers 2  # + speaker labels (needs models/get-diarize-models.sh first)
+#   pass --speakers N when you know the headcount - auto mode may over-split (tested)
 python3 convo/webui.py                        # browse at 127.0.0.1:8473
 python3 convo/sync_server.py --token T &      # relay (your own box)
 python3 convo/cli.py sync --server http://... # move notes between devices
