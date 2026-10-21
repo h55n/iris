@@ -88,3 +88,10 @@ def test_transcript_markdown_no_speaker_no_lang():
     from iris import transcribe as T
     md = T.transcript_markdown([{"start": 0, "text": "plain"}])
     assert md == "[00:00] plain"
+
+def test_mmss_rolls_past_an_hour_as_minutes():
+    from iris import transcribe as T
+    # long meetings stay MM:SS (61:01), matching the evidence quotes in notes
+    assert T.mmss(3661.7) == "61:01"
+    assert T.mmss(0) == "00:00"
+    assert T.mmss(59.94) == "00:59"
