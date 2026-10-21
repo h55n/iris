@@ -43,6 +43,9 @@ def export_meeting(store_dir: str, mid: str, out_path: str, key_path: str | None
 def share_meeting(store_dir: str, mid: str, recipient_pub: str, out_path: str,
                   key_path: str | None = None) -> str:
     """Encrypt the export bundle to the recipient's age key."""
+    if not recipient_pub.startswith("age1"):
+        raise C.CryptoError(f"not an age public key: {recipient_pub[:24]!r}... "
+                            f"(it starts with 'age1', ask them to run `iris key`)")
     blob = C.encrypt_bytes(build_bundle(store_dir, mid, key_path).encode(), recipient_pub)
     with open(out_path, "w") as f:
         f.write(blob.decode())

@@ -33,3 +33,9 @@ def test_share_only_recipient_can_open():
     try:
         C.decrypt_bytes(blob, KEY); assert False, "owner key must NOT open it"
     except C.CryptoError: pass
+
+def test_share_rejects_non_age_key(tmp_path):
+    from iris import export as E, crypto as C
+    import pytest
+    with pytest.raises(C.CryptoError, match="not an age public key"):
+        E.share_meeting("/tmp/iris-export-test", "whatever", "ssh-ed25519 AAAA...", str(tmp_path / "o.age"))
