@@ -120,11 +120,20 @@ h2 .icon, h3 .icon{width:18px;height:18px;vertical-align:-3px;margin-right:7px;c
 .stat .n{font-size:22px;font-weight:600;color:var(--text)}
 .stat .l{font-size:11.5px;color:var(--faint);margin-top:1px}
 .greet{font-size:13px;color:var(--muted);text-align:center;margin-top:26px}
-.mascot{display:block;margin:26px auto 10px;cursor:pointer;
-  animation:floaty 3.6s ease-in-out infinite;transform-origin:center 70%}
-@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-.mascot.wink{animation:wink .5s var(--snap)}
-@keyframes wink{30%{transform:scaleY(.82) translateY(4px)}60%{transform:scaleY(1.06)}}
+.mascot{display:block;margin:26px auto 10px;cursor:pointer;transform-origin:50% 92%;overflow:visible}
+.mascot.happy{animation:sway 5s ease-in-out infinite}
+@keyframes sway{0%,100%{transform:rotate(-1.4deg)}50%{transform:rotate(1.4deg)}}
+.mascot.sleep{animation:breathe 4.5s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
+.mascot.celebrate{animation:grow .9s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes grow{from{transform:scale(.35,.15);opacity:0}to{transform:none;opacity:1}}
+.mascot .bloom{transform-box:fill-box;transform-origin:50% 50%;animation:pop .7s .55s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes pop{from{transform:scale(0) rotate(-40deg)}to{transform:none}}
+.mascot .sparkles{animation:twinkle 1.6s 1.2s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:1}50%{opacity:.25}}
+.mascot.wink{animation:boing .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes boing{30%{transform:scale(1.07,.93)}60%{transform:scale(.97,1.05)}}
+@media (prefers-reduced-motion:reduce){.mascot,.mascot *{animation:none!important}}
 .empty{text-align:center;color:var(--muted);padding:28px 12px 8px}
 .empty .t{font-size:15px;color:var(--text);font-weight:500;margin-top:6px}
 .empty .s{font-size:13px;margin-top:2px}
