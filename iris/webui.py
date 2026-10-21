@@ -70,19 +70,24 @@ SPEAKER_COLORS = [
     ("#fdf3e3", "#96610f"), ("#f3ecfa", "#6b3fa0"), ("#e8f5f4", "#0f6e63"),
 ]
 
-def speaker_chip(n: int) -> str:
+def speaker_chip(n: int, label: str | None = None) -> str:
     bg, fg = SPEAKER_COLORS[n % len(SPEAKER_COLORS)]
-    return f'<span class=speaker style="background:{bg};color:{fg}">Speaker {n + 1}</span>'
+    return f'<span class=speaker style="background:{bg};color:{fg}">{esc(label or "Speaker " + str(n + 1))}</span>'
 
 def render_transcript_line(line: str) -> str:
-    """[mm:ss] Speaker N: text  ->  timestamp + chip + text"""
+    """[mm:ss] Speaker N: text / [mm:ss] Name: text -> timestamp + chip + text"""
     import re
-    m = re.match(r"^\[(\d\d:\d\d)\] (?:Speaker (\d+): )?(.*)$", line)
-    if not m:
-        return esc(line)
-    ts, spk, text = m.group(1), m.group(2), m.group(3)
-    chip = speaker_chip(int(spk) - 1) if spk else ""
-    return f'<span style="color:var(--faint)">{ts}</span>  {chip}{esc(text)}'
+    m = re.match(r"^\[(\d\d:\d\d)\] (?:(Speaker \d+)|([A-Za-z][\w-]*)): (.*)$", line)
+    if m:
+        ts, numbered, name, text = m.groups()
+        label = numbered or name
+        idx = (int(numbered.split()[1]) - 1) if numbered else (sum(label.encode()) % len(SPEAKER_COLORS))
+        chip = speaker_chip(idx, label)
+        return f'<span style="color:var(--faint)">{ts}</span>  {chip}{esc(text)}'
+    m2 = re.match(r"^\[(\d\d:\d\d)\] (.*)$", line)
+    if m2:
+        return f'<span style="color:var(--faint)">{m2.group(1)}</span>  {esc(m2.group(2))}'
+    return esc(line)
 
 def render_notes_md(md: str) -> str:
     out = []
