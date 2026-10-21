@@ -12,9 +12,9 @@ is the "device fingerprint" users compare when pairing devices.)
 from __future__ import annotations
 import os, subprocess, sys
 
-AGE = os.environ.get("CONVO_AGE", os.path.join(os.path.dirname(__file__), "..", "vendor", "age"))
-AGE_KEYGEN = os.environ.get("CONVO_AGE_KEYGEN", os.path.join(os.path.dirname(__file__), "..", "vendor", "age-keygen"))
-DEFAULT_KEY = os.path.expanduser(os.environ.get("CONVO_KEY", "~/.convo/key.txt"))
+AGE = os.environ.get("IRIS_AGE", os.path.join(os.path.dirname(__file__), "..", "vendor", "age"))
+AGE_KEYGEN = os.environ.get("IRIS_AGE_KEYGEN", os.path.join(os.path.dirname(__file__), "..", "vendor", "age-keygen"))
+DEFAULT_KEY = os.path.expanduser(os.environ.get("IRIS_KEY", "~/.convo/key.txt"))
 
 class CryptoError(RuntimeError):
     pass

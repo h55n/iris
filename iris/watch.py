@@ -6,7 +6,7 @@ Linux desktop notification via notify-send; other platforms: prints.
 """
 import subprocess, sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from convo.detect import Detector
+from iris.detect import Detector
 
 def notify(title: str, body: str) -> str:
     """Desktop notification; returns what was shown (for tests/logs)."""

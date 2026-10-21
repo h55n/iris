@@ -14,7 +14,7 @@ import io, os, json, argparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 def make_handler(store_dir, token, backend):
-    from convo import transcribe as T, backends as B, verify, store, crypto as C, render
+    from iris import transcribe as T, backends as B, verify, store, crypto as C, render
     class H(BaseHTTPRequestHandler):
         def _auth(self):
             return self.headers.get("X-Convo-Token") == token
@@ -50,9 +50,9 @@ def make_handler(store_dir, token, backend):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--store", default=os.environ.get("CONVO_STORE", "store"))
+    ap.add_argument("--store", default=os.environ.get("IRIS_STORE", "store"))
     ap.add_argument("--token", required=True)
-    ap.add_argument("--backend", default=os.environ.get("CONVO_BACKEND", "ollama"))
+    ap.add_argument("--backend", default=os.environ.get("IRIS_BACKEND", "ollama"))
     ap.add_argument("--port", type=int, default=8472)
     a = ap.parse_args()
     print(f"ingest server on :{a.port} (store {a.store})")

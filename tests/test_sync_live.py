@@ -2,7 +2,7 @@
 meeting travels as ciphertext, relay disk holds NO plaintext."""
 import os, subprocess, time, json
 import pytest
-from convo import store as S, crypto as C, sync as Y
+from iris import store as S, crypto as C, sync as Y
 
 KEY = "/tmp/convo-synctest-key.txt"
 A = "/tmp/convo-synctest-A"; B = "/tmp/convo-synctest-B"; RELAY = "/tmp/convo-synctest-relay"

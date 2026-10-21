@@ -1,5 +1,5 @@
 import os
-from convo import store as S, crypto as C, export as E
+from iris import store as S, crypto as C, export as E
 
 KEY = "/tmp/convo-export-key.txt"; RKEY = "/tmp/convo-export-rkey.txt"
 STORE = "/tmp/convo-export-store"

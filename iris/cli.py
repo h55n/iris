@@ -2,9 +2,9 @@
 """convo - private meeting notes. ingest | sweep | list | sync | key | encrypt | read | export | share | search | doctor"""
 import sys, os, json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from convo import transcribe as T, backends, verify, store, crypto as C, render, diarize as DZ
+from iris import transcribe as T, backends, verify, store, crypto as C, render, diarize as DZ
 
-STORE = os.environ.get("CONVO_STORE", "store")
+STORE = os.environ.get("IRIS_STORE", "store")
 
 def cmd_ingest(audio, backend_name="ollama", title="", diarize=False, speakers=0):
     mid = store.new_meeting(STORE, title)
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     if not args or args[0] not in ("ingest", "sweep", "list", "sync", "key", "encrypt", "read", "export", "share", "search", "doctor"):
         print(__doc__); sys.exit(1)
     if args[0] == "doctor":
-        from convo import doctor; doctor.main()
+        from iris import doctor; doctor.main()
     elif args[0] == "key":
         if len(args) > 1 and args[1] == "init":
             print("public key:", C.generate_key())
@@ -57,19 +57,19 @@ if __name__ == "__main__":
         for h in store.search(STORE, " ".join(args[1:])):
             print(f"{h['meeting']} ({h['file']}): {h['line']}")
     elif args[0] == "export":
-        from convo import export as E
+        from iris import export as E
         print(E.export_meeting(STORE, args[1], args[2]))
     elif args[0] == "share":
-        from convo import export as E
+        from iris import export as E
         print(E.share_meeting(STORE, args[1], args[2], args[3]))
     elif args[0] == "read":
         for name, text in store.decrypt_meeting(STORE, args[1]).items():
             print(f"--- {name} ---\n{text}")
     elif args[0] == "sync":
         import getpass
-        server = args[args.index("--server") + 1] if "--server" in args else os.environ.get("CONVO_SYNC_SERVER", "http://127.0.0.1:8471")
-        token = os.environ.get("CONVO_SYNC_TOKEN") or getpass.getpass("sync token: ")
-        from convo import sync as S
+        server = args[args.index("--server") + 1] if "--server" in args else os.environ.get("IRIS_SYNC_SERVER", "http://127.0.0.1:8471")
+        token = os.environ.get("IRIS_SYNC_TOKEN") or getpass.getpass("sync token: ")
+        from iris import sync as S
         pushed = [S.push(STORE, mid, server, token)["id"] for mid in sorted(os.listdir(STORE)) if os.path.isdir(os.path.join(STORE, mid))]
         st = S.state_file(STORE)
         got = S.pull_all(STORE, server, token, st.get("last_pull", 0.0))

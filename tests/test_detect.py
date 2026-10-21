@@ -1,4 +1,4 @@
-import convo.detect as D
+import iris.detect as D
 
 class Fake(Detector := D.Detector):
     def __init__(self, procs=None, titles=None, mic=False, **kw):

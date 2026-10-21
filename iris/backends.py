@@ -27,7 +27,7 @@ def _parse_notes(raw: str) -> dict:
 class OllamaBackend:
     name = "ollama"
     def __init__(self, model=None, base="http://127.0.0.1:11434"):
-        self.model = model or os.environ.get("CONVO_OLLAMA_MODEL", "gemma3:4b")
+        self.model = model or os.environ.get("IRIS_OLLAMA_MODEL", "gemma3:4b")
         self.base = base
     def notes(self, transcript_md: str) -> dict:
         r = _chat(f"{self.base}/api/generate",
@@ -38,7 +38,7 @@ class OllamaBackend:
 class UltramarineBackend:
     name = "ultramarine"
     def __init__(self, key=None):
-        self.key = key or os.environ.get("CONVO_ULTRAMARINE_KEY", "")
+        self.key = key or os.environ.get("IRIS_ULTRAMARINE_KEY", "")
     def notes(self, transcript_md: str) -> dict:
         r = _chat("https://api.paperinstruments.com/v1/chat/completions",
                   {"model": "ultramarine-1-flash",
@@ -47,7 +47,7 @@ class UltramarineBackend:
         _log_usage(r)
         return _parse_notes(r["choices"][0]["message"]["content"])
 
-USAGE_LOG = os.environ.get("CONVO_USAGE_LOG", os.path.expanduser("~/.convo/hosted-usage.jsonl"))
+USAGE_LOG = os.environ.get("IRIS_USAGE_LOG", os.path.expanduser("~/.convo/hosted-usage.jsonl"))
 
 def _log_usage(response: dict):
     """Track hosted-backend token usage locally, so the real spend is visible

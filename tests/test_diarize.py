@@ -1,4 +1,4 @@
-from convo.diarize import assign_speakers, merge_same_speaker
+from iris.diarize import assign_speakers, merge_same_speaker
 
 def test_assign_by_max_overlap():
     t = [{"start": 0, "end": 5, "text": "hi"}, {"start": 5.5, "end": 10, "text": "yo"}]

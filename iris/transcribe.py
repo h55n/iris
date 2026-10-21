@@ -1,9 +1,9 @@
 """Transcription via whisper.cpp CLI. Same engine that ships to phone/laptop."""
 import json, os, re, subprocess, tempfile
 
-WHISPER_CLI = os.environ.get("CONVO_WHISPER_CLI", "vendor/whisper.cpp/build/bin/whisper-cli")
-MODEL = os.environ.get("CONVO_WHISPER_MODEL", "models/ggml-tiny.en.bin")
-VAD_MODEL = os.environ.get("CONVO_VAD_MODEL", "models/ggml-silero-v6.2.0.bin")
+WHISPER_CLI = os.environ.get("IRIS_WHISPER_CLI", "vendor/whisper.cpp/build/bin/whisper-cli")
+MODEL = os.environ.get("IRIS_WHISPER_MODEL", "models/ggml-tiny.en.bin")
+VAD_MODEL = os.environ.get("IRIS_VAD_MODEL", "models/ggml-silero-v6.2.0.bin")
 
 def to_wav16k(src: str) -> str:
     """Any audio/video -> 16kHz mono wav (whisper.cpp input contract)."""

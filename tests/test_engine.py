@@ -1,6 +1,6 @@
 import os, sys, time, json, tempfile, shutil
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from convo import verify, store, transcribe as T
+from iris import verify, store, transcribe as T
 
 SEGS = [
     {"start": 0.0, "end": 4.0, "text": "Let's ship the Android recorder on Friday."},
@@ -65,7 +65,7 @@ def test_mmss():
 def test_sync_roundtrip_and_no_audio():
     import threading
     from http.server import HTTPServer
-    from convo import sync_server, sync
+    from iris import sync_server, sync
     root = tempfile.mkdtemp(); srv_dir = tempfile.mkdtemp()
     httpd = HTTPServer(("127.0.0.1", 0), sync_server.make_handler(srv_dir, "tok"))
     port = httpd.server_address[1]

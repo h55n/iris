@@ -9,7 +9,7 @@ to someone else's key, not uploading anywhere.
 """
 from __future__ import annotations
 import json, os, time
-from convo import crypto as C, store as S
+from iris import crypto as C, store as S
 
 def _get_texts(store_dir: str, mid: str, key_path: str | None) -> dict:
     """Return {name: text} for transcript.md/notes.md, decrypting if needed."""

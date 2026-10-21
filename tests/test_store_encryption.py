@@ -1,5 +1,5 @@
 import os, json
-from convo import store as S, crypto as C
+from iris import store as S, crypto as C
 
 KEY = "/tmp/convo-store-test-key.txt"
 STORE = "/tmp/convo-store-test"

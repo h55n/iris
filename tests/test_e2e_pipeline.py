@@ -1,7 +1,7 @@
 """End-to-end pipeline test: ingest -> store -> verify -> render -> encrypt,
 with whisper and the notes backend stubbed (they're covered by live tests)."""
 import os, json, subprocess
-from convo import cli, store, crypto as C
+from iris import cli, store, crypto as C
 
 SEGMENTS = [
     {"start": 0.0, "end": 3.0, "text": "Decision: we ship the recorder on Friday."},
@@ -25,7 +25,7 @@ def test_full_ingest_pipeline(tmp_path, monkeypatch):
     monkeypatch.setattr(cli.T, "transcribe", lambda a: list(SEGMENTS))
     monkeypatch.setattr(cli.backends, "get_backend", lambda name: StubBackend())
     monkeypatch.setattr(C, "DEFAULT_KEY", key)
-    monkeypatch.setattr("convo.store.C.DEFAULT_KEY", key)
+    monkeypatch.setattr("iris.store.C.DEFAULT_KEY", key)
     C.generate_key(key)
 
     wav = tmp_path / "m.wav"; wav.write_bytes(b"RIFF" + b"\0" * 2000)
@@ -59,7 +59,7 @@ def test_verifier_demotes_invented_claim_in_pipeline(tmp_path, monkeypatch):
         def notes(self, tmd): return bad
     monkeypatch.setattr(cli.backends, "get_backend", lambda name: Bad())
     monkeypatch.setattr(C, "DEFAULT_KEY", key)
-    monkeypatch.setattr("convo.store.C.DEFAULT_KEY", key)
+    monkeypatch.setattr("iris.store.C.DEFAULT_KEY", key)
     if not os.path.exists(key): C.generate_key(key)
 
     wav = tmp_path / "m.wav"; wav.write_bytes(b"RIFF" + b"\0" * 2000)

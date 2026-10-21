@@ -1,5 +1,5 @@
 import os
-from convo import crypto as C
+from iris import crypto as C
 
 K = "/tmp/convo-export2-key.txt"
 

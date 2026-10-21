@@ -11,8 +11,8 @@ from __future__ import annotations
 import os, wave
 import numpy as np
 
-SEG_MODEL = os.environ.get("CONVO_SEG_MODEL", "models/pyannote-seg-3-0.onnx")
-EMB_MODEL = os.environ.get("CONVO_EMB_MODEL", "models/eres2net_en.onnx")
+SEG_MODEL = os.environ.get("IRIS_SEG_MODEL", "models/pyannote-seg-3-0.onnx")
+EMB_MODEL = os.environ.get("IRIS_EMB_MODEL", "models/eres2net_en.onnx")
 
 def available() -> bool:
     return os.path.exists(SEG_MODEL) and os.path.exists(EMB_MODEL)

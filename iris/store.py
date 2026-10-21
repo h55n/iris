@@ -57,7 +57,7 @@ def _save_meta(store_dir, mid, meta):
 """Encryption wiring (age). When the user has a key (~/.convo/key.txt),
 transcript.md and notes.md are stored as .age ciphertext only - the relay
 and the disk never hold plaintext. Audio is untouched (deleted by sweep)."""
-from convo import crypto as C
+from iris import crypto as C
 
 PLAINTEXT_FILES = ("transcript.md", "notes.md")
 

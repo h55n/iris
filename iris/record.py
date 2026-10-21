@@ -43,5 +43,5 @@ if __name__ == "__main__":
     out = args[0] if args else "meeting.wav"
     if record(out):
         if "--ingest" in sys.argv:
-            from convo import cli
+            from iris import cli
             cli.cmd_ingest(out)

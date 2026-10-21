@@ -1,5 +1,5 @@
 import sys
-from convo import record
+from iris import record
 
 def test_linux_cmd():
     c = record.build_cmd("linux", "o.wav")

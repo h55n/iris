@@ -1,5 +1,5 @@
 import os, subprocess
-import convo.crypto as C
+import iris.crypto as C
 
 KEY = "/tmp/convo-test-key.txt"
 
