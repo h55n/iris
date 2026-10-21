@@ -36,3 +36,14 @@ def test_save_notes_plain(tmp_path):
 def test_corrupt_folders_file_is_empty_list(tmp_path):
     (tmp_path / "_folders.json").write_text("{nope")
     assert L.list_folders(str(tmp_path)) == []
+
+def test_save_notes_keeps_encrypted_meeting_encrypted(tmp_path):
+    from iris import crypto as C
+    key = str(tmp_path / "k.txt"); C.generate_key(key)
+    d = str(tmp_path / "store"); os.makedirs(d)
+    mid = L.new_note(d, "secret")
+    S.encrypt_meeting(d, mid, key)
+    L.save_notes(d, mid, "launch code is plants", key_path=key)
+    assert not os.path.exists(os.path.join(d, mid, "notes.md"))
+    assert S.decrypt_meeting(d, mid, key)["notes.md"] == "launch code is plants"
+    assert b"plants" not in open(os.path.join(d, mid, "notes.md.age"), "rb").read()
