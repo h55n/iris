@@ -118,3 +118,10 @@ def test_title_html_escaped_in_page(server):
     _post(f"/rename/{mid}", {"title": payload})
     body = urllib.request.urlopen(f"http://127.0.0.1:{PORT}/meeting/{mid}").read().decode()
     assert payload not in body and H.escape(payload) in body
+
+def test_missing_meeting_is_a_real_404(server):
+    try:
+        urllib.request.urlopen(f"http://127.0.0.1:{PORT}/meeting/20990101-0000-ffffff")
+        assert False, "should 404"
+    except urllib.error.HTTPError as e:
+        assert e.code == 404

@@ -304,10 +304,10 @@ def page(inner: str) -> bytes:
 
 def make_handler(store_dir: str):
     class H(BaseHTTPRequestHandler := __import__("http.server", fromlist=["BaseHTTPRequestHandler"]).BaseHTTPRequestHandler):
-        def _html(self, body: str):
+        def _html(self, body: str, status: int = 200):
             data = page(f'<div class=layout><nav class=sidebar>{sidebar(store_dir, self._active)}</nav>'
                         f'<main class=content><div class=doc>{body}</div></main></div>')
-            self.send_response(200)
+            self.send_response(status)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(data)))
             self.end_headers()
@@ -404,7 +404,7 @@ def make_handler(store_dir: str):
                 mid = path.split("/meeting/", 1)[1].strip("/")
                 self._active = mid
                 if "/" in mid or ".." in mid or not os.path.isdir(os.path.join(store_dir, mid)):
-                    self._html("<p>not found</p>"); return
+                    self._html("<p>not found</p>", status=404); return
                 meta = json.load(open(os.path.join(store_dir, mid, "meta.json")))
                 texts = (S.decrypt_meeting(store_dir, mid) if S.is_encrypted(store_dir, mid)
                          else {n: open(os.path.join(store_dir, mid, n)).read()
