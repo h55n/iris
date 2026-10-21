@@ -80,7 +80,7 @@ def export_secret(path: str = DEFAULT_KEY) -> str:
 
 def export_qr(path: str = DEFAULT_KEY) -> str:
     """ASCII QR of the secret key for phone pairing (scan with any scanner,
-    paste into the convo app). Rendered locally - the key never leaves."""
+    paste into the Iris app). Rendered locally - the key never leaves."""
     import io, qrcode
     qr = qrcode.QRCode(border=1)
     qr.add_data(export_secret(path))
