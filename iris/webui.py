@@ -2,7 +2,7 @@
 DECRYPTED transcripts and notes, so it must never be reachable off the
 machine. Design: Notion/Granola/macOS - calm document reading, soft neutrals.
 
-  python3 convo/webui.py --port 8473
+  python3 iris/webui.py --port 8473
 """
 import argparse, html, json, os, sys, time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
