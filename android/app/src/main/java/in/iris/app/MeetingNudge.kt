@@ -14,7 +14,7 @@ import kotlin.concurrent.thread
  *  grant Usage Access in system settings. Cannot see the mic or audio of
  *  other apps (OS-level, since Play policy May 2022) - documented in TESTED.md. */
 object MeetingNudge {
-    private val MEETING_APPS = mapOf(
+    internal val MEETING_APPS = mapOf(
         "us.zoom.videomeetings" to "Zoom",
         "com.google.android.apps.meetings" to "Google Meet",
         "com.google.android.apps.tachyon" to "Google Meet (Duo)",
@@ -23,6 +23,9 @@ object MeetingNudge {
         "com.cisco.webex.meetings" to "Webex",
         "com.slack" to "Slack (huddle?)"
     )
+    /** Display name for a foreground package, or null if it isn't a known meeting app. */
+    fun meetingAppName(pkg: String): String? = MEETING_APPS[pkg]
+
     @Volatile private var running = false
 
     fun start(ctx: Context) {
@@ -34,7 +37,7 @@ object MeetingNudge {
             var nudgedFor: String? = null
             while (running) {
                 val fg = foregroundApp(ctx)
-                val app = MEETING_APPS[fg]
+                val app = fg?.let { meetingAppName(it) }
                 if (app != null && nudgedFor != fg) {
                     nudgedFor = fg
                     val tap = PendingIntent.getActivity(ctx, 2, Intent(ctx, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
