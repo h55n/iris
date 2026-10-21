@@ -14,6 +14,10 @@ def to_wav16k(src: str) -> str:
 
 def transcribe(audio_path: str, model: str = MODEL, language: str = "en") -> list[dict]:
     """Returns [{'start': float, 'end': float, 'text': str}] segments."""
+    if not os.path.exists(model):
+        raise FileNotFoundError(
+            f"whisper model not found: {model} - download it from "
+            f"hf.co/ggerganov/whisper.cpp (see README), or set IRIS_WHISPER_MODEL")
     wav = to_wav16k(audio_path)
     out_prefix = tempfile.NamedTemporaryFile(delete=False).name
     cmd = [WHISPER_CLI, "-m", model, "-f", wav, "-l", language, "-oj", "-of", out_prefix]

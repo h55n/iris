@@ -95,3 +95,9 @@ def test_mmss_rolls_past_an_hour_as_minutes():
     assert T.mmss(3661.7) == "61:01"
     assert T.mmss(0) == "00:00"
     assert T.mmss(59.94) == "00:59"
+
+def test_transcribe_missing_model_named():
+    from iris import transcribe as T
+    import pytest
+    with pytest.raises(FileNotFoundError, match="whisper model not found"):
+        T.transcribe("/tmp/whatever.wav", model="/tmp/no-such-model.bin")
