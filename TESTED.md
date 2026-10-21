@@ -141,3 +141,10 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 - `gradle testDebugUnitTest`: AgeDecryptTest 2/2 green (bech32 rejects garbage, bech32 charset complete). JVM-only, no emulator needed.
 - Upload retry (2 retries, 1.5s/3s backoff) + X-Iris-Title header: compiles into a clean APK; runtime retry behavior is on Hassan's device test list.
 - Ingest server accepts X-Iris-Title and falls back to X-Convo-Title for older app builds (unit-covered via handler tests? no - verified by reading; live POST test is on the device list).
+
+## Design pass 2 (themes, mascot, motion) - tested Oct 21 night
+- 6 accent themes x light/dark: pixel-verified on live screenshots at 1440/1024/390, purple and orange spot-checked; theme persists via localStorage, applies before first paint (no flash).
+- Sidebar theme picker: first version never matched its CSS (stray quote in class attribute) - caught on a real screenshot, fixed, re-verified pinned to the sidebar footer.
+- Motion: spring-eased page/list entrance, hover lifts, press scale; prefers-reduced-motion disables all of it (CSS media query, not JS).
+- Confetti "Meeting saved" moment: fires only for meetings <10 min old, once per meeting per browser (localStorage guard). Celebrate mascot verified on a real fresh meeting.
+- Mascot: geometric eye SVG REJECTED by Hassan; 3 hand-drawn-ink candidates (Scribble/Noctua/Echo) sent for his pick before wiring in.
