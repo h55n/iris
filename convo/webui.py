@@ -45,6 +45,15 @@ def make_handler(store_dir):
             self.wfile.write(data)
         def do_GET(self):
             if self.path == "/" or self.path.startswith("/?"):
+                import urllib.parse as U
+                q = U.parse_qs(U.urlparse(self.path).query).get("q", [""])[0].strip()
+                if q:
+                    hits = S.search(store_dir, q)
+                    rows = [f'<div class=m><a href="/meeting/{h["meeting"]}">{esc(h["meeting"])}</a>'
+                            f'<div class=meta>{esc(h["file"])}: {esc(h["line"][:120])}</div></div>' for h in hits]
+                    body = (f'<p><a href="/">&larr;</a> {len(hits)} result(s) for <b>{esc(q)}</b></p>'
+                            + ("".join(rows) or "<p>nothing found</p>"))
+                    return self._html(body)
                 rows = []
                 for mid in sorted(os.listdir(store_dir), reverse=True):
                     mp = os.path.join(store_dir, mid, "meta.json")
@@ -55,7 +64,9 @@ def make_handler(store_dir):
                     ip = f' &middot; {integ.get("passed")}/{integ.get("checked")} verified' if integ else ""
                     rows.append(f'<div class=m><a href="/meeting/{mid}">{esc(meta.get("title", mid))}</a>{badge}'
                                 f'<div class=meta>{mid}{ip}</div></div>')
-                self._html(f"<h1>convo</h1>{''.join(rows) or '<p>No meetings yet.</p>'}")
+                form = ('<form method=get><input name=q placeholder="search all meetings" '
+                        'style="width:70%;padding:.4rem"> <button>search</button></form>')
+                self._html(f"<h1>convo</h1>{form}{''.join(rows) or '<p>No meetings yet.</p>'}")
             elif self.path.startswith("/meeting/"):
                 mid = self.path.split("/meeting/", 1)[1].strip("/")
                 if "/" in mid or ".." in mid or not os.path.isdir(os.path.join(store_dir, mid)):
