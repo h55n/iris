@@ -25,3 +25,10 @@ def test_decrypt_meeting_roundtrip():
     out = S.decrypt_meeting(STORE, mid, KEY)
     assert out["transcript.md"] == "[00:01] hello Priya"
     assert "ship Friday" in out["notes.md"]
+
+def test_search_skips_locked_meeting_without_key():
+    mid = sorted(os.listdir(STORE))[0]  # encrypted by the first test
+    hits = S.search(STORE, "Priya", key_path="/tmp/definitely-not-a-key.txt")
+    assert hits == []
+    hits2 = S.search(STORE, "Priya", key_path=KEY)
+    assert hits2 and hits2[0]["meeting"] == mid

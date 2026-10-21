@@ -111,7 +111,10 @@ def search(store_dir: str, query: str, key_path: str = None) -> list[dict]:
     for mid in list_meetings(store_dir):
         d = os.path.join(store_dir, mid)
         if is_encrypted(store_dir, mid):
-            texts = decrypt_meeting(store_dir, mid, key_path or C.DEFAULT_KEY)
+            try:
+                texts = decrypt_meeting(store_dir, mid, key_path or C.DEFAULT_KEY)
+            except C.CryptoError:
+                continue  # locked meeting, key not here - search what you can read
         else:
             texts = {n: open(os.path.join(d, n)).read()
                      for n in PLAINTEXT_FILES if os.path.exists(os.path.join(d, n))}
