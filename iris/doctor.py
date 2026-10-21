@@ -24,6 +24,8 @@ def main():
     _ok("diarization models", os.path.exists("models/pyannote-seg-3-0.onnx") and os.path.exists("models/eres2net_en.onnx"),
         "models/get-diarize-models.sh")
     _ok("sherpa-onnx (speaker labels)", _importable("sherpa_onnx"), "pip install sherpa-onnx")
+    _ok("qrcode (key pairing QR)", _importable("qrcode"), "pip install qrcode")
+    _ok("numpy (voiceprints)", _importable("numpy"), "pip install numpy")
     _ok("ollama (local notes)", _http_up("http://127.0.0.1:11434"),
         "install ollama + `ollama pull gemma3:4b`, or use --backend ultramarine")
     try:
