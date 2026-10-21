@@ -27,7 +27,7 @@ Every claim the product makes is tied to a test that actually ran. Anything not 
 - Full pipeline on a 54-second two-voice meeting (gTTS-synthesized, clean audio): transcript -> notes via the hosted fallback (Ultramarine ultramarine-1-flash) -> integrity pass -> 6/6 decisions+action items verified against the transcript.
 - Integrity pass unit tests: fabricated evidence quotes, out-of-range timestamps, invented owner names, empty evidence, clause-trimmed quotes and garbage timestamp formats are caught and demoted to "unverified" (8 edge tests + pipeline tests incl. sync).
 - Retention sweep: recordings older than 7 days deleted, transcripts and notes kept; fresh recordings untouched (unit test).
-- Sync: server + client pass a loopback test - two local "devices" exchange transcripts/notes through the server; audio confirmed absent server-side; bad token rejected.
+- Sync: server + client pass a loopback test - two local "devices" exchange transcripts/notes through the server; audio confirmed absent server-side; bad token rejected. Guard rails live-tested: /pull/ path traversal rejected (400), malformed since= rejected (400), server stays up after both.
 - Hindi tested with multilingual models on synthetic gTTS audio (details below).
 
 ## Integrity findings from live trap runs (2026-10-20)
