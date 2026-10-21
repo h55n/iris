@@ -38,8 +38,8 @@ PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=
   [data-theme=pink]{ --accent:#e08ab5; --accent-soft:#33222b; }
   [data-theme=red]{ --accent:#e88a86; --accent-soft:#332020; }
 }
-.themes{display:flex;gap:8px;padding:14px 10px 6px;align-items:center;margin-top:8px;border-top:1px solid var(--border-soft)}
-.themes .lbl{font-size:11px;color:var(--faint);margin-right:2px}
+.themes{display:flex;gap:10px;padding:12px 10px 8px;align-items:center;justify-content:center;margin-top:10px;border-top:1px solid var(--border-soft)}
+.themes .lbl{font-size:11px;color:var(--faint)}
 .dot{width:16px;height:16px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
 .dot.sel{border-color:var(--text)}
 .dot[data-t=""]{background:#2383e2}.dot[data-t=green]{background:#0f7b6c}
