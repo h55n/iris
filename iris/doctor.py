@@ -27,6 +27,13 @@ def main():
     _ok("ollama (local notes)", _http_up("http://127.0.0.1:11434"),
         "install ollama + `ollama pull gemma3:4b`, or use --backend ultramarine")
     try:
+        from iris import voices as V
+        names = sorted(V.load_voices()) if V.available() else []
+        if names:
+            print(f"  voices enrolled: {', '.join(names)}")
+    except Exception:
+        pass
+    try:
         r = subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True)
         print(f"  repo   {r.stdout.strip()}")
     except Exception:
