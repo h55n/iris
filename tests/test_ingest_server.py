@@ -18,7 +18,7 @@ def server():
 
 def _post(path, body=b"x" * 2000, token=None, title=None):
     req = urllib.request.Request(f"http://127.0.0.1:{PORT}{path}", data=body, method="POST")
-    if token: req.add_header("X-Convo-Token", token)
+    if token: req.add_header("X-Iris-Token", token)
     if title: req.add_header("X-Iris-Title", title)
     try:
         return urllib.request.urlopen(req).getcode()
@@ -43,7 +43,7 @@ def test_huge_audio_rejected(server):
     import http.client
     conn = http.client.HTTPConnection("127.0.0.1", PORT)
     conn.request("POST", "/ingest", body=b"x" * 2000,
-                 headers={"X-Convo-Token": "t0ken",
+                 headers={"X-Iris-Token": "t0ken",
                           "Content-Length": str(600 * 1024 * 1024)})
     # server reads the header first; it should 413 without needing the body
     try:
@@ -52,3 +52,12 @@ def test_huge_audio_rejected(server):
         code = None  # connection reset is also an acceptable refusal
     conn.close()
     assert code in (413, None)
+
+
+def test_legacy_convo_token_header_still_accepted(server):
+    req = urllib.request.Request(f"http://127.0.0.1:{PORT}/nope", data=b"x" * 2000, method="POST")
+    req.add_header("X-Convo-Token", "t0ken")  # old APK header -> must still auth (404 not 403)
+    try:
+        urllib.request.urlopen(req)
+    except urllib.error.HTTPError as e:
+        assert e.code == 404

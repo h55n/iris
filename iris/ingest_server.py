@@ -5,7 +5,7 @@ back to the phone through the normal relay as ciphertext.
 
   python3 iris/ingest_server.py --token S3CRET --port 8472
 
-POST /ingest  (body = raw audio bytes, X-Convo-Token, optional X-Iris-Title)
+POST /ingest  (body = raw audio bytes, X-Iris-Token, optional X-Iris-Title)
   -> {"meeting": "<id>", "integrity": {...}}
 Audio lands in store/<mid>/audio.* and is swept by the 7-day retention like
 any other recording.
@@ -20,7 +20,7 @@ def make_handler(store_dir, token, backend):
     from iris import transcribe as T, backends as B, verify, store, crypto as C, render
     class H(BaseHTTPRequestHandler):
         def _auth(self):
-            return self.headers.get("X-Convo-Token") == token
+            return self.headers.get("X-Iris-Token", self.headers.get("X-Convo-Token")) == token
         def _send(self, code, obj):
             body = json.dumps(obj).encode()
             self.send_response(code)

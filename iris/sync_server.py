@@ -7,7 +7,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 def make_handler(root, token):
     class H(BaseHTTPRequestHandler):
         def _auth(self):
-            return self.headers.get("X-Convo-Token") == token
+            return self.headers.get("X-Iris-Token", self.headers.get("X-Convo-Token")) == token
         def _send(self, code, obj):
             body = json.dumps(obj).encode()
             self.send_response(code)

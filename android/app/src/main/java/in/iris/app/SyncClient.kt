@@ -17,7 +17,7 @@ object SyncClient {
                     contentType: String = "application/json", extraHeaders: Map<String, String> = emptyMap()): Pair<Int, ByteArray> {
         val c = URL(url).openConnection() as HttpURLConnection
         c.connectTimeout = 15000; c.readTimeout = 60000
-        c.setRequestProperty("X-Convo-Token", token)
+        c.setRequestProperty("X-Iris-Token", token)
         extraHeaders.forEach { (k, v) -> c.setRequestProperty(k, v) }
         if (body != null) {
             c.requestMethod = "POST"

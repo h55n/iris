@@ -7,7 +7,7 @@ import hashlib, json, os, time, urllib.request
 def _req(url, token, payload=None):
     data = json.dumps(payload).encode() if payload is not None else None
     req = urllib.request.Request(url, data=data,
-        headers={"X-Convo-Token": token, "Content-Type": "application/json"})
+        headers={"X-Iris-Token": token, "Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=30) as r:
         return json.load(r)
 
