@@ -264,7 +264,7 @@ def sidebar(store_dir: str, active: str | None) -> str:
         cls = "nav-item active" if mid == active else "nav-item"
         items.append(f'<a class="{cls}" href="/meeting/{mid}">'
                      f'<div class=nav-title>{esc(meta.get("title", mid))}</div>'
-                     f'<div class=nav-meta>{when}{iv}</div></a>')
+                     f'<div class=nav-meta>{when}{" &middot; locked" if meta.get("encrypted") else ""}{iv}</div></a>')
     return ('<div class=brand>Iris<span id=tagline>private meeting notes</span></div>'
             '<script>(function(){var t=["private meeting notes","your meetings, your machines",'
             '"nothing leaves your devices","notes that keep receipts","always local, always yours"];'
