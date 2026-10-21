@@ -1,3 +1,4 @@
+from iris import store as s
 
 def test_list_meetings_skips_non_meetings(tmp_path):
     s.new_meeting(str(tmp_path), "a")
