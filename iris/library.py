@@ -156,3 +156,56 @@ def reorder_notes(store_dir: str, ids: list[str]) -> int:
 def order_key(meta: dict):
     """Manually ordered notes first (by order), the rest newest-first."""
     return (0, meta.get("order", 0), 0) if "order" in meta else (1, 0, -meta.get("created", 0))
+
+
+TRASH = ".trash"
+TRASH_DAYS = 30
+
+def trash_dir(store_dir): return os.path.join(store_dir, TRASH)
+
+def trash_note(store_dir: str, mid: str) -> bool:
+    """Soft delete: the folder moves to .trash and can be restored for 30 days."""
+    import shutil
+    src = os.path.join(store_dir, mid)
+    if "/" in mid or ".." in mid or not os.path.isfile(os.path.join(src, "meta.json")):
+        return False
+    meta = S._load_meta(store_dir, mid)
+    meta["trashed_at"] = time.time()
+    S._save_meta(store_dir, mid, meta)
+    os.makedirs(trash_dir(store_dir), exist_ok=True)
+    shutil.move(src, os.path.join(trash_dir(store_dir), mid))
+    return True
+
+def list_trash(store_dir: str) -> list[dict]:
+    out = []
+    td = trash_dir(store_dir)
+    for mid in sorted(os.listdir(td)) if os.path.isdir(td) else []:
+        try:
+            meta = json.load(open(os.path.join(td, mid, "meta.json")))
+        except (OSError, json.JSONDecodeError):
+            continue
+        out.append({"id": mid, "title": meta.get("title", mid), "trashed_at": meta.get("trashed_at", 0)})
+    return sorted(out, key=lambda t: -t["trashed_at"])
+
+def restore_note(store_dir: str, mid: str) -> bool:
+    import shutil
+    src = os.path.join(trash_dir(store_dir), mid)
+    dst = os.path.join(store_dir, mid)
+    if "/" in mid or ".." in mid or not os.path.isdir(src) or os.path.exists(dst):
+        return False
+    shutil.move(src, dst)
+    meta = S._load_meta(store_dir, mid)
+    meta.pop("trashed_at", None)
+    S._save_meta(store_dir, mid, meta)
+    return True
+
+def purge_trash(store_dir: str, now: float | None = None, older_than_days: float = TRASH_DAYS) -> int:
+    """Permanently remove trashed notes older than the window (0 = everything)."""
+    import shutil
+    now = now or time.time()
+    n = 0
+    for t in list_trash(store_dir):
+        if now - t["trashed_at"] >= older_than_days * 86400:
+            shutil.rmtree(os.path.join(trash_dir(store_dir), t["id"]), ignore_errors=True)
+            n += 1
+    return n

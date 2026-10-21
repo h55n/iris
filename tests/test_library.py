@@ -100,3 +100,30 @@ def test_reorder_notes_sets_order_and_ignores_unknown(tmp_path):
 def test_order_key_puts_manual_first():
     ms = [{"created": 5}, {"order": 1, "created": 1}, {"order": 0, "created": 2}, {"created": 9}]
     assert [m["created"] for m in sorted(ms, key=L.order_key)] == [2, 1, 9, 5]
+
+def test_trash_restore_and_purge(tmp_path):
+    d = str(tmp_path); mid = L.new_note(d, "oops")
+    L.save_notes(d, mid, "keep me")
+    assert L.trash_note(d, mid) is True
+    assert mid not in S.list_meetings(d) and [t["id"] for t in L.list_trash(d)] == [mid]
+    assert L.restore_note(d, mid) is True
+    assert open(os.path.join(d, mid, "notes.md")).read() == "keep me"
+    assert "trashed_at" not in S._load_meta(d, mid) and L.list_trash(d) == []
+
+def test_purge_only_removes_old_trash(tmp_path):
+    import time
+    d = str(tmp_path); a, b = L.new_note(d, "a"), L.new_note(d, "b")
+    L.trash_note(d, a); L.trash_note(d, b)
+    # age one of them 31 days
+    mp = os.path.join(d, ".trash", a, "meta.json"); m = json.load(open(mp)); m["trashed_at"] = time.time() - 31 * 86400
+    json.dump(m, open(mp, "w"))
+    assert L.purge_trash(d) == 1
+    assert [t["id"] for t in L.list_trash(d)] == [b]
+    assert L.purge_trash(d, older_than_days=0) == 1 and L.list_trash(d) == []
+
+def test_trash_rejects_bad_ids_and_restore_never_overwrites(tmp_path):
+    d = str(tmp_path)
+    assert L.trash_note(d, "../x") is False and L.trash_note(d, "nope") is False
+    mid = L.new_note(d, "a"); L.trash_note(d, mid)
+    os.makedirs(os.path.join(d, mid))                      # id reused meanwhile
+    assert L.restore_note(d, mid) is False
