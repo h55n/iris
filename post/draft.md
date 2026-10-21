@@ -73,7 +73,9 @@ deleted store/20261013-0915-a1b2c3/audio.wav     # 8 days old
 # transcript.md and notes.md for the same meeting: untouched
 ```
 
-[SCREENSHOT: same notes file synced on phone + laptop]
+![Local web UI: notes with claim receipts and full speaker-labeled transcript](assets/ui-meeting.png)
+
+![Meetings list with integrity counts](assets/ui-index.png)
 
 ## Code
 

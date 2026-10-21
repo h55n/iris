@@ -27,7 +27,7 @@ def render_notes_md(md: str) -> str:
         if line.startswith("# "): out.append(f"<h1>{e[2:]}</h1>")
         elif line.startswith("## "): out.append(f"<h2>{e[3:]}</h2>")
         elif line.startswith("### "): out.append(f"<h3>{e[4:]}</h3>")
-        elif line.startswith("  > "): out.append(f"<blockquote>{e[5:]}</blockquote>")
+        elif line.startswith("  > "): out.append(f"<blockquote>{esc(line[4:])}</blockquote>")
         elif line.startswith("- [ ] "): out.append(f"<div>&#9744; {e[6:]}</div>")
         elif line.startswith("- "): out.append(f"<div>&bull; {e[2:]}</div>")
         elif line.startswith("_integrity"): out.append(f'<p class=meta>{e}</p>')
