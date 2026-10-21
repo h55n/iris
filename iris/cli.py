@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Iris - private meeting notes. ingest | sweep | list | sync | key | encrypt | read | export | share | search | ask | enroll | voices | doctor"""
+"""Iris - private meeting notes. ingest | sweep | list | sync | key | encrypt | read | export | share | search | ask | note | pin | unpin | folders | folder | move | enroll | voices | doctor"""
 import sys, os, json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from iris import transcribe as T, backends, verify, store, crypto as C, render, diarize as DZ, voices as V
@@ -56,8 +56,38 @@ def main(args):
     args = sys.argv[1:]
     if args == ["--version"]:
         print(f"iris {__version__}"); sys.exit(0)
-    if not args or args[0] not in ("ingest", "sweep", "list", "sync", "key", "encrypt", "read", "export", "share", "search", "ask", "enroll", "voices", "doctor"):
+    if not args or args[0] not in ("ingest", "sweep", "list", "sync", "key", "encrypt", "read", "export", "share", "search", "ask", "note", "pin", "unpin", "folders", "folder", "move", "enroll", "voices", "doctor"):
         print(__doc__); sys.exit(1)
+    if args[0] in ("note", "pin", "unpin", "folders", "folder", "move"):
+        from iris import library as Lb
+        os.makedirs(STORE, exist_ok=True)
+        def _folder_id(name):
+            hit = [f for f in Lb.list_folders(STORE) if f["name"].lower() == name.lower() or f["id"] == name]
+            if not hit:
+                print(f"no such folder: {name} (try: iris folders)", file=sys.stderr); sys.exit(1)
+            return hit[0]["id"]
+        if args[0] == "note":
+            fid = _folder_id(args[args.index("--in") + 1]) if "--in" in args else None
+            title = " ".join(a for i, a in enumerate(args[1:], 1) if a != "--in" and (i < 2 or args[i - 1] != "--in"))
+            print(Lb.new_note(STORE, title, fid))
+        elif args[0] in ("pin", "unpin"):
+            Lb.set_pinned(STORE, _need_meeting(args), args[0] == "pin")
+        elif args[0] == "folders":
+            for f in Lb.list_folders(STORE):
+                n = sum(1 for m in store.list_meetings(STORE) if store._load_meta(STORE, m).get("folder") == f["id"])
+                print(f"{f['id']}  {f['name']}  ({n})")
+        elif args[0] == "folder":
+            if len(args) < 3 or args[1] != "new":
+                print("usage: iris folder new <name>", file=sys.stderr); sys.exit(1)
+            try: print(Lb.create_folder(STORE, " ".join(args[2:]))["id"])
+            except ValueError as e: print(f"error: {e}", file=sys.stderr); sys.exit(1)
+        else:  # move <meeting> <folder|none>
+            mid = _need_meeting(args)
+            target = " ".join(args[2:])
+            if not target:
+                print("usage: iris move <meeting> <folder name | none>", file=sys.stderr); sys.exit(1)
+            Lb.move(STORE, mid, None if target.lower() == "none" else _folder_id(target))
+        return
     if args[0] == "enroll":
         if len(args) < 3 or not os.path.exists(args[2]):
             print("usage: iris enroll <name> <sample.wav>"); sys.exit(1)
