@@ -93,6 +93,8 @@ def export_qr(path: str = DEFAULT_KEY) -> str:
 
 def key_info(path: str = DEFAULT_KEY) -> str:
     import time
+    if not os.path.exists(path):
+        raise CryptoError(f"no key at {path} - run `iris key init` first")
     st = os.stat(path)
     return (f"key file: {path}\n"
             f"created: {time.strftime('%Y-%m-%d %H:%M', time.localtime(st.st_ctime))}\n"

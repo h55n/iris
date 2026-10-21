@@ -46,3 +46,9 @@ def test_export_secret_missing_key_named(tmp_path):
     import pytest
     with pytest.raises(C.CryptoError, match="key init"):
         C.export_secret(str(tmp_path / "nope.txt"))
+
+def test_key_info_missing_key_named(tmp_path):
+    from iris import crypto as C
+    import pytest
+    with pytest.raises(C.CryptoError, match="key init"):
+        C.key_info(str(tmp_path / "nope.txt"))
