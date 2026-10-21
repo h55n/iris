@@ -113,6 +113,12 @@ blockquote .ts{color:var(--faint);font-size:12.5px}
   .spk4{background:#2b2138;color:#c0a3e8}.spk5{background:#16302d;color:#6ec9bf}
 }
 h2 .icon, h3 .icon{width:18px;height:18px;vertical-align:-3px;margin-right:7px;color:var(--accent)}
+.stats{display:flex;gap:12px;justify-content:center;margin:18px auto 0;max-width:560px}
+.stat{flex:1;background:var(--side);border:1px solid var(--border-soft);border-radius:10px;
+  padding:12px 14px;text-align:center}
+.stat .n{font-size:22px;font-weight:600;color:var(--text)}
+.stat .l{font-size:11.5px;color:var(--faint);margin-top:1px}
+.greet{font-size:13px;color:var(--muted);text-align:center;margin-top:26px}
 .mascot{display:block;margin:26px auto 10px;cursor:pointer;
   animation:floaty 3.6s ease-in-out infinite;transform-origin:center 70%}
 @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
@@ -331,10 +337,26 @@ def make_handler(store_dir: str):
             path = U.urlparse(self.path).path
             if path == "/":
                 self._active = None
-                self._html('<h1 style="margin-top:24px">Meetings</h1>'
-                           '<div class=empty>' + mascot(120)
+                mids = S.list_meetings(store_dir, reverse=True)
+                n_enc = n_pass = n_checked = 0
+                for m in mids:
+                    mt = json.load(open(os.path.join(store_dir, m, "meta.json")))
+                    n_enc += 1 if mt.get("encrypted") else 0
+                    ig = mt.get("integrity") or {}
+                    n_pass += ig.get("passed", 0); n_checked += ig.get("checked", 0)
+                hour = time.localtime().tm_hour
+                greet = ("Good night" if hour < 5 else "Good morning" if hour < 12
+                         else "Good afternoon" if hour < 17 else "Good evening")
+                stats = ('<div class=stats>'
+                         f'<div class=stat><div class=n>{len(mids)}</div><div class=l>meeting{"s" if len(mids)!=1 else ""}</div></div>'
+                         f'<div class=stat><div class=n>{n_enc}</div><div class=l>encrypted</div></div>'
+                         f'<div class=stat><div class=n>{n_pass}/{n_checked}</div><div class=l>claims verified</div></div>'
+                         '</div>') if mids else ""
+                self._html(f'<div class=greet>{greet}.</div>'
+                           '<div class=empty style="padding-top:2px">' + mascot(120)
                            + '<div class=t>Pick a meeting</div>'
-                           + '<div class=s>from the list, or search across everything - even encrypted notes</div></div>')
+                           + '<div class=s>from the list, or search across everything - even encrypted notes</div>'
+                           + stats + '</div>')
             elif path == "/search":
                 q = U.parse_qs(U.urlparse(self.path).query).get("q", [""])[0].strip()
                 self._active = None
