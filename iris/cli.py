@@ -103,7 +103,8 @@ if __name__ == "__main__":
         ml = "--multilingual" in args
         cmd_ingest(args[1], backend, title=title, diarize=dia, speakers=spk, multilingual=ml)
     elif args[0] == "sweep":
-        for p in store.sweep(STORE): print(f"deleted {p}")
+        dry = "--dry-run" in args
+        for p in store.sweep(STORE, dry_run=dry): print(f"{'would delete' if dry else 'deleted'} {p}")
     elif args[0] == "list":
         from iris import store as _S
         for mid in _S.list_meetings(STORE, reverse=True):

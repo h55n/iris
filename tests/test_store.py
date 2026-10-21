@@ -12,3 +12,15 @@ def test_list_meetings_order(tmp_path):
     time.sleep(0.02)
     b = s.new_meeting(str(tmp_path), "second")
     assert s.list_meetings(str(tmp_path), reverse=True)[0] == max(a, b)
+
+def test_sweep_dry_run_deletes_nothing(tmp_path):
+    import time, json, os
+    mid = s.new_meeting(str(tmp_path), "old")
+    s.attach_audio(str(tmp_path), mid, __file__)  # any file stands in for audio
+    meta = json.load(open(tmp_path / mid / "meta.json"))
+    meta["created"] = time.time() - 9 * 86400  # 9 days old
+    json.dump(meta, open(tmp_path / mid / "meta.json", "w"))
+    would = s.sweep(str(tmp_path), dry_run=True)
+    assert would and all(os.path.exists(p) for p in would)
+    gone = s.sweep(str(tmp_path))
+    assert gone and all(not os.path.exists(p) for p in gone)
