@@ -49,3 +49,11 @@ def test_wrong_token_rejected():
         assert False, "should 403"
     except Exception as e:
         assert "403" in str(e)
+
+def test_sync_auth_header_preference():
+    from iris.sync_server import _authed
+    assert _authed({"X-Iris-Token": "tok"}, "tok")
+    assert _authed({"X-Convo-Token": "tok"}, "tok")
+    assert _authed({"X-Iris-Token": "tok", "X-Convo-Token": "tok"}, "tok")  # both present, new matches
+    assert not _authed({"X-Iris-Token": "wrong", "X-Convo-Token": "tok"}, "tok")  # new header wins, so deny
+    assert not _authed({}, "tok")

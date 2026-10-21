@@ -4,10 +4,14 @@ stdlib only: python3 iris/sync_server.py --dir syncdata --token S3CRET --port 84
 import json, os, time, argparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+def _authed(headers, token: str) -> bool:
+    """New header wins; legacy X-Convo-Token keeps already-built APKs working."""
+    return headers.get("X-Iris-Token", headers.get("X-Convo-Token")) == token
+
 def make_handler(root, token):
     class H(BaseHTTPRequestHandler):
         def _auth(self):
-            return self.headers.get("X-Iris-Token", self.headers.get("X-Convo-Token")) == token
+            return _authed(self.headers, token)
         def _send(self, code, obj):
             body = json.dumps(obj).encode()
             self.send_response(code)
