@@ -154,6 +154,14 @@ def make_handler(store_dir: str):
         _active = None
         def do_POST(self):
             import urllib.parse as U
+            if self.path.startswith("/delete/"):
+                mid = self.path.split("/delete/", 1)[1].strip("/")
+                d = os.path.join(store_dir, mid)
+                if "/" not in mid and ".." not in mid and os.path.isdir(d):
+                    import shutil; shutil.rmtree(d)
+                self.send_response(303)
+                self.send_header("Location", "/")
+                return self.end_headers()
             if not self.path.startswith("/rename/"):
                 self.send_response(404); return self.end_headers()
             mid = self.path.split("/rename/", 1)[1].strip("/")
@@ -199,7 +207,9 @@ def make_handler(store_dir: str):
                 body = (f'<h1>{esc(meta.get("title", mid))}</h1><div class=doc-meta>{when} &middot; {mid}</div>'
                         f'<form method=post action="/rename/{mid}" style="margin-bottom:18px">'
                         f'<input name=title placeholder="Rename meeting" style="padding:5px 9px;font-size:13px;border:1px solid var(--border);border-radius:6px;width:220px"> '
-                        f'<button style="padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:#fff">rename</button></form>')
+                        f'<button style="padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:#fff">rename</button></form>'
+                        f'<form method=post action="/delete/{mid}" onsubmit="return confirm(\'Delete this meeting? Notes and transcript are removed from this device.\')" style="margin-bottom:24px">'
+                        f'<button style="padding:5px 12px;font-size:13px;border:1px solid #e5c7c5;border-radius:6px;background:#fff;color:#b83232">delete meeting</button></form>')
                 if "notes.md" in texts:
                     body += render_notes_md(texts["notes.md"])
                 if "transcript.md" in texts:
