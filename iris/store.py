@@ -38,8 +38,11 @@ def sweep(store_dir: str, now: float = None, dry_run: bool = False) -> list[str]
     deleted = []
     for mid in list_meetings(store_dir):
         d = os.path.join(store_dir, mid)
-        meta = _load_meta(store_dir, mid)
-        if now - meta["created"] < RETENTION_DAYS * 86400: continue
+        try:
+            meta = _load_meta(store_dir, mid)
+        except (OSError, json.JSONDecodeError):
+            continue  # never delete what we can't read
+        if now - meta.get("created", now) < RETENTION_DAYS * 86400: continue
         for af in meta.get("audio_files", []):
             p = os.path.join(d, af)
             if os.path.exists(p):

@@ -55,3 +55,21 @@ def test_sweep_deletes_all_parts_of_old_recording(tmp_path):
     assert len(deleted) == 2
     assert not [f for f in os.listdir(os.path.join(d, mid)) if f.endswith(".wav")]
     assert os.path.exists(mp)  # meta stays
+
+def test_sweep_never_deletes_unreadable_meeting(tmp_path):
+    from iris import store
+    import os, json, time
+    d = str(tmp_path / "store")
+    good = store.new_meeting(d, "good")
+    a = tmp_path / "g.wav"; a.write_bytes(b"x")
+    store.attach_audio(d, good, str(a))
+    mp = os.path.join(d, good, "meta.json")
+    meta = json.load(open(mp)); meta["created"] = time.time() - 9 * 86400
+    json.dump(meta, open(mp, "w"))
+    bad = os.path.join(d, "20261010-0000-corrupt")
+    os.makedirs(bad)
+    open(os.path.join(bad, "meta.json"), "w").write("{oops")
+    open(os.path.join(bad, "audio.wav"), "w").write("keep me")
+    deleted = store.sweep(d)
+    assert len(deleted) == 1  # only the good meeting's old audio
+    assert os.path.exists(os.path.join(bad, "audio.wav"))  # corrupt meeting untouched
