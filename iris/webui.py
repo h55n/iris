@@ -120,6 +120,7 @@ body{margin:0;font:16px/1.65 var(--font);-webkit-font-smoothing:antialiased;
 .inline input{padding:5px 9px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--input-bg);color:var(--text)}
 .inline button{padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:999px;background:var(--input-bg);color:var(--text)}
 .inline .danger{border-color:var(--danger-border);color:var(--danger)}.inline .primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.recent{max-width:560px;margin:34px auto 0;text-align:left}
 .card{display:block;padding:12px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;text-decoration:none;color:var(--text);background:var(--input-bg)}
 .card:hover{border-color:var(--accent)}.card .nav-title{font-size:15px}
 .nav-item{display:block;padding:6px 10px;border-radius:6px;color:var(--text);text-decoration:none;margin-bottom:1px}
@@ -353,6 +354,40 @@ def _nav_item(mid, meta, active):
             f'<div class=nav-title>{esc(meta.get("title", mid))}</div>'
             f'<div class=nav-meta>{when}{tail}{iv}</div></a>')
 
+def _day_label(ts: float) -> str:
+    d = time.strftime("%Y-%m-%d", time.localtime(ts))
+    if d == time.strftime("%Y-%m-%d"): return "Today"
+    if d == time.strftime("%Y-%m-%d", time.localtime(time.time() - 86400)): return "Yesterday"
+    return time.strftime("%A, %b %-d", time.localtime(ts))
+
+def _preview(store_dir: str, mid: str, meta: dict) -> str:
+    if meta.get("encrypted"):
+        return "Encrypted"
+    try:
+        for line in open(os.path.join(store_dir, mid, "notes.md")).read().splitlines():
+            t = line.strip().lstrip("#-> []x").strip()
+            if t: return t[:110]
+    except OSError:
+        pass
+    return ""
+
+def _recent_cards(store_dir: str, mids: list, limit: int = 8) -> str:
+    rows = []
+    for m in mids:
+        meta = load_meta_safe(store_dir, m)
+        if meta: rows.append((m, meta))
+    rows.sort(key=lambda t: (not t[1].get("pinned"), -t[1].get("created", 0)))
+    if not rows: return ""
+    out, last = "<div class=recent>", None
+    for m, meta in rows[:limit]:
+        label = "Pinned" if meta.get("pinned") else _day_label(meta.get("created", 0))
+        if label != last:
+            out += f'<div class=nav-sec>{label}</div>'; last = label
+        pv = _preview(store_dir, m, meta)
+        out += (f'<a class=card href="/meeting/{m}"><div class=nav-title>{esc(meta.get("title", m))}</div>'
+                + (f'<div class=nav-meta>{esc(pv)}</div>' if pv else "") + '</a>')
+    return out + "</div>"
+
 def sidebar(store_dir: str, active: str | None, active_folder: str | None = None) -> str:
     metas = []
     for mid in S.list_meetings(store_dir, reverse=True):
@@ -508,11 +543,12 @@ def make_handler(store_dir: str):
                          f'<div class=stat><div class=n>{n_enc}</div><div class=l>encrypted</div></div>'
                          f'<div class=stat><div class=n>{n_pass}/{n_checked}</div><div class=l>claims verified</div></div>'
                          '</div>') if mids else ""
+                recent = _recent_cards(store_dir, mids)
                 self._html(f'<div class=greet>{greet}.</div>'
                            '<div class=empty style="padding-top:2px">' + mascot(120)
                            + '<div class=t>Pick a meeting</div>'
                            + '<div class=s>from the list, or search across everything - even encrypted notes</div>'
-                           + stats + '</div>')
+                           + stats + '</div>' + recent)
             elif path == "/search":
                 q = U.parse_qs(U.urlparse(self.path).query).get("q", [""])[0].strip()
                 self._active = None

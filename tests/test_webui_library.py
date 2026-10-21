@@ -79,3 +79,11 @@ def test_palette_and_fonts_are_notion_granola():
 def test_mobile_menu_toggle_present():
     html = get("/")
     assert 'id=navtoggle' in html and 'class=menubtn' in html
+
+def test_home_lists_recent_notes_with_preview_and_pinned_first():
+    mid = post("/new", {"title": "Home preview note"})[1].split("/")[-1]
+    post(f"/notes/{mid}", {"text": "# Heading line\nbody"})
+    post(f"/pin/{mid}", {})
+    html = get("/")
+    assert "Home preview note" in html and "Heading line" in html
+    assert html.index(">Pinned<") < html.index("Home preview note")
