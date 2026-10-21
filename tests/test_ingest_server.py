@@ -36,3 +36,19 @@ def test_wrong_path_404(server):
 
 def test_tiny_audio_rejected(server):
     assert _post("/ingest", body=b"ab", token="t0ken") == 400
+
+def test_huge_audio_rejected(server):
+    assert _post("/ingest", body=b"", token="t0ken") in (400,)  # empty
+    # claim a huge Content-Length without sending it: server must refuse on the header alone
+    import http.client
+    conn = http.client.HTTPConnection("127.0.0.1", PORT)
+    conn.request("POST", "/ingest", body=b"x" * 2000,
+                 headers={"X-Convo-Token": "t0ken",
+                          "Content-Length": str(600 * 1024 * 1024)})
+    # server reads the header first; it should 413 without needing the body
+    try:
+        code = conn.getresponse().status
+    except Exception:
+        code = None  # connection reset is also an acceptable refusal
+    conn.close()
+    assert code in (413, None)

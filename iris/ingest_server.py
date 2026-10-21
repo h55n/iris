@@ -31,7 +31,10 @@ def make_handler(store_dir, token, backend):
         def do_POST(self):
             if not self._auth(): return self._send(403, {"error": "bad token"})
             if self.path != "/ingest": return self._send(404, {})
-            audio = self.rfile.read(int(self.headers["Content-Length"]))
+            size = int(self.headers["Content-Length"])
+            if size > 500 * 1024 * 1024:  # 500 MB sanity cap (~9h of 16k mono wav)
+                return self._send(413, {"error": "audio too large"})
+            audio = self.rfile.read(size)
             if len(audio) < 1000: return self._send(400, {"error": "audio too small"})
             title = self.headers.get("X-Iris-Title", self.headers.get("X-Convo-Title", ""))
             mid = store.new_meeting(store_dir, title)
