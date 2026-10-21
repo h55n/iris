@@ -88,7 +88,7 @@ License: MIT.
 
 | piece | file | what it does |
 |---|---|---|
-| CLI | `iris/cli.py` | ingest / sweep / list / sync / key / encrypt / read / export / share |
+| CLI | `iris/cli.py` | ingest / sweep / list / sync / key / encrypt / read / export / share / search / enroll / voices / doctor |
 | transcription | `iris/transcribe.py` | whisper.cpp + silero VAD, sentence timestamps |
 | notes backends | `iris/backends.py` | Ollama gemma3:4b (local default) or Ultramarine (hosted fallback) |
 | claim verifier | `iris/verify.py` | every decision/action item must quote the transcript; invented claims demoted |
