@@ -9,21 +9,42 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from iris import store as S
 
 PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
-<title>Iris</title><style>
+<title>Iris</title>
+<script>try{var t=localStorage.getItem("iris-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
 :root{
-  --bg:#ffffff; --side:#f7f7f5; --text:#37352f; --muted:#73726e; --faint:#a3a29e;
+  --bg:#fdfdfc; --side:#f7f7f2; --text:#37352f; --muted:#73726e; --faint:#a3a29e;
   --border:#e9e9e7; --border-soft:#ededeb; --accent:#2383e2;
   --quote-border:#d3d1cb; --pill-ok-bg:#eef7ee; --pill-ok:#2f6b31;
   --input-bg:#ffffff; --active-bg:#e3e3e0; --danger:#b83232; --danger-border:#e5c7c5;
+  --accent-soft:#e7f0fb;
 }
+[data-theme=green]{ --accent:#0f7b6c; --accent-soft:#e2f1ee; }
+[data-theme=purple]{ --accent:#6940a5; --accent-soft:#efeaf7; }
+[data-theme=orange]{ --accent:#d9730d; --accent-soft:#faebdd; }
+[data-theme=pink]{ --accent:#c14c8a; --accent-soft:#f8e9f1; }
+[data-theme=red]{ --accent:#d44c47; --accent-soft:#fae9e8; }
 @media (prefers-color-scheme: dark){
   :root{
     --bg:#191919; --side:#202020; --text:#d4d4d2; --muted:#9b9b98; --faint:#6f6f6c;
     --border:#2f2f2f; --border-soft:#2a2a2a; --accent:#529cca;
     --quote-border:#4a4a47; --pill-ok-bg:#1e2b1e; --pill-ok:#6aaa6f;
     --input-bg:#252525; --active-bg:#373737; --danger:#e08a8a; --danger-border:#5a3535;
+    --accent-soft:#1c2f3d;
   }
+  [data-theme=green]{ --accent:#4dab9a; --accent-soft:#1d2f2b; }
+  [data-theme=purple]{ --accent:#a98fd4; --accent-soft:#2a2436; }
+  [data-theme=orange]{ --accent:#e8a35c; --accent-soft:#332a1e; }
+  [data-theme=pink]{ --accent:#e08ab5; --accent-soft:#33222b; }
+  [data-theme=red]{ --accent:#e88a86; --accent-soft:#332020; }
 }
+.themes{display:flex;gap:8px;padding:10px 10px 4px;align-items:center}
+.themes .lbl{font-size:11px;color:var(--faint);margin-right:2px}
+.dot{width:16px;height:16px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+.dot.sel{border-color:var(--text)}
+.dot[data-t=""]{background:#2383e2}.dot[data-t=green]{background:#0f7b6c}
+.dot[data-t=purple]{background:#6940a5}.dot[data-t=orange]{background:#d9730d}
+.dot[data-t=pink]{background:#c14c8a}.dot[data-t=red]{background:#d44c47}
 *{box-sizing:border-box}
 body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
   color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
@@ -142,7 +163,21 @@ def sidebar(store_dir: str, active: str | None) -> str:
     return ('<div class=brand>Iris<span>private meeting notes</span></div>'
             '<form class=searchbox method=get action="/search">'
             '<input name=q placeholder="Search meetings"></form>'
-            + ("".join(items) or '<div class=nav-meta style="padding:0 10px">No meetings yet.</div>'))
+            + ("".join(items) or '<div class=nav-meta style="padding:0 10px">No meetings yet.</div>')
+            + '<div class=themes"><span class=lbl>theme</span>'
+            + ''.join(f'<button class=dot data-t="{t}" title="{t or "blue"}" '
+                      f'onclick="pickTheme(\'{t}\',this)"></button>'
+                      for t in ("", "green", "purple", "orange", "pink", "red"))
+            + '</div>'
+            + '<script>function pickTheme(t,b){'
+              'if(t)document.documentElement.dataset.theme=t;'
+              'else delete document.documentElement.dataset.theme;'
+              'try{localStorage.setItem("iris-theme",t)}catch(e){}'
+              'document.querySelectorAll(".dot").forEach(d=>d.classList.remove("sel"));'
+              'b.classList.add("sel")}'
+              '(function(){var cur="";try{cur=localStorage.getItem("iris-theme")||""}catch(e){}'
+              'var d=document.querySelector(\'.dot[data-t="\'+cur+\'"]\');if(d)d.classList.add("sel")})()'
+              '</script>')
 
 def page(inner: str) -> bytes:
     return (PAGE + inner).encode()
@@ -213,9 +248,9 @@ def make_handler(store_dir: str):
                 body = (f'<h1>{esc(meta.get("title", mid))}</h1><div class=doc-meta>{when} &middot; {mid}</div>'
                         f'<form method=post action="/rename/{mid}" style="margin-bottom:18px">'
                         f'<input name=title placeholder="Rename meeting" style="padding:5px 9px;font-size:13px;border:1px solid var(--border);border-radius:6px;width:220px;background:var(--input-bg);color:var(--text)"> '
-                        f'<button style="padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--input-bg);color:var(--text)">rename</button></form>'
+                        f'<button style="padding:5px 12px;font-size:13px;border:1px solid var(--border);border-radius:999px;background:var(--input-bg);color:var(--text)">rename</button></form>'
                         f'<form method=post action="/delete/{mid}" onsubmit="return confirm(\'Delete this meeting? Notes and transcript are removed from this device.\')" style="margin-bottom:24px">'
-                        f'<button style="padding:5px 12px;font-size:13px;border:1px solid var(--danger-border);border-radius:6px;background:var(--input-bg);color:var(--danger)">delete meeting</button></form>')
+                        f'<button style="padding:5px 12px;font-size:13px;border:1px solid var(--danger-border);border-radius:999px;background:var(--input-bg);color:var(--danger)">delete meeting</button></form>')
                 if "notes.md" in texts:
                     body += render_notes_md(texts["notes.md"])
                 if "transcript.md" in texts:
