@@ -50,3 +50,12 @@
 - TESTED (3 unit tests): bundle contents, plaintext export, share only opens with the recipient's key (owner key correctly fails).
 - TESTED LIVE: `convo export` on the encrypted demo meeting produced a readable bundle.
 - Hassan's tests pending: share a real meeting with a second person (they run `age -d` with their key), PDF export if he wants it.
+
+## Android app (android/) - added Oct 21
+- Kotlin, zero third-party deps, minSdk 26 (age decrypt needs 33, gated at runtime).
+- RecorderService: foreground service, 16kHz mono WAV, persistent visible notification with Stop. Recording is ALWAYS visible - no background listening.
+- MeetingNudge: the only detection Android allows - foreground-app polling via UsageStats (Zoom, Meet, Teams, Webex, Slack) -> "meeting? tap to record" notification. Needs Usage Access granted by the user. CANNOT see other apps' mic/audio (OS + Play policy May 2022).
+- SyncClient: pulls meeting bundles from the user's own relay; posts recordings to the user's own laptop ingest endpoint over LAN. Nothing third-party.
+- AgeDecrypt: full age v1 decryption in-app (bech32 key import, X25519 via API 33 platform crypto, HKDF-SHA256, ChaCha20-Poly1305, STREAM chunks) - the phone reads encrypted notes with the user's own key.
+- TESTED: compiles to a working APK (app-debug.apk builds clean). NOT testable in sandbox - Hassan's on-device list: mic recording quality, nudge firing in a real Zoom/Meet call, LAN upload to laptop, encrypted notes read on phone, Android 13+ gate message on older phones.
+- Laptop ingest server (convo/ingest_server.py): phone -> laptop over LAN, full pipeline runs on the laptop, results sync back encrypted via relay.

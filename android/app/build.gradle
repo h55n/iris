@@ -1,0 +1,9 @@
+plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
+android {
+    namespace 'in.convo.app'
+    compileSdk 33
+    defaultConfig { applicationId "in.convo.app"; minSdk 26; targetSdk 33; versionCode 1; versionName "0.1" }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_11; targetCompatibility JavaVersion.VERSION_11 }
+    kotlinOptions { jvmTarget = '11' }
+}
+dependencies { implementation "org.jetbrains.kotlin:kotlin-stdlib:1.8.10" }
