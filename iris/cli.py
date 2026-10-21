@@ -84,11 +84,11 @@ if __name__ == "__main__":
         server = args[args.index("--server") + 1] if "--server" in args else os.environ.get("IRIS_SYNC_SERVER", "http://127.0.0.1:8471")
         token = os.environ.get("IRIS_SYNC_TOKEN") or getpass.getpass("sync token: ")
         from iris import sync as S
-        pushed = [S.push(STORE, mid, server, token)["id"] for mid in sorted(os.listdir(STORE)) if os.path.isdir(os.path.join(STORE, mid))]
+        pushed, skipped = S.push_changed(STORE, server, token)
         st = S.state_file(STORE)
         got = S.pull_all(STORE, server, token, st.get("last_pull", 0.0))
         st["last_pull"] = __import__("time").time(); S.save_state(STORE, st)
-        print(f"pushed {len(pushed)}, pulled {len(got)}: {got}")
+        print(f"pushed {len(pushed)} ({len(skipped)} unchanged), pulled {len(got)}: {got}")
     elif args[0] == "ingest":
         if len(args) < 2 or not os.path.exists(args[1]):
             print("usage: iris ingest <audio-file> [--backend ollama|ultramarine] [--diarize [--speakers N]] [--multilingual] [--title T]"); sys.exit(1)

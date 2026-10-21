@@ -1,6 +1,8 @@
 """Sync client: push local meetings to / pull remote meetings from the sync server.
-Audio files are explicitly excluded - they never leave their device."""
-import json, os, time, urllib.request
+Audio files are explicitly excluded - they never leave their device.
+Push is incremental: a per-meeting content hash in .sync-state.json skips
+meetings that have not changed since the last push."""
+import hashlib, json, os, time, urllib.request
 
 def _req(url, token, payload=None):
     data = json.dumps(payload).encode() if payload is not None else None
@@ -19,8 +21,29 @@ def _bundle(store_dir, mid):
             b[key] = (json.load(open(p)) if name.endswith(".json") else open(p).read())
     return b  # audio deliberately absent
 
+def bundle_hash(store_dir, mid):
+    return hashlib.sha256(json.dumps(_bundle(store_dir, mid), sort_keys=True).encode()).hexdigest()
+
 def push(store_dir, mid, server, token):
     return _req(f"{server}/push/{mid}", token, _bundle(store_dir, mid))
+
+def push_changed(store_dir, server, token):
+    """Push only meetings whose content changed since the last push."""
+    st = state_file(store_dir)
+    hashes = st.get("push_hashes", {})
+    pushed, skipped = [], []
+    for mid in sorted(os.listdir(store_dir)):
+        if not os.path.isdir(os.path.join(store_dir, mid)):
+            continue
+        h = bundle_hash(store_dir, mid)
+        if hashes.get(mid) == h:
+            skipped.append(mid); continue
+        push(store_dir, mid, server, token)
+        hashes[mid] = h
+        pushed.append(mid)
+    st["push_hashes"] = hashes
+    save_state(store_dir, st)
+    return pushed, skipped
 
 def pull_all(store_dir, server, token, since=0.0):
     got = []
