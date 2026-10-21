@@ -72,7 +72,8 @@ if __name__ == "__main__":
             i = args.index("--backend"); backend = args[i + 1]; del args[i:i + 2]
         dia = "--diarize" in args
         spk = int(args[args.index("--speakers") + 1]) if "--speakers" in args else 0
-        cmd_ingest(args[1], backend, diarize=dia, speakers=spk)
+        title = args[args.index("--title") + 1] if "--title" in args else ""
+        cmd_ingest(args[1], backend, title=title, diarize=dia, speakers=spk)
     elif args[0] == "sweep":
         for p in store.sweep(STORE): print(f"deleted {p}")
     elif args[0] == "list":

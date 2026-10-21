@@ -44,7 +44,23 @@ class UltramarineBackend:
                   {"model": "ultramarine-1-flash",
                    "messages": [{"role": "user", "content": PROMPT + transcript_md}]},
                   headers={"Authorization": f"Bearer {self.key}"})
+        _log_usage(r)
         return _parse_notes(r["choices"][0]["message"]["content"])
+
+USAGE_LOG = os.environ.get("CONVO_USAGE_LOG", os.path.expanduser("~/.convo/hosted-usage.jsonl"))
+
+def _log_usage(response: dict):
+    """Track hosted-backend token usage locally, so the real spend is visible
+    (the DEV post cites actual spend, not a guess)."""
+    u = (response or {}).get("usage") or {}
+    rec = {"ts": __import__("time").time(), "backend": "ultramarine",
+           "prompt_tokens": u.get("prompt_tokens"), "completion_tokens": u.get("completion_tokens")}
+    try:
+        os.makedirs(os.path.dirname(USAGE_LOG), exist_ok=True)
+        with open(USAGE_LOG, "a") as f:
+            f.write(__import__("json").dumps(rec) + "\n")
+    except Exception:
+        pass
 
 def get_backend(name: str):
     return {"ollama": OllamaBackend, "ultramarine": UltramarineBackend}[name]()
