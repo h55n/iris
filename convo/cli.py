@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""convo - private meeting notes. ingest | sweep | list | sync | key | encrypt | read | export | share | search"""
+"""convo - private meeting notes. ingest | sweep | list | sync | key | encrypt | read | export | share | search | doctor"""
 import sys, os, json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from convo import transcribe as T, backends, verify, store, crypto as C, render, diarize as DZ
@@ -35,9 +35,11 @@ def cmd_ingest(audio, backend_name="ollama", title="", diarize=False, speakers=0
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    if not args or args[0] not in ("ingest", "sweep", "list", "sync", "key", "encrypt", "read", "export", "share", "search"):
+    if not args or args[0] not in ("ingest", "sweep", "list", "sync", "key", "encrypt", "read", "export", "share", "search", "doctor"):
         print(__doc__); sys.exit(1)
-    if args[0] == "key":
+    if args[0] == "doctor":
+        from convo import doctor; doctor.main()
+    elif args[0] == "key":
         if len(args) > 1 and args[1] == "init":
             print("public key:", C.generate_key())
         elif len(args) > 1 and args[1] == "export":

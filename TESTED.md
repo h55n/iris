@@ -1,3 +1,25 @@
+# TESTED.md - the honesty ledger
+
+Every claim the product makes is tied to a test that actually ran. Anything not testable in the dev sandbox is explicitly assigned to Hassan's devices. Sections are chronological.
+
+## Test ledger summary
+
+| area | status |
+|---|---|
+| transcription (en, VAD) | LIVE-TESTED (synthetic + LibriSpeech) |
+| Hindi transcription (ggml-small) | TESTED synthetic; real speech = Hassan |
+| Tamil/Spanish | TESTED synthetic |
+| Bengali | FAILS (wrong script) - unsupported |
+| claim verifier | 39+ unit/e2e tests + live demotions |
+| retention sweep | unit-tested + demoed |
+| encryption (age) | unit + live roundtrip |
+| sync relay | live two-store roundtrip, zero plaintext at relay |
+| speaker diarization | LIVE-TESTED (16/16 real-human turns); similar voices degrade |
+| meeting auto-detect | unit-tested (fake probes); live laptop = Hassan |
+| Android app | compiles to APK; ALL on-device behavior = Hassan |
+| local web UI | live-tested + screenshots |
+| ollama/gemma3:4b notes | NOT testable in sandbox - Hassan's laptop |
+
 # What is tested vs untested (honest build log)
 
 ## Tested live in the dev sandbox (2026-10-20/21)
