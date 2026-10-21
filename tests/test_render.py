@@ -28,3 +28,10 @@ def test_integrity_line_counts():
 def test_missing_owner_renders_cleanly():
     n = dict(NOTES); n["action_items"] = [{"text": "t", "evidence": "e", "at": "00:01"}]
     assert "- [ ] t  " in render_notes("m1", n, [])
+
+def test_render_notes_tolerates_partial_items():
+    from iris import render
+    md = render.render_notes("m1", {"summary": "s",
+        "decisions": [{"text": "keep it local"}],          # no evidence/at
+        "action_items": [{"evidence": "q", "at": "00:01"}]}, [])  # no text
+    assert "(untitled)" in md and "[?]" in md
