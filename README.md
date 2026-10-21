@@ -1,4 +1,4 @@
-# Iris (working name)
+# Iris
 
 Private, local-first meeting notes. Records when you tell it to, transcribes on your
 own machine, writes notes you can trust, deletes the audio after a week.
