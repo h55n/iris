@@ -76,4 +76,12 @@ if __name__ == "__main__":
     elif args[0] == "sweep":
         for p in store.sweep(STORE): print(f"deleted {p}")
     elif args[0] == "list":
-        for mid in sorted(os.listdir(STORE)): print(mid)
+        import time as _t
+        for mid in sorted(os.listdir(STORE), reverse=True):
+            mp = os.path.join(STORE, mid, "meta.json")
+            if not os.path.isfile(mp): continue
+            m = json.load(open(mp))
+            enc = " [encrypted]" if m.get("encrypted") else ""
+            i = m.get("integrity") or {}
+            iv = f" ({i.get('passed')}/{i.get('checked')} verified)" if i else ""
+            print(f"{mid}  {m.get('title', '')}{enc}{iv}")

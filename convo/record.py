@@ -22,6 +22,8 @@ def record(out_wav: str, platform: str = None) -> bool:
             time.sleep(5)
             print(f"  recording... {int(time.time() - t0)}s (Ctrl-C to stop)", flush=True)
     threading.Thread(target=timer, daemon=True).start()
+    print("REMINDER: tell everyone on the call you're recording. India allows one-party")
+    print("consent (you being present counts), but announcing is the product's behavior.")
     try:
         subprocess.run(cmd)
     except KeyboardInterrupt:
