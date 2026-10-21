@@ -81,3 +81,22 @@ def test_rename_speaker_supports_devanagari_and_encrypted(tmp_path):
 def test_rename_speaker_unknown_label_changes_nothing(tmp_path):
     d, mid = _tm(tmp_path, "[00:01] Speaker 1: hi")
     assert L.rename_speaker(d, mid, "Speaker 9", "Ravi") == 0
+
+def test_reorder_folders(tmp_path):
+    d = str(tmp_path)
+    a, b, c = (L.create_folder(d, n)["id"] for n in "ABC")
+    assert L.reorder_folders(d, [c, a]) is True
+    assert [f["id"] for f in L.list_folders(d)] == [c, a, b]
+    assert L.reorder_folders(d, [c, a]) is False
+    assert L.reorder_folders(d, ["f-ghost", c]) is False
+
+def test_reorder_notes_sets_order_and_ignores_unknown(tmp_path):
+    d = str(tmp_path)
+    x, y = L.new_note(d, "x"), L.new_note(d, "y")
+    assert L.reorder_notes(d, [y, "nope", x, y]) == 2
+    assert S._load_meta(d, y)["order"] == 0 and S._load_meta(d, x)["order"] == 1
+    assert L.reorder_notes(d, [y, x]) == 0
+
+def test_order_key_puts_manual_first():
+    ms = [{"created": 5}, {"order": 1, "created": 1}, {"order": 0, "created": 2}, {"created": 9}]
+    assert [m["created"] for m in sorted(ms, key=L.order_key)] == [2, 1, 9, 5]

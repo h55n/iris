@@ -125,3 +125,34 @@ def rename_speaker(store_dir: str, mid: str, old: str, new: str, key_path: str |
 
 def tidy_title(title: str) -> str:
     return re.sub(r"\s+", " ", title).strip()[:120]
+
+
+def reorder_folders(store_dir: str, ids: list[str]) -> bool:
+    """Put folders in the given order. Unknown ids are ignored; folders not
+    listed keep their relative order after the listed ones."""
+    folders = list_folders(store_dir)
+    by_id = {f["id"]: f for f in folders}
+    first = [by_id[i] for i in dict.fromkeys(ids) if i in by_id]
+    rest = [f for f in folders if f["id"] not in {x["id"] for x in first}]
+    new = first + rest
+    if [f["id"] for f in new] == [f["id"] for f in folders]:
+        return False
+    _save_folders(store_dir, new)
+    return True
+
+def reorder_notes(store_dir: str, ids: list[str]) -> int:
+    """Manual order for notes (pinned list, a folder). Stores meta['order'] =
+    position, so it survives sync. Returns how many notes changed."""
+    n = 0
+    real = set(S.list_meetings(store_dir))
+    for pos, mid in enumerate(i for i in dict.fromkeys(ids) if i in real):
+        meta = S._load_meta(store_dir, mid)
+        if meta.get("order") != pos:
+            meta["order"] = pos
+            S._save_meta(store_dir, mid, meta)
+            n += 1
+    return n
+
+def order_key(meta: dict):
+    """Manually ordered notes first (by order), the rest newest-first."""
+    return (0, meta.get("order", 0), 0) if "order" in meta else (1, 0, -meta.get("created", 0))
