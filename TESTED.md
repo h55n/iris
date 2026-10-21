@@ -43,3 +43,10 @@
 - TESTED LIVE: demo meeting encrypted via `convo encrypt`, plaintext gone from disk, `convo read` roundtrips the real transcript.
 - Behavior: `convo ingest` auto-encrypts when a key exists. Sync carries only .age ciphertext (relay never sees plaintext).
 - Hassan's tests pending: key pair across 2 devices (copy key file, confirm same pubkey fingerprint), passphrase-protected key variant, sync roundtrip of encrypted meetings.
+
+## Export & encrypted share (convo/export.py) - added Oct 21
+- export: one markdown bundle (notes + full transcript + meta), plaintext, audio never included.
+- share: same bundle encrypted to a RECIPIENT'S age public key - sharing = re-encrypting to their key, nothing uploaded.
+- TESTED (3 unit tests): bundle contents, plaintext export, share only opens with the recipient's key (owner key correctly fails).
+- TESTED LIVE: `convo export` on the encrypted demo meeting produced a readable bundle.
+- Hassan's tests pending: share a real meeting with a second person (they run `age -d` with their key), PDF export if he wants it.

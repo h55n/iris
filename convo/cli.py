@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""convo - private meeting notes. ingest | sweep | list | sync | key | encrypt | read"""
+"""convo - private meeting notes. ingest | sweep | list | sync | key | encrypt | read | export | share"""
 import sys, os, json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from convo import transcribe as T, backends, verify, store, crypto as C
@@ -50,7 +50,7 @@ def cmd_ingest(audio, backend_name="ollama", title=""):
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    if not args or args[0] not in ("ingest", "sweep", "list", "sync", "key", "encrypt", "read"):
+    if not args or args[0] not in ("ingest", "sweep", "list", "sync", "key", "encrypt", "read", "export", "share"):
         print(__doc__); sys.exit(1)
     if args[0] == "key":
         print("public key:", C.generate_key() if len(args) > 1 and args[1] == "init" else C.public_key())
@@ -59,6 +59,12 @@ if __name__ == "__main__":
         for m in mids:
             if not store.is_encrypted(STORE, m):
                 print(m, "->", ", ".join(store.encrypt_meeting(STORE, m)))
+    elif args[0] == "export":
+        from convo import export as E
+        print(E.export_meeting(STORE, args[1], args[2]))
+    elif args[0] == "share":
+        from convo import export as E
+        print(E.share_meeting(STORE, args[1], args[2], args[3]))
     elif args[0] == "read":
         for name, text in store.decrypt_meeting(STORE, args[1]).items():
             print(f"--- {name} ---\n{text}")
