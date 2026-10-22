@@ -554,7 +554,7 @@ def sidebar(store_dir: str, active: str | None, active_folder: str | None = None
             + '<button>+ New note</button></form>'
             + '<a class=folder href="/record" style="margin:2px 0 6px"><span class=chev></span>Record a meeting</a>'
             + _switcher(metas)
-            + '<div class=nav>' + out + '<a class=folder href="/trash"><span class=chev></span>Trash</a></div>'
+            + '<div class=nav>' + out + '<a class=folder href="/cloud"><span class=chev></span>Cloud sync</a><a class=folder href="/trash"><span class=chev></span>Trash</a></div>'
             + '<div class=themes><span class=lbl>Theme</span>'
             + ''.join(f'<button class=dot data-t="{t}" title="{t or "blue"}" '
                       f'onclick="pickTheme(\'{t}\',this)"></button>'
@@ -621,6 +621,20 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
             def ok_mid(m):
                 return bool(m) and "/" not in m and ".." not in m and os.path.isfile(os.path.join(store_dir, m, "meta.json"))
             parts = self.path.strip("/").split("/")
+            if self.path in ("/cloud/save", "/cloud/sync", "/cloud/forget"):
+                from iris import cloud as CL
+                try:
+                    if self.path == "/cloud/save":
+                        CL.save(store_dir, form.get("server", ""), form.get("token", ""), form.get("transcripts") == "1")
+                        msg = "Saved."
+                    elif self.path == "/cloud/forget":
+                        CL.forget(store_dir); msg = "Disconnected. Notes already on the cloud stay there until you remove them on the site."
+                    else:
+                        r = CL.sync_now(store_dir)
+                        msg = f"Synced: {r['pushed']} sent, {r['unchanged']} unchanged, {r['pulled']} received."
+                except Exception as e:
+                    msg = f"Could not sync: {e}"
+                return go("/cloud?m=" + U.quote(msg))
             if self.path == "/new":
                 fid = form.get("folder") or None
                 return go("/meeting/" + L.new_note(store_dir, form.get("title", ""), fid))
@@ -745,6 +759,24 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
                     + (cards or '<div class=empty>' + mascot(88, "sleep")
                        + '<div class=t>Nothing in this folder yet</div>'
                        + '<div class=s>make a note here, or move one in from its page</div></div>'))
+            elif path == "/cloud":
+                from iris import cloud as CL
+                self._active = None
+                st = CL.status(store_dir)
+                m = U.parse_qs(U.urlparse(self.path).query).get("m", [""])[0]
+                last = _day_label(st["last"]) if st["last"] else "never"
+                self._html("<h1>Iris Cloud</h1><div class=doc-meta>Notes only. Your audio never leaves this device"
+                           + (", and transcripts stay here too." if not st["transcripts"] else "; transcripts are included because you turned that on.")
+                           + "</div>" + (f"<p class=card>{esc(m)}</p>" if m else "")
+                           + (f'<p>Linked to <b>{esc(st["server"])}</b>. Last sync: {last}.</p>'
+                              '<form method=post action="/cloud/sync" class=inline><button>Sync now</button></form> '
+                              '<form method=post action="/cloud/forget" class=inline><button class=danger>Disconnect</button></form>' if st["linked"] else
+                              "<p>Make a token on your Iris Cloud account page, then paste it here.</p>")
+                           + '<form method=post action="/cloud/save" style="display:flex;flex-direction:column;gap:8px;max-width:420px;margin-top:18px">'
+                             f'<input name=server value="{esc(st["server"])}" aria-label="Server">'
+                             '<input name=token type=password placeholder="Sync token" autocomplete=off aria-label="Token">'
+                             f'<label style="font-size:13px"><input type=checkbox name=transcripts value=1 {"checked" if st["transcripts"] else ""}> Also send transcripts (the cloud only keeps them if you allow it in Account)</label>'
+                             '<button>Save</button></form>')
             elif path == "/trash":
                 self._active = None
                 items = L.list_trash(store_dir)
