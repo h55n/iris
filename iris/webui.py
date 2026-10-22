@@ -183,15 +183,19 @@ h2 .icon, h3 .icon{width:18px;height:18px;vertical-align:-3px;margin-right:7px;c
 .stat .l{font-size:11.5px;color:var(--faint);margin-top:1px}
 .greet{font-size:13px;color:var(--muted);text-align:center;margin-top:26px}
 .mascot{display:block;margin:26px auto 10px;cursor:pointer;transform-origin:50% 92%;overflow:visible}
-.mascot.happy{animation:sway 5s ease-in-out infinite}
+.mascot.happy{animation:sway 5s 1.6s ease-in-out infinite}
 @keyframes sway{0%,100%{transform:rotate(-1.4deg)}50%{transform:rotate(1.4deg)}}
-.mascot.sleep{animation:breathe 4.5s ease-in-out infinite}
+.mascot.sleep{animation:breathe 4.5s 1.6s ease-in-out infinite}
 @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
-.mascot.celebrate{animation:grow .9s cubic-bezier(.34,1.56,.64,1) both}
-@keyframes grow{from{transform:scale(.35,.15);opacity:0}to{transform:none;opacity:1}}
-.mascot .bloom{transform-box:fill-box;transform-origin:50% 50%;animation:pop .7s .55s cubic-bezier(.34,1.56,.64,1) both}
-@keyframes pop{from{transform:scale(0) rotate(-40deg)}to{transform:none}}
-.mascot .sparkles{animation:twinkle 1.6s 1.2s ease-in-out infinite}
+.mascot.celebrate{animation:settle .9s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes settle{from{transform:translateY(8px) scale(.94);opacity:0}to{transform:none;opacity:1}}
+.mascot .stem path{stroke-dasharray:1;stroke-dashoffset:0;animation:draw .7s cubic-bezier(.4,0,.2,1) both}
+@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+.mascot .leaf{transform-box:view-box;animation:unfurl .65s calc(.35s + var(--d,0s)) cubic-bezier(.34,1.56,.64,1) both}
+@keyframes unfurl{from{transform:scale(0) rotate(-24deg);opacity:0}to{transform:none;opacity:1}}
+.mascot .bloom{transform-box:fill-box;transform-origin:50% 50%;animation:pop .8s .85s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes pop{from{transform:scale(0) rotate(-50deg)}to{transform:none}}
+.mascot .sparkles{animation:twinkle 1.6s 1.6s ease-in-out infinite}
 @keyframes twinkle{0%,100%{opacity:1}50%{opacity:.25}}
 .mascot.wink{animation:boing .5s cubic-bezier(.34,1.56,.64,1)}
 @keyframes boing{30%{transform:scale(1.07,.93)}60%{transform:scale(.97,1.05)}}

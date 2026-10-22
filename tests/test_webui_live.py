@@ -192,6 +192,6 @@ def test_ask_no_answer_stays_quiet(server):
 
 def test_plant_motion_css_and_reduced_motion(server):
     html = _get("/")
-    assert "@keyframes grow" in html and "@keyframes pop" in html
+    assert "@keyframes unfurl" in html and "@keyframes draw" in html and "@keyframes pop" in html
     assert "prefers-reduced-motion" in html
     assert "floaty" not in html  # old eye bobbing is gone

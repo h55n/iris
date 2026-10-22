@@ -14,13 +14,14 @@ def test_plant_animates_and_reduced_motion_disables():
     srv = subprocess.Popen(["python3", "iris/webui.py", "--store", STORE, "--port", str(PORT)],
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     time.sleep(1.0)
-    q = "[...document.querySelectorAll('.mascot, .mascot .bloom')].map(e=>getComputedStyle(e).animationName)"
+    q = "[...document.querySelectorAll('.mascot, .mascot .stem path, .mascot .leaf, .mascot .bloom')].map(e=>getComputedStyle(e).animationName)"
     try:
         with pw.sync_playwright() as p:
             b = p.chromium.launch(executable_path=CHROME, args=["--no-sandbox"])
             pg = b.new_page()
             pg.goto(f"http://127.0.0.1:{PORT}/meeting/{mid}")
-            assert pg.evaluate(q) == ["grow", "pop"]
+            names = pg.evaluate(q)
+            assert names[0] == "settle" and "draw" in names and "unfurl" in names and names[-1] == "pop"
             pg2 = b.new_page(reduced_motion="reduce")
             pg2.goto(f"http://127.0.0.1:{PORT}/meeting/{mid}")
             assert set(pg2.evaluate(q)) == {"none"}
