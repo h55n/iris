@@ -28,3 +28,5 @@ PC (Windows/Mac/Linux): run `run-iris.bat` (Windows) or `./run-iris.sh`, open ht
 Phone or tablet: start the server for the network with a token, e.g. `python3 iris/webui.py --host 0.0.0.0 --token PICKONE`. Browsers only allow the microphone on https or localhost, so put it behind a free https tunnel (for example `cloudflared tunnel --url http://localhost:8473` or Tailscale Serve), open the https link once with `?t=PICKONE`, then "Add to Home screen" / "Install app".
 
 What the web app cannot do (this is why the Android APK still exists): detect that Zoom/Meet opened and nudge you, record with the screen off or in the background, or capture other apps' audio. Browsers don't allow those.
+
+- Pair the Android app with Iris Cloud: relay URL https://iris-cloud-one.vercel.app/sync plus a token from the site Account page; notes pulled from the web or PC should appear in the list.
