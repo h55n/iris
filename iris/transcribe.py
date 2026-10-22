@@ -1,5 +1,5 @@
 """Transcription via whisper.cpp CLI. Same engine that ships to phone/laptop."""
-import json, os, re, subprocess, tempfile
+import json, os, re, shutil, subprocess, tempfile
 
 WHISPER_CLI = os.environ.get("IRIS_WHISPER_CLI", "vendor/whisper.cpp/build/bin/whisper-cli")
 MODEL = os.environ.get("IRIS_WHISPER_MODEL", "models/ggml-tiny.en.bin")
@@ -9,6 +9,8 @@ def to_wav16k(src: str) -> str:
     """Any audio/video -> 16kHz mono wav (whisper.cpp input contract)."""
     if not os.path.exists(src):
         raise FileNotFoundError(f"audio not found: {src}")
+    if shutil.which("ffmpeg") is None:
+        raise RuntimeError("ffmpeg is not installed (apt install ffmpeg / brew install ffmpeg)")
     out = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
     r = subprocess.run(["ffmpeg", "-y", "-i", src, "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", out],
                        capture_output=True)

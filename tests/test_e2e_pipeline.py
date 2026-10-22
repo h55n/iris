@@ -115,3 +115,11 @@ def test_to_wav16k_unreadable_media_named():
     junk.write(b"this is not audio"); junk.close()
     with pytest.raises(RuntimeError, match="ffmpeg could not convert"):
         T.to_wav16k(junk.name)
+
+def test_to_wav16k_missing_ffmpeg_is_a_clear_error(monkeypatch, tmp_path):
+    import shutil, pytest
+    from iris import transcribe as T
+    f = tmp_path / "a.mp3"; f.write_bytes(b"x")
+    monkeypatch.setattr(shutil, "which", lambda name: None)
+    with pytest.raises(RuntimeError, match="ffmpeg is not installed"):
+        T.to_wav16k(str(f))

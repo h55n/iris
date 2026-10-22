@@ -12,6 +12,8 @@ jobs:
         with: { python-version: "3.11" }
       - name: install python deps
         run: pip install pytest numpy qrcode
+      - name: install ffmpeg
+        run: sudo apt-get update -q && sudo apt-get install -y -q ffmpeg
       - name: install age (crypto tests)
         run: |
           mkdir -p vendor
