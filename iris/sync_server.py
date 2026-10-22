@@ -4,9 +4,12 @@ stdlib only: python3 iris/sync_server.py --dir syncdata --token S3CRET --port 84
 import json, os, time, argparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+MAX_BUNDLE = 5 * 1024 * 1024   # a meeting's notes and transcript are text; refuse anything bigger
+
 def _authed(headers, token: str) -> bool:
     """New header wins; legacy X-Convo-Token keeps already-built APKs working."""
-    return headers.get("X-Iris-Token", headers.get("X-Convo-Token")) == token
+    import hmac
+    return hmac.compare_digest(headers.get("X-Iris-Token", headers.get("X-Convo-Token")) or "", token)
 
 def make_handler(root, token):
     class H(BaseHTTPRequestHandler):
@@ -24,7 +27,18 @@ def make_handler(root, token):
             if not self.path.startswith("/push/"): return self._send(404, {})
             mid = self.path.split("/push/", 1)[1].strip("/")
             if "/" in mid or ".." in mid: return self._send(400, {"error": "bad id"})
-            bundle = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            try:
+                size = int(self.headers.get("Content-Length", ""))
+            except ValueError:
+                return self._send(400, {"error": "bad Content-Length"})
+            if not 0 < size <= MAX_BUNDLE:
+                return self._send(413, {"error": "bundle too large"})
+            try:
+                bundle = json.loads(self.rfile.read(size))
+            except ValueError:
+                return self._send(400, {"error": "bad json"})
+            if not isinstance(bundle, dict):
+                return self._send(400, {"error": "bad bundle"})
             if "audio" in bundle or "audio_b64" in bundle:
                 return self._send(400, {"error": "audio never syncs"})
             d = os.path.join(root, mid)

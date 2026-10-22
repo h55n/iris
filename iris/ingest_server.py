@@ -24,7 +24,8 @@ def make_handler(store_dir, token, backend):
     from iris import transcribe as T, backends as B, verify, store, crypto as C, render
     class H(BaseHTTPRequestHandler):
         def _auth(self):
-            return self.headers.get("X-Iris-Token", self.headers.get("X-Convo-Token")) == token
+            import hmac
+            return hmac.compare_digest(self.headers.get("X-Iris-Token", self.headers.get("X-Convo-Token")) or "", token)
         def _send(self, code, obj):
             body = json.dumps(obj).encode()
             self.send_response(code)
