@@ -35,8 +35,9 @@ Android reads Iris Cloud notes too: in the app set the relay URL to `https://iri
                     web UI / search / export <--+
 ```
 
-Audio never leaves your devices. The relay moves only encrypted
-transcripts and notes; decryption keys never touch it.
+Audio never leaves your devices. The relay moves notes (and transcripts if you choose).
+If you run `iris encrypt`, they travel as ciphertext and the keys never touch the relay;
+without it they are plain text, so use a relay you trust (Iris Cloud sends notes only, over https).
 
 ## See it
 
