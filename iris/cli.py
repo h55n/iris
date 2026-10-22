@@ -143,7 +143,7 @@ def main(args):
         server = args[args.index("--server") + 1] if "--server" in args else os.environ.get("IRIS_SYNC_SERVER", "http://127.0.0.1:8471")
         token = os.environ.get("IRIS_SYNC_TOKEN") or getpass.getpass("sync token: ")
         from iris import sync as S
-        pushed, skipped = S.push_changed(STORE, server, token)
+        pushed, skipped = S.push_changed(STORE, server, token, notes_only="--notes-only" in args)
         S.push_folders(STORE, server, token)
         st = S.state_file(STORE)
         got = S.pull_all(STORE, server, token, st.get("last_pull", 0.0))

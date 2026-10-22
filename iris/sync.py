@@ -11,7 +11,9 @@ def _req(url, token, payload=None):
     with urllib.request.urlopen(req, timeout=30) as r:
         return json.load(r)
 
-def _bundle(store_dir, mid):
+NOTES_ONLY_SKIP = ("transcript", "transcript_age")
+
+def _bundle(store_dir, mid, notes_only=False):
     d = os.path.join(store_dir, mid)
     b = {"id": mid}
     for name, key in (("meta.json", "meta"), ("transcript.md", "transcript"), ("notes.md", "notes"),
@@ -19,15 +21,17 @@ def _bundle(store_dir, mid):
         p = os.path.join(d, name)
         if os.path.isfile(p):
             b[key] = (json.load(open(p)) if name.endswith(".json") else open(p).read())
+    if notes_only:
+        for k in NOTES_ONLY_SKIP: b.pop(k, None)
     return b  # audio deliberately absent
 
-def bundle_hash(store_dir, mid):
-    return hashlib.sha256(json.dumps(_bundle(store_dir, mid), sort_keys=True).encode()).hexdigest()
+def bundle_hash(store_dir, mid, notes_only=False):
+    return hashlib.sha256(json.dumps(_bundle(store_dir, mid, notes_only), sort_keys=True).encode()).hexdigest()
 
-def push(store_dir, mid, server, token):
-    return _req(f"{server}/push/{mid}", token, _bundle(store_dir, mid))
+def push(store_dir, mid, server, token, notes_only=False):
+    return _req(f"{server}/push/{mid}", token, _bundle(store_dir, mid, notes_only))
 
-def push_changed(store_dir, server, token):
+def push_changed(store_dir, server, token, notes_only=False):
     """Push only meetings whose content changed since the last push."""
     st = state_file(store_dir)
     hashes = st.get("push_hashes", {})
@@ -36,12 +40,12 @@ def push_changed(store_dir, server, token):
         if mid.startswith((".", "_")) or not os.path.isfile(os.path.join(store_dir, mid, "meta.json")):
             continue  # .trash, _folders.json, stray dirs: never meetings
         try:
-            h = bundle_hash(store_dir, mid)
+            h = bundle_hash(store_dir, mid, notes_only)
         except (OSError, ValueError):
             skipped.append(mid); continue  # unreadable meeting: skip, never push garbage
         if hashes.get(mid) == h:
             skipped.append(mid); continue
-        push(store_dir, mid, server, token)
+        (push(store_dir, mid, server, token, notes_only=True) if notes_only else push(store_dir, mid, server, token))
         hashes[mid] = h
         pushed.append(mid)
     st["push_hashes"] = hashes
