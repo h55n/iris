@@ -12,6 +12,7 @@ from iris import library as L
 
 PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
 <title>Iris</title>
+<!--PWA-->
 <script>try{var t=localStorage.getItem("iris-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>
 :root{
@@ -538,6 +539,7 @@ def sidebar(store_dir: str, active: str | None, active_folder: str | None = None
             '<form method=post action="/new" class=newnote>'
             + (f'<input type=hidden name=folder value="{esc(active_folder)}">' if active_folder else "")
             + '<button>+ New note</button></form>'
+            + '<a class=folder href="/record" style="margin:2px 0 6px"><span class=chev></span>Record a meeting</a>'
             + _switcher(metas)
             + '<div class=nav>' + out + '<a class=folder href="/trash"><span class=chev></span>Trash</a></div>'
             + '<div class=themes><span class=lbl>Theme</span>'
@@ -574,9 +576,10 @@ def sidebar(store_dir: str, active: str | None, active_folder: str | None = None
               '</script>')
 
 def page(inner: str) -> bytes:
-    return (PAGE + inner).encode()
+    from iris import pwa as W
+    return (PAGE.replace('<!--PWA-->', W.HEAD_TAGS) + inner + W.SW_REGISTER).encode()
 
-def make_handler(store_dir: str):
+def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
     class H(BaseHTTPRequestHandler := __import__("http.server", fromlist=["BaseHTTPRequestHandler"]).BaseHTTPRequestHandler):
         def _html(self, body: str, status: int = 200):
             data = page(f'<div class=layout><nav class=sidebar>{sidebar(store_dir, self._active, self._folder)}</nav>'
@@ -843,13 +846,75 @@ def make_handler(store_dir: str):
             else:
                 self.send_response(404); self.end_headers()
         def log_message(self, *a): pass
+
+    # ---- installable web app + in-browser recorder + optional access token ----
+    from iris import pwa as W
+    import http.cookies as _ck, urllib.parse as _up
+    _get, _post = H.do_GET, H.do_POST
+
+    def _send(self, code, ctype, data, extra=()):
+        self.send_response(code); self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        for k, v in extra: self.send_header(k, v)
+        self.end_headers(); self.wfile.write(data)
+
+    def _allowed(self):
+        if not token: return True
+        q = _up.parse_qs(_up.urlparse(self.path).query)
+        if q.get("t", [""])[0] == token:
+            clean = _up.urlparse(self.path).path or "/"
+            self.send_response(303); self.send_header("Location", clean)
+            self.send_header("Set-Cookie", f"iris_t={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=31536000")
+            self.end_headers(); return False
+        c = _ck.SimpleCookie(self.headers.get("Cookie", ""))
+        if c.get("iris_t") and c["iris_t"].value == token: return True
+        _send(self, 401, "text/html; charset=utf-8", b"<meta charset=utf-8><body style='font-family:system-ui;padding:2em'><h2>Iris</h2><p>Open the link with your access token (?t=...).</p>")
+        return False
+
+    def gated_get(self):
+        path = _up.urlparse(self.path).path
+        if path == "/manifest.webmanifest": return _send(self, 200, "application/manifest+json", W.MANIFEST.encode())
+        if path == "/sw.js": return _send(self, 200, "text/javascript", W.SW.encode(), [("Service-Worker-Allowed", "/")])
+        if path in ("/icon-192.png", "/icon-512.png"):
+            data = W.asset(path[1:])
+            return _send(self, 200, "image/png", data) if data else _send(self, 404, "text/plain", b"")
+        if not self._allowed(): return
+        if path == "/record":
+            self._active = None; self._folder = None
+            return self._html(W.RECORD_BODY.replace("btn-green", "primary"))
+        _get(self)
+
+    def gated_post(self):
+        if not self._allowed(): return
+        if _up.urlparse(self.path).path == "/api/record":
+            import json as _j
+            from iris.pipeline import process_audio, PipelineError
+            size = int(self.headers.get("Content-Length", 0) or 0)
+            if size < 1000 or size > 500 * 1024 * 1024:
+                return _send(self, 400, "application/json", b'{"error":"audio missing, too small or too large"}')
+            ctype = self.headers.get("Content-Type", "audio/webm")
+            ext = "mp4" if "mp4" in ctype else "ogg" if "ogg" in ctype else "webm"
+            title = _up.unquote(self.headers.get("X-Iris-Title", ""))
+            try:
+                out = process_audio(store_dir, self.rfile.read(size), title, backend, "web-recorder", ext)
+                return _send(self, 200, "application/json", _j.dumps(out).encode())
+            except PipelineError as e:
+                return _send(self, 500, "application/json", _j.dumps({"error": str(e), "meeting": e.meeting}).encode())
+        _post(self)
+
+    H.do_GET, H.do_POST, H._allowed = gated_get, gated_post, _allowed
     return H
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--store", default=os.environ.get("IRIS_STORE", "store"))
     ap.add_argument("--port", type=int, default=8473)
+    ap.add_argument("--host", default="127.0.0.1", help="use 0.0.0.0 to reach it from other devices (then set --token)")
+    ap.add_argument("--token", default=os.environ.get("IRIS_UI_TOKEN", ""), help="require ?t=TOKEN on first visit")
+    ap.add_argument("--backend", default=os.environ.get("IRIS_BACKEND", "ollama"), choices=["ollama", "ultramarine"])
     a = ap.parse_args()
-    from http.server import HTTPServer
-    print(f"Iris UI on http://127.0.0.1:{a.port} (local only - serves decrypted content)")
-    HTTPServer(("127.0.0.1", a.port), make_handler(a.store)).serve_forever()
+    if a.host != "127.0.0.1" and not a.token:
+        sys.exit("refusing to serve decrypted notes on the network without --token")
+    from http.server import ThreadingHTTPServer
+    print(f"Iris on http://{a.host}:{a.port}" + (" (token required)" if a.token else " (local only)"))
+    ThreadingHTTPServer((a.host, a.port), make_handler(a.store, a.token, a.backend)).serve_forever()

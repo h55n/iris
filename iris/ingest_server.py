@@ -43,25 +43,13 @@ def make_handler(store_dir, token, backend):
                 return self._send(413, {"error": "audio too large"})
             audio = self.rfile.read(size)
             if len(audio) < 1000: return self._send(400, {"error": "audio too small"})
-            title = _meeting_title(self.headers)
-            mid = store.new_meeting(store_dir, title)
-            tmp = os.path.join(store_dir, mid, "audio.wav")
-            with open(tmp, "wb") as f: f.write(audio)
-            meta = json.load(open(os.path.join(store_dir, mid, "meta.json")))
-            meta["audio_files"] = ["audio.wav"]; meta["source"] = "phone-lan"
-            json.dump(meta, open(os.path.join(store_dir, mid, "meta.json"), "w"), indent=2)
+            from iris.pipeline import process_audio, PipelineError
             try:
-                segs = T.transcribe(tmp)
-                tmd = T.transcript_markdown(segs)
-                store.write_text(store_dir, mid, "transcript.md", tmd)
-                notes = verify.verify_notes(B.get_backend(backend).notes(tmd), segs)
-                store.write_text(store_dir, mid, "notes.md", render.render_notes(mid, notes, segs))
-                if os.path.exists(C.DEFAULT_KEY):
-                    store.encrypt_meeting(store_dir, mid)
-            except Exception as e:
+                out = process_audio(store_dir, audio, _meeting_title(self.headers), backend)
+            except PipelineError as e:
                 # audio is kept on disk; the phone gets a real answer, not a dropped socket
-                return self._send(500, {"error": f"{type(e).__name__}: {e}", "meeting": mid})
-            self._send(200, {"meeting": mid, "integrity": notes.get("integrity")})
+                return self._send(500, {"error": str(e), "meeting": e.meeting})
+            self._send(200, out)
         def log_message(self, *a): pass
     return H
 
