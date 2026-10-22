@@ -544,7 +544,7 @@ def sidebar(store_dir: str, active: str | None, active_folder: str | None = None
     return ('<input type=checkbox id=navtoggle><label for=navtoggle class=menubtn>Menu</label>'
             '<div class=brand>Iris<span id=tagline>private meeting notes</span></div>'
             '<script>(function(){var t=["private meeting notes","your meetings, your machines",'
-            '"nothing leaves your devices","notes that keep receipts","always local, always yours"];'
+            '"your audio stays on your devices","notes that keep receipts","local first, always yours"];'
             'var i=Math.floor(Math.random()*t.length),el=document.getElementById("tagline");'
             'if(el)el.textContent=t[i]})()</script>'
             '<form class=searchbox method=get action="/search">'
@@ -847,7 +847,8 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
                 if fresh:
                     body += ('<div class=empty style="padding-top:6px">' + mascot(124, "celebrate")
                              + '<div class=t>Meeting saved</div>'
-                             + '<div class=s>encrypted, verified, and only on your devices</div></div>')
+                             + '<div class=s>' + ('encrypted and verified' if meta.get("encrypted") else 'verified')
+                             + ', saved on this device. Audio never leaves it.</div></div>')
                 lock = ' &middot; <span style="color:var(--pill-ok)">encrypted at rest</span>' if meta.get("encrypted") else ""
                 fl = L.list_folders(store_dir)
                 cur = meta.get("folder")

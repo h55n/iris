@@ -124,3 +124,18 @@ def test_titles_and_folder_names_are_escaped_on_every_page():
             assert "<script>alert(1)" not in low and "<img src=x onerror" not in low and "<iframe src=//e" not in low and "<svg onload=alert" not in low, pth
     finally:
         srv.shutdown()
+
+
+def test_saved_banner_only_claims_encryption_when_the_meeting_is_encrypted():
+    d = tempfile.mkdtemp()
+    mid = S.new_meeting(d, "Plain")
+    S.write_text(d, mid, "notes.md", "# Plain\n- x")
+    S.write_text(d, mid, "transcript.md", "[00:01] x")
+    srv = _serve(webui.make_handler(d), 18605)
+    try:
+        code, body = _req(f"http://127.0.0.1:18605/meeting/{mid}")
+        assert code == 200 and "Meeting saved" in body
+        assert "encrypted and verified" not in body and "verified, saved on this device" in body
+        assert "nothing leaves your devices" not in body
+    finally:
+        srv.shutdown()
