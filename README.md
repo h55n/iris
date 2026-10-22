@@ -109,7 +109,6 @@ License: MIT.
 | Hinglish | `iris/lang.py` | text-only Hinglish detection (Roman Hindi, Devanagari + English); tagged in transcripts |
 | plants | `iris/mascot.py` | hand-drawn plants for empty states and the meeting-saved bloom |
 | Android app | `android/` | recorder, meeting nudges, relay sync, on-device age decryption |
-| DEV post draft | `post/draft.md` | Hacktoberfest Week 3 submission (unpublished) |
 
 ## Quick start
 

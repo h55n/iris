@@ -1,0 +1,1 @@
+Debug-signed Android build for testing (not a Play Store build). Install: allow "install unknown apps" for your browser, open the APK. Use with the laptop side of Iris on the same Wi-Fi. Test checklist: see TESTING.md in the repo.
