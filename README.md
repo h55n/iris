@@ -70,6 +70,7 @@ python3 iris/cli.py sweep                                   # delete >7-day reco
 python3 iris/cli.py sweep --dry-run                         # preview what would be deleted
 python3 iris/cli.py list
 python3 iris/cli.py sync --server http://YOUR-SERVER:8471   # sync notes between devices
+python3 iris/cli.py sync --server https://iris-cloud-one.vercel.app/sync --notes-only   # Iris Cloud: notes only, no transcript, never audio (token from the site's Account page)
 
 # sync server (self-host, stdlib only)
 python3 iris/sync_server.py --dir syncdata --token S3CRET --port 8471
