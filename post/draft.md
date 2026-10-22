@@ -97,9 +97,6 @@ Read the demo transcript above again: the speaker said "we ship on Friday" and W
 ## Prize Categories
 
 - Best Use of Gemma - notes written by gemma3:4b running locally via Ollama
-- Best Use of Ultramarine - hosted fallback notes backend; usage is logged locally per run (`~/.iris/hosted-usage.jsonl`) so the spend claim is real, not estimated [CONFIRM DASHBOARD TOTAL BEFORE PUBLISH]
-- Best Use of Temporal - [if it lands: durable ingest pipeline]
-- Best Use of MongoDB Atlas - [if it lands: sync store]
-- Best Use of a .tech Domain - [demo page if deployed]
+- Best Use of Ultramarine - hosted fallback notes backend; usage is logged locally per run (`~/.iris/hosted-usage.jsonl`) so the spend claim is real, not estimated
 
-*Built with: whisper.cpp (MIT), Whisper tiny/base/small (MIT), pyannote segmentation + ERes2Net via sherpa-onnx, Gemma 3 via Ollama, age (X25519), Kotlin/Android (zero third-party deps), Python stdlib. Tests: 98 Python unit/integration tests + 10 Android JVM unit tests, both green on CI. License: MIT.*
+*Built with: whisper.cpp (MIT), Whisper tiny/base/small (MIT), pyannote segmentation + ERes2Net via sherpa-onnx, Gemma 3 via Ollama, age (X25519), Kotlin/Android (zero third-party deps), Python stdlib. Tests: 223 Python unit, integration and browser tests, green locally (Android JVM unit tests run on CI). License: MIT.*

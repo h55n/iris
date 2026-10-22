@@ -157,7 +157,7 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 - sweep --dry-run previews retention deletions without touching files (tested both paths).
 - Ingest server caps uploads at 500MB, checked on the Content-Length header before reading the body (413).
 - Web UI raw download endpoint: traversal attempts render "not found" and never touch the filesystem (tested).
-- CI: both jobs green on the same commit - pytest (89 tests) + Android JUnit (4 tests) on GitHub-hosted runners.
+- CI: both jobs green on the same commit - pytest (223 tests as of Oct 22) + Android JUnit (4 tests) on GitHub-hosted runners.
 
 ## Notion x Granola upgrade - tested Oct 21 night
 - Real Chrome (Playwright) tests, all green: "/" slash menu inserts blocks, Esc keeps text, Ctrl/Cmd+B/I/E toggle bold/italic/code, list continuation (Enter continues, empty item exits), autosave reaches disk with no JS errors, drag reorder of folders and pinned notes persists across reload, the saved-meeting plant runs grow + pop and prefers-reduced-motion turns every animation off.
