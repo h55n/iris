@@ -34,7 +34,9 @@ HEAD_TAGS = ('<link rel=manifest href=/manifest.webmanifest><meta name=theme-col
              '<meta name=apple-mobile-web-app-capable content=yes>')
 SW_REGISTER = "<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(function(){})</script>"
 
-RECORD_BODY = """<h1 class=title style="font-size:30px">Record a meeting</h1>
+RECORD_BODY = """<style>#rtitle{font:inherit;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text)}
+#rbtn{font:inherit;font-weight:600;padding:10px 18px;border:0;border-radius:999px;background:var(--accent);color:#fff;cursor:pointer;transition:transform .15s cubic-bezier(.34,1.56,.64,1)}
+#rbtn:active{transform:scale(.95)}#rbtn:disabled{opacity:.6;cursor:default}</style><h1 class=title style="font-size:30px">Record a meeting</h1>
 <p class=greet style="text-align:left;margin:0 0 14px">Audio goes to your own Iris server for transcription. Nothing is sent anywhere else.</p>
 <input id=rtitle placeholder="Title (optional)" style="width:100%;margin-bottom:12px">
 <div style="display:flex;gap:10px;align-items:center">
