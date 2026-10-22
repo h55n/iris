@@ -73,6 +73,19 @@ input:focus{box-shadow:0 0 0 3px var(--accent-soft)}
 .rise:nth-child(6){animation-delay:.2s}.rise:nth-child(7){animation-delay:.24s}
 .rise:nth-child(n+8){animation-delay:.28s}
 @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* motion and type taken from hssn.me: one ease, short staggered fade-up with a touch of blur, hairlines, mono eyebrows */
+@keyframes stagger-in{from{opacity:0;transform:translateY(6px);filter:blur(2px)}to{opacity:1;transform:none;filter:none}}
+.doc>*{opacity:0;animation:stagger-in .5s var(--spring) forwards;animation-delay:calc(var(--i,0)*70ms + 40ms)}
+.doc>*:nth-child(1){--i:0}.doc>*:nth-child(2){--i:1}.doc>*:nth-child(3){--i:2}.doc>*:nth-child(4){--i:3}.doc>*:nth-child(5){--i:4}.doc>*:nth-child(n+6){--i:5}
+.nav-item{opacity:0;animation:stagger-in .45s var(--spring) forwards;animation-delay:calc(var(--n,0)*35ms + 80ms)}
+.nav-item:nth-of-type(2){--n:1}.nav-item:nth-of-type(3){--n:2}.nav-item:nth-of-type(4){--n:3}.nav-item:nth-of-type(5){--n:4}.nav-item:nth-of-type(n+6){--n:5}
+.nav-item,.folder,.cta,.cta2,.mi,.pinbtn{transition:transform .18s var(--spring),background .18s ease,color .18s ease,box-shadow .18s ease}
+.cta:hover,.cta2:hover{transform:translateY(-2px)}.cta:active{transform:none}
+.nav-item:hover{transform:translateX(2px)}
+.nav-sec,.eyebrow{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.title{letter-spacing:-.04em;font-weight:680}
+h2.big{letter-spacing:-.02em}
+a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 body{margin:0;font:16px/1.65 var(--font);-webkit-font-smoothing:antialiased;
   color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
@@ -87,7 +100,7 @@ body{margin:0;font:16px/1.65 var(--font);-webkit-font-smoothing:antialiased;
 .searchbox input{width:100%;padding:6px 10px;font-size:13px;border:1px solid var(--border);
   border-radius:6px;background:var(--input-bg);color:var(--text);outline:none}
 .searchbox input:focus{border-color:var(--accent)}
-.nav-sec{font-size:11px;font-weight:600;color:var(--faint);padding:14px 10px 4px;letter-spacing:.2px}
+.nav-sec{font-size:11px;font-weight:600;color:var(--faint);padding:14px 10px 4px;letter-spacing:.08em}
 .folder{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:6px;color:var(--text);text-decoration:none;font-size:14px}
 .folder:hover{background:var(--active-bg)}.folder.on{background:var(--active-bg);font-weight:500}
 .folder .chev{font-size:10px;color:var(--faint);width:10px}.folder .count{margin-left:auto;font-size:11.5px;color:var(--faint)}
