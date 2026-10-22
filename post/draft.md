@@ -97,6 +97,6 @@ Read the demo transcript above again: the speaker said "we ship on Friday" and W
 ## Prize Categories
 
 - Best Use of Gemma - notes written by gemma3:4b running locally via Ollama
-- Best Use of Ultramarine - hosted fallback notes backend; usage is logged locally per run (`~/.iris/hosted-usage.jsonl`) so the spend claim is real, not estimated
+- Best Use of Ultramarine - hosted fallback notes backend
 
-*Built with: whisper.cpp (MIT), Whisper tiny/base/small (MIT), pyannote segmentation + ERes2Net via sherpa-onnx, Gemma 3 via Ollama, age (X25519), Kotlin/Android (zero third-party deps), Python stdlib. Tests: 223 Python unit, integration and browser tests, green locally (Android JVM unit tests run on CI). License: MIT.*
+*Built with: whisper.cpp (MIT), Whisper tiny/base/small (MIT), pyannote segmentation + ERes2Net via sherpa-onnx, Gemma 3 via Ollama, age (X25519), Kotlin/Android (zero third-party deps), Python stdlib. Tests: 224 Python unit, integration and browser tests (all pass locally; CI runs 216, the 3 browser tests skip there) + 13 Android JVM unit tests, CI green. License: MIT.*
