@@ -16,6 +16,8 @@ own machine, writes notes you can trust, deletes the audio after a week.
 - **Sync without audio** - a tiny self-hostable server moves transcripts/notes/meta
   between your devices. Recordings never leave the device they were made on.
 
+Android reads Iris Cloud notes too: in the app set the relay URL to `https://iris-cloud-one.vercel.app/sync` and paste a sync token from the site's Account page. (Pull works through the existing relay client; not yet tried on a real phone.)
+
 ## How it fits together
 
 ```
