@@ -39,12 +39,17 @@ transcripts and notes; decryption keys never touch it.
 ## See it
 
 <p>
-<img src="post/assets/ui-index.png" width="32%" alt="Meetings home with mascot and stats">
-<img src="post/assets/ui-meeting.png" width="32%" alt="Meeting notes with claim receipts">
-<img src="post/assets/ui-search.png" width="32%" alt="Search across encrypted notes">
+<img src="docs/screenshots/home_1440_light.png" width="49%" alt="Home: pinned notes, folders and the plant mascot">
+<img src="docs/screenshots/note_1440_dark.png" width="49%" alt="A meeting note in dark mode with claim receipts">
+</p>
+<p>
+<img src="docs/screenshots/folder_1024_light.png" width="49%" alt="A project folder">
+<img src="docs/screenshots/home_390_dark.png" width="22%" alt="Phone width, dark">
 </p>
 
 Dark mode follows your system; six accent themes live in the sidebar footer.
+
+Regenerate the screenshots with `python3 scripts/demo_shots.py out/` (needs playwright and Chrome).
 
 ## Run it
 
