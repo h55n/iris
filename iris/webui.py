@@ -4,7 +4,7 @@ machine. Design: Notion/Granola/macOS - calm document reading, soft neutrals.
 
   python3 iris/webui.py --port 8473
 """
-import argparse, html, json, os, sys, time
+import argparse, hmac, html, json, os, sys, time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from iris import store as S
 from iris.mascot import mascot
@@ -906,17 +906,32 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
     def _allowed(self):
         if not token: return True
         q = _up.parse_qs(_up.urlparse(self.path).query)
-        if q.get("t", [""])[0] == token:
+        if hmac.compare_digest(q.get("t", [""])[0], token):
             clean = _up.urlparse(self.path).path or "/"
             self.send_response(303); self.send_header("Location", clean)
             self.send_header("Set-Cookie", f"iris_t={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=31536000")
             self.end_headers(); return False
         c = _ck.SimpleCookie(self.headers.get("Cookie", ""))
-        if c.get("iris_t") and c["iris_t"].value == token: return True
+        if c.get("iris_t") and hmac.compare_digest(c["iris_t"].value, token): return True
         _send(self, 401, "text/html; charset=utf-8", b"<meta charset=utf-8><body style='font-family:system-ui;padding:2em'><h2>Iris</h2><p>Open the link with your access token (?t=...).</p>")
         return False
 
+    def _guard(self):
+        """Stop other websites from driving this local app. A page you have open elsewhere can post forms to
+        127.0.0.1 (CSRF) or point its own hostname at 127.0.0.1 (DNS rebinding). Reject both.
+        On a network bind the access token is the gate, so only the Origin rule applies."""
+        host = (_up.urlparse("//" + (self.headers.get("Host") or "")).hostname or "").lower()
+        if not token and host not in ("127.0.0.1", "localhost", "::1"):
+            _send(self, 421, "text/plain", b"wrong host"); return False
+        origin = self.headers.get("Origin")
+        if origin and origin != "null" and _up.urlparse(origin).netloc != (self.headers.get("Host") or ""):
+            _send(self, 403, "text/plain", b"cross-site request refused"); return False
+        if origin == "null":
+            _send(self, 403, "text/plain", b"cross-site request refused"); return False
+        return True
+
     def gated_get(self):
+        if not self._guard(): return
         path = _up.urlparse(self.path).path
         if path == "/manifest.webmanifest": return _send(self, 200, "application/manifest+json", W.MANIFEST.encode())
         if path == "/sw.js": return _send(self, 200, "text/javascript", W.SW.encode(), [("Service-Worker-Allowed", "/")])
@@ -930,6 +945,7 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
         _get(self)
 
     def gated_post(self):
+        if not self._guard(): return
         if not self._allowed(): return
         if _up.urlparse(self.path).path == "/api/record":
             import json as _j
@@ -947,6 +963,7 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
                 return _send(self, 500, "application/json", _j.dumps({"error": str(e), "meeting": e.meeting}).encode())
         _post(self)
 
+    H._guard = _guard
     H.do_GET, H.do_POST, H._allowed = gated_get, gated_post, _allowed
     return H
 
