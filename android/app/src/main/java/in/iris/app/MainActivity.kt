@@ -91,7 +91,7 @@ class MainActivity : Activity() {
         val token = prefs.getString("token", "") ?: ""
         val f = RecorderService.lastFile ?: run { toast("no recording yet"); return }
         if (laptop.isBlank() || token.isBlank()) { toast("set laptop URL + token first"); return }
-        if (!SyncClient.validUrl(laptop)) { toast("laptop URL must start with http://"); return }
+        if (!SyncClient.validUrl(laptop)) { toast("laptop URL must be https, or http on your own network"); return }
         status.text = "uploading to your laptop..."
         thread {
             try {
@@ -108,7 +108,7 @@ class MainActivity : Activity() {
         val token = prefs.getString("token", "") ?: ""
         val key = prefs.getString("agekey", "") ?: ""
         if (relay.isBlank() || token.isBlank()) { toast("set relay URL + token first"); return }
-        if (!SyncClient.validUrl(relay)) { toast("relay URL must start with http://"); return }
+        if (!SyncClient.validUrl(relay)) { toast("relay URL must be https, or http on your own network"); return }
         if (key.isNotBlank() && !AgeDecrypt.validSecretKey(key)) { toast("age key doesn't look right - paste the AGE-SECRET-KEY-1... line"); return }
         status.text = "syncing..."
         thread {

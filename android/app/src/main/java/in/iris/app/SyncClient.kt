@@ -32,8 +32,25 @@ object SyncClient {
         return code to bytes
     }
 
-    /** Only http(s) URLs are accepted for laptop/relay endpoints. */
-    fun validUrl(u: String) = u.startsWith("http://") || u.startsWith("https://")
+    /** https anywhere. Plain http only for devices on your own network (private ranges, localhost, .local),
+     *  so a token and your notes never cross the open internet unencrypted. */
+    fun validUrl(u: String): Boolean {
+        if (u.startsWith("https://")) return hostOf(u).isNotEmpty()
+        if (!u.startsWith("http://")) return false
+        return isPrivateHost(hostOf(u))
+    }
+
+    fun hostOf(u: String): String =
+        u.substringAfter("://").substringBefore("/").substringBefore("?").substringAfterLast("@").substringBefore(":").lowercase()
+
+    fun isPrivateHost(h: String): Boolean {
+        if (h == "localhost" || h.endsWith(".local")) return true
+        val p = h.split(".")
+        if (p.size != 4) return false
+        val n = p.map { it.toIntOrNull() ?: return false }
+        if (n.any { it !in 0..255 }) return false
+        return n[0] == 10 || n[0] == 127 || (n[0] == 192 && n[1] == 168) || (n[0] == 172 && n[1] in 16..31)
+    }
 
     fun listMeetings(relay: String, token: String, since: Double = 0.0): List<Meeting> {
         val (code, bytes) = req("$relay/list?since=$since", token)
