@@ -1,7 +1,7 @@
 """Iris Cloud link for the local app: remember where to sync, and run a sync.
 Only notes go up by default. Audio never does. The token sits in
 <store>/.cloud.json with owner-only permissions."""
-import json, os, time
+import json, os, sys, time
 
 DEFAULT_SERVER = "https://iris-cloud-one.vercel.app/sync"
 _FILE = ".cloud.json"
@@ -53,3 +53,17 @@ def sync_now(store_dir):
     cfg["last_sync"] = st["last_pull"]
     _write(store_dir, cfg)
     return {"pushed": len(pushed), "unchanged": len(skipped), "pulled": len(got)}
+
+def set_auto(store_dir, on):
+    cfg = load(store_dir)
+    if not cfg.get("token"): raise RuntimeError("not linked yet")
+    cfg["auto"] = bool(on); _write(store_dir, cfg)
+
+def auto_sync(store_dir):
+    """After a meeting finishes: sync if the cloud is linked and auto is on (default on once linked).
+    Never raises - a flaky network must not break note-taking. Returns the result dict or None."""
+    cfg = load(store_dir)
+    if not cfg.get("token") or cfg.get("auto") is False: return None
+    try: return sync_now(store_dir)
+    except Exception as e:
+        print(f"cloud sync skipped: {type(e).__name__}", file=sys.stderr); return None

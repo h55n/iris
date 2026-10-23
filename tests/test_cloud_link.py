@@ -55,3 +55,14 @@ def test_sync_now_requires_link():
     d, _ = _store()
     with pytest.raises(RuntimeError):
         CL.sync_now(d)
+
+
+def test_auto_sync_is_silent_when_unlinked_or_off_and_never_raises():
+    d, _ = _store()
+    assert CL.auto_sync(d) is None                       # not linked
+    CL.save(d, "https://127.0.0.1:1/sync", "tok")        # linked but unreachable
+    assert CL.auto_sync(d) is None                       # swallowed, no exception
+    CL.set_auto(d, False)
+    assert CL.auto_sync(d) is None and CL.load(d)["auto"] is False
+    with pytest.raises(RuntimeError):
+        CL.set_auto(tempfile.mkdtemp(), True)

@@ -37,6 +37,9 @@ def cmd_ingest(audio, backend_name="ollama", title="", diarize=False, speakers=0
         print("encrypted: transcript.md.age, notes.md.age")
     print(f"meeting: {mid}\nbackend: {backend.name}\nintegrity: {notes['integrity']}")
     print(f"notes: {os.path.join(STORE, mid, 'notes.md')}")
+    from iris import cloud as CL
+    r = CL.auto_sync(STORE)
+    if r: print(f"cloud: synced ({r['pushed']} pushed, {r['pulled']} pulled)")
 
 __version__ = "0.3.0"
 
