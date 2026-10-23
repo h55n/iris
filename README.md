@@ -10,6 +10,7 @@ own machine, writes notes you can trust, deletes the audio after a week.
   lines it came from, with a timestamp. A verifier checks each claim; anything the
   model invented (a task, a name, a quote) is demoted to "unverified" instead of
   landing silently in your to-do list.
+- **Linked notes and a graph** - write `[[another note]]` to link notes, see backlinks on each page, and browse the whole web of notes on the Graph page.
 - **Recording retention** - audio auto-deletes after 7 days; transcripts and notes stay.
 - **Local-first notes** - default backend is Ollama (gemma3:4b) on your machine;
   a hosted fallback exists for machines too small to run a model.
