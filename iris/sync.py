@@ -90,6 +90,9 @@ def pull_all(store_dir, server, token, since=0.0):
         if m["id"] == "_folders":
             merge_folders(store_dir, b.get("folders", []))
             continue
+        if "notes_ct" in b and "notes" not in b and "notes_age" not in b:
+            got.append(m["id"])   # browser-encrypted on the site: seen, but only the site can open it - keep the local copy untouched
+            continue
         d = os.path.join(store_dir, m["id"])
         if _newer_locally(d, b.get("meta")):
             continue  # your edit here is newer than the copy on the relay

@@ -65,3 +65,17 @@ def test_push_changed_skips_corrupt_meeting(tmp_path, monkeypatch):
     pushed, skipped = Y.push_changed(d, "http://x", "t")
     assert "20261010-0000-corrupt" in skipped and "20261010-0000-corrupt" not in pushed_to
     assert pushed_to  # the good meeting still pushed
+
+
+def test_pull_skips_browser_encrypted_bundles(monkeypatch, tmp_path):
+    from iris import sync as SY, store as S
+    mid = S.new_meeting(str(tmp_path), "Local copy")
+    S.write_text(str(tmp_path), mid, "notes.md", "# Local copy\n- keep me")
+    bundles = {mid: {"meta": {"title": "Encrypted note", "browser_encrypted": True},
+                     "notes_ct": {"v": 1, "ct": "..."}}}
+    monkeypatch.setattr(SY, "_req", lambda url, token, data=None:
+                        {"meetings": [{"id": mid, "ts": 1}]} if "/list" in url else bundles[mid])
+    got = SY.pull_all(str(tmp_path), "https://x.test/sync", "tok")
+    assert got == [mid]  # seen, so it is not re-pulled forever
+    assert "keep me" in open(os.path.join(str(tmp_path), mid, "notes.md")).read()
+    assert "Encrypted note" not in open(os.path.join(str(tmp_path), mid, "meta.json")).read()
