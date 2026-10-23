@@ -11,3 +11,8 @@ android/build/
 android/.gradle/
 android/local.properties
 post/
+
+# Android signing secrets - never commit
+android/keystore.properties
+*.keystore
+*.jks

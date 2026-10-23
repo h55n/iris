@@ -1,10 +1,40 @@
 plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
+
+// Release signing. Credentials live in android/keystore.properties (gitignored) or in the
+// IRIS_KEYSTORE / IRIS_KEYSTORE_PASSWORD / IRIS_KEY_ALIAS / IRIS_KEY_PASSWORD environment
+// variables. If neither is set, the release build is unsigned so nobody ships a random key by accident.
+def ksProps = new Properties()
+def ksFile = rootProject.file('keystore.properties')
+if (ksFile.exists()) { ksFile.withInputStream { ksProps.load(it) } }
+def ksStore = System.getenv('IRIS_KEYSTORE') ?: ksProps.getProperty('storeFile')
+def ksStorePw = System.getenv('IRIS_KEYSTORE_PASSWORD') ?: ksProps.getProperty('storePassword')
+def ksAlias = System.getenv('IRIS_KEY_ALIAS') ?: ksProps.getProperty('keyAlias')
+def ksKeyPw = System.getenv('IRIS_KEY_PASSWORD') ?: ksProps.getProperty('keyPassword')
+def hasReleaseKey = ksStore && ksStorePw && ksAlias && ksKeyPw
+
 android {
     namespace 'in.iris.app'
     compileSdk 33
     defaultConfig { applicationId "in.iris.app"; minSdk 26; targetSdk 33; versionCode 1; versionName "0.1" }
     compileOptions { sourceCompatibility JavaVersion.VERSION_11; targetCompatibility JavaVersion.VERSION_11 }
     kotlinOptions { jvmTarget = '11' }
+    signingConfigs {
+        release {
+            if (hasReleaseKey) {
+                storeFile file(ksStore)
+                storePassword ksStorePw
+                keyAlias ksAlias
+                keyPassword ksKeyPw
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (hasReleaseKey) { signingConfig signingConfigs.release }
+            minifyEnabled false
+        }
+        debug { }
+    }
 }
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.8.10"

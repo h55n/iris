@@ -174,3 +174,11 @@ cd android
 gradle assembleDebug   # JDK 11+, Android SDK 33; APK at app/build/outputs/apk/debug/
 ```
 
+Release builds are signed only when credentials are present, so a plain build can never ship an unexpected key:
+
+1. Generate the keystore once and back it up somewhere safe off the machine. Losing it means installed copies can never be updated again.
+   `keytool -genkeypair -v -keystore iris-release.keystore -alias iris -keyalg RSA -keysize 4096 -validity 10000`
+2. Copy `android/keystore.properties.template` to `android/keystore.properties` (gitignored) and fill it in, or set the `IRIS_KEYSTORE`, `IRIS_KEYSTORE_PASSWORD`, `IRIS_KEY_ALIAS` and `IRIS_KEY_PASSWORD` environment variables.
+3. `gradle assembleRelease` - the APK lands in `app/build/outputs/apk/release/`. Without credentials the build still succeeds but the APK stays unsigned.
+4. Record the certificate fingerprint (`keytool -list -v -keystore iris-release.keystore`) so later builds can be checked against it.
+
