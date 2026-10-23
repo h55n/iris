@@ -16,7 +16,8 @@ Every claim the product makes is tied to a test that actually ran. Anything not 
 | sync relay | live two-store roundtrip, zero plaintext at relay |
 | speaker diarization | LIVE-TESTED (16/16 real-human turns); similar voices degrade |
 | meeting auto-detect | unit-tested (fake probes); live laptop = Hassan |
-| Android app | compiles to APK; ALL on-device behavior = Hassan |
+| Android app | builds in CI every push (debug + unsigned release); 4 unit test classes pass; ALL on-device behavior = Hassan |
+| wikilinks, local graph, recap, auto-sync | unit + live browser tests (see Oct 23 section) |
 | local web UI | live-tested + screenshots |
 | ollama/gemma3:4b notes | NOT testable in sandbox - Hassan's laptop |
 
@@ -168,3 +169,10 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 - Hinglish detection is heuristic text classification (word list), 11 table cases incl. false-positive guards ("to", "the", "sir"). Not tested on real Hinglish speech; that is a Hassan test.
 - Bug found by the tests: the confetti script had a JS syntax error from day one, so the celebration never ran. Fixed; every inline script is now syntax-checked in CI.
 - Not covered: real typing latency on a phone, Android UI for folders/pins (web only so far).
+
+## Linked notes, graph, recap, auto-sync - added Oct 23
+- Wikilinks: `[[Title]]` links between meetings render in the local web UI; backlinks shown on the target note. TESTED: graph nodes/edges have no self-links or duplicates (unit), graph page and wikilinks render escaped (browser test).
+- Recap page: last 7 days of notes on demand; completed task text is struck through without striking the source label; locked (encrypted) notes are excluded (unit + browser tests).
+- Auto-sync: after linking the hosted account, notes push silently after each meeting; unlinked or toggled-off means no network call and no error raised (unit + security tests, cross-site push refused).
+- Sync guards: a pull never overwrites a local note with browser-encrypted ciphertext from the hosted site (unit); second push of an unchanged note sends nothing (incremental tests).
+- Android CI: every push builds assembleDebug AND assembleRelease on GitHub's free runner (release unsigned unless credentials are supplied via gitignored properties or env) and runs the 4 Kotlin unit test classes. Verified green on the first run.
