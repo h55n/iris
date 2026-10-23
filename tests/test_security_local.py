@@ -171,3 +171,20 @@ def test_graph_page_and_wikilinks_render(local):
     # no external resources: graph page must not load scripts/styles from other origins
     assert "http://" not in g.split("<script>window.__graph")[1].replace("<\\/", "")
     assert 'src="http' not in g and 'href="http' not in g
+
+
+def test_recap_page_excludes_locked_notes(local):
+    import time as T
+    base, mid, d = local
+    from iris import store as S
+    other = S.new_meeting(d, "Recent one")
+    S.write_text(d, other, "notes.md", "# Recent one\n## Action items\n- [ ] call the dentist\n")
+    html = _req(base + "/recap")[1]
+    assert "call the dentist" in html and "not confirmed as outstanding" in html
+    # lock the note: unreadable notes must disappear from the recap
+    import os, json
+    os.remove(d + "/" + other + "/notes.md")
+    open(d + "/" + other + "/notes.md.age", "w").write("AGE-ENCRYPTED-FAKE")
+    meta = json.load(open(d + "/" + other + "/meta.json")); meta["encrypted"] = True
+    json.dump(meta, open(d + "/" + other + "/meta.json", "w"))
+    assert "call the dentist" not in _req(base + "/recap")[1]

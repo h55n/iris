@@ -54,3 +54,15 @@ def test_encrypted_meeting_is_a_node_but_has_no_edges():
     g = LK.graph(d)
     assert any(n["id"] == c for n in g["nodes"])
     assert not any(e["from"] == c for e in g["edges"])
+
+
+def test_recap_extract_and_summarize():
+    from iris import recap as RC
+    ds, acs = RC.extract_from_notes("# M\n## Decisions\n- ship Friday\n\n## Action items\n- [ ] call Priya\n- [x] book room\n")
+    assert ds == ["ship Friday"] and acs == [("call Priya", False), ("book room", True)]
+    now = 1_000_000_000.0
+    r = RC.summarize([("Old", now - 9 * 86400, "## Decisions\n- old call", 0),
+                      ("New", now - 3600, "## Action items\n- [ ] fresh task", 2)], now=now)
+    assert [m["title"] for m in r["meetings"]] == ["New"]
+    assert r["actions"] == [{"text": "fresh task", "done": False, "source": "New"}]
+    assert r["link_count"] == 2 and r["decisions"] == []

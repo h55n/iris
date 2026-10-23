@@ -597,7 +597,7 @@ def sidebar(store_dir: str, active: str | None, active_folder: str | None = None
             + '<button>+ New note</button></form>'
             + '<a class=folder href="/record" style="margin:2px 0 6px"><span class=chev></span>Record a meeting</a>'
             + _switcher(metas)
-            + '<div class=nav>' + out + '<a class=folder href="/graph"><span class=chev></span>Graph</a><a class=folder href="/cloud"><span class=chev></span>Cloud sync</a><a class=folder href="/trash"><span class=chev></span>Trash</a></div>'
+            + '<div class=nav>' + out + '<a class=folder href="/recap"><span class=chev></span>Recap</a><a class=folder href="/graph"><span class=chev></span>Graph</a><a class=folder href="/cloud"><span class=chev></span>Cloud sync</a><a class=folder href="/trash"><span class=chev></span>Trash</a></div>'
             + '<div class=themes><span class=lbl>Theme</span>'
             + ''.join(f'<button class=dot data-t="{t}" title="{t or "blue"}" '
                       f'onclick="pickTheme(\'{t}\',this)"></button>'
@@ -825,6 +825,45 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
                              '<input name=token type=password placeholder="Sync token" autocomplete=off aria-label="Token">'
                              f'<label style="font-size:13px"><input type=checkbox name=transcripts value=1 {"checked" if st["transcripts"] else ""}> Also send transcripts (the cloud only keeps them if you allow it in Account)</label>'
                              '<button>Save</button></form>')
+            elif path == "/recap":
+                from iris import recap as RC, links as LK
+                self._active = None
+                entries = []
+                for m2 in S.list_meetings(store_dir):
+                    meta2 = load_meta_safe(store_dir, m2)
+                    if meta2 is None:
+                        continue
+                    texts2 = read_meeting_texts(store_dir, m2)
+                    if texts2 is None:   # locked: the recap never decrypts what the key cannot open
+                        continue
+                    notes2 = texts2.get("notes.md", "")
+                    entries.append((meta2.get("title") or m2, meta2.get("created", 0), notes2,
+                                    len(LK.extract(notes2))))
+                r = RC.summarize(entries)
+                def esc2(t): return esc(t)
+                body = ('<h1>Weekly recap</h1><div class=doc-meta>Last 7 days, generated when you opened this page. '
+                        'Action items below are extracted from your notes, not confirmed as outstanding. '
+                        'Locked notes are not included.</div>')
+                body += f'<h2>{len(r["meetings"])} note{"s" if len(r["meetings"]) != 1 else ""}</h2>'
+                for m3 in r["meetings"]:
+                    when2 = time.strftime("%a %b %-d", time.localtime(m3["created"]))
+                    body += f'<div class=bullet>{esc2(m3["title"])} <span style="color:var(--muted);font-size:12.5px">{when2}</span></div>'
+                if r["decisions"]:
+                    body += f"<h2>{heading_icon('decisions')}Decisions</h2>"
+                    for d in r["decisions"]:
+                        body += f'<div class=bullet>{esc2(d["text"])} <span style="color:var(--muted);font-size:12.5px">- {esc2(d["source"])}</span></div>'
+                if r["actions"]:
+                    body += f"<h2>{heading_icon('action items')}Action items</h2>"
+                    for a in r["actions"]:
+                        cls = "todo done" if a["done"] else "todo"
+                        box = "box on" if a["done"] else "box"
+                        body += (f'<div class="{cls}"><span class="{box}"></span><span>{esc2(a["text"])}'
+                                 f' <span style="color:var(--muted);font-size:12.5px">- {esc2(a["source"])}</span></span></div>')
+                if r["link_count"]:
+                    body += f'<p style="color:var(--muted);font-size:13px">{r["link_count"]} [[link]]{"s" if r["link_count"] != 1 else ""} written this week. <a class=wikilink href="/graph">Open the graph</a></p>'
+                if not r["meetings"]:
+                    body += '<div class=empty>' + mascot(72, "sleep") + '<div class=t>Nothing this week</div><div class=s>New notes will show up here.</div></div>'
+                self._html(body)
             elif path == "/graph":
                 from iris import links as LK
                 self._active = None
