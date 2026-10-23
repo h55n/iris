@@ -152,7 +152,7 @@ a.wikilink:hover{border-bottom-style:solid}
 .dragging{opacity:.4}
 .dropbefore{box-shadow:0 -2px 0 var(--accent)}
 h2.big{font-size:26px;margin-top:28px}
-.todo.done span:last-child{text-decoration:line-through;color:var(--faint)}
+.todo.done>span:nth-child(2){text-decoration:line-through;color:var(--faint)}
 .box.on{background:var(--accent);border-color:var(--accent)}
 .num{margin:4px 0}.num .n{color:var(--muted);display:inline-block;min-width:22px}
 code{font-family:var(--mono);font-size:.9em;background:var(--side);border:1px solid var(--border-soft);border-radius:4px;padding:1px 5px}
@@ -857,8 +857,8 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
                     for a in r["actions"]:
                         cls = "todo done" if a["done"] else "todo"
                         box = "box on" if a["done"] else "box"
-                        body += (f'<div class="{cls}"><span class="{box}"></span><span>{esc2(a["text"])}'
-                                 f' <span style="color:var(--muted);font-size:12.5px">- {esc2(a["source"])}</span></span></div>')
+                        body += (f'<div class="{cls}"><span class="{box}"></span><span>{esc2(a["text"])}</span>'
+                                 f' <span style="color:var(--muted);font-size:12.5px">- {esc2(a["source"])}</span></div>')
                 if r["link_count"]:
                     body += f'<p style="color:var(--muted);font-size:13px">{r["link_count"]} [[link]]{"s" if r["link_count"] != 1 else ""} written this week. <a class=wikilink href="/graph">Open the graph</a></p>'
                 if not r["meetings"]:
