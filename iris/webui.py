@@ -131,6 +131,9 @@ body{margin:0;font:16px/1.65 var(--font);-webkit-font-smoothing:antialiased;
 .edmeta{display:flex;justify-content:space-between;font-size:12px;color:var(--faint);margin-top:6px}
 .ghost{border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:999px;padding:4px 14px;font-size:13px;margin:10px 0}
 .ghost:empty{display:none}
+a.wikilink{color:var(--accent);text-decoration:none;border-bottom:1px dashed color-mix(in srgb,var(--accent) 50%,transparent)}
+a.wikilink:hover{border-bottom-style:solid}
+.wikilink.missing{color:var(--muted);border-bottom:1px dashed var(--border)}
 .tdrawer{margin-top:28px;border-top:1px solid var(--border-soft);padding-top:14px}
 .tdrawer summary{cursor:pointer;font-size:15px;font-weight:600;color:var(--muted);list-style:none}
 .tdrawer summary::-webkit-details-marker{display:none}
@@ -261,6 +264,35 @@ def read_meeting_texts(store_dir: str, mid: str):
     except C.CryptoError:
         return None
 
+GRAPH_JS = """<script>(function(){
+var g=window.__graph,cv=document.getElementById('graph');if(!g||!cv)return;
+var ctx=cv.getContext('2d'),W,H,dpr=window.devicePixelRatio||1;
+function size(){W=cv.clientWidth;H=520;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+size();window.addEventListener('resize',function(){size()});
+var ns=g.nodes.map(function(n,i){n.x=W/2+Math.cos(i*2.4)*Math.min(W,H)/3*(0.4+0.6*((i*37%10)/10));n.y=H/2+Math.sin(i*2.4)*Math.min(W,H)/3*(0.4+0.6*((i*53%10)/10));n.vx=0;n.vy=0;return n});
+var byId={};ns.forEach(function(n){byId[n.id]=n});
+var es=g.edges.map(function(e){return{a:byId[e.from],b:byId[e.to]}}).filter(function(e){return e.a&&e.b});
+function tick(){
+ ns.forEach(function(n){n.vx+=(W/2-n.x)*0.002;n.vy+=(H/2-n.y)*0.002;
+  ns.forEach(function(m){if(m!==n){var dx=n.x-m.x,dy=n.y-m.y,d2=dx*dx+dy*dy+40;if(d2<16000){var f=900/d2;n.vx+=dx*f/60;n.vy+=dy*f/60}}})});
+ es.forEach(function(e){var dx=e.b.x-e.a.x,dy=e.b.y-e.a.y,d=Math.sqrt(dx*dx+dy*dy)||1,f=(d-110)*0.004;e.a.vx+=dx/d*f*d;e.a.vy+=dy/d*f*d;e.b.vx-=dx/d*f*d;e.b.vy-=dy/d*f*d});
+ ns.forEach(function(n){if(n!==drag){n.x+=Math.max(-6,Math.min(6,n.vx));n.y+=Math.max(-6,Math.min(6,n.vy))}n.vx*=0.82;n.vy*=0.82;n.x=Math.max(30,Math.min(W-30,n.x));n.y=Math.max(20,Math.min(H-20,n.y))});
+ ctx.clearRect(0,0,W,H);
+ var st=getComputedStyle(document.documentElement);
+ ctx.strokeStyle=st.getPropertyValue('--border')||'#ddd';ctx.lineWidth=1;
+ es.forEach(function(e){ctx.beginPath();ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);ctx.stroke()});
+ ctx.font='12px ui-sans-serif,system-ui,sans-serif';ctx.textAlign='center';
+ ns.forEach(function(n){ctx.beginPath();ctx.arc(n.x,n.y,7,0,7);ctx.fillStyle=st.getPropertyValue('--accent')||'#22c55e';ctx.fill();
+  ctx.fillStyle=st.getPropertyValue('--text')||'#222';var t=n.title.length>26?n.title.slice(0,25)+'\u2026':n.title;ctx.fillText(t,n.x,n.y+22)});
+ requestAnimationFrame(tick)}
+var drag=null;
+cv.addEventListener('pointerdown',function(e){var r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+ drag=null;ns.forEach(function(n){if((n.x-x)*(n.x-x)+(n.y-y)*(n.y-y)<140)drag=n});if(drag)cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',function(e){if(!drag)return;var r=cv.getBoundingClientRect();drag.x=e.clientX-r.left;drag.y=e.clientY-r.top;drag.vx=0;drag.vy=0});
+cv.addEventListener('pointerup',function(e){if(!drag)return;var r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,d=drag;drag=null;
+ if(Math.abs(d.x-x)<4&&Math.abs(d.y-y)<4)location.href='/meeting/'+encodeURIComponent(d.id)});
+tick();})()</script>"""
+
 EDITOR_JS = """<script>(function(){
 var ed=document.getElementById('ed'),t=document.getElementById('title'),sv=document.getElementById('saved');
 var tg=document.getElementById('toggle'),vw=document.getElementById('view'),eb=document.getElementById('edit');
@@ -372,18 +404,29 @@ def render_transcript_line(line: str) -> str:
         return f'<span style="color:var(--faint)">{m2.group(1)}</span>  {esc(m2.group(2))}'
     return esc(line)
 
-def inline_md(t: str) -> str:
-    """Escape first, then turn **bold**, *italic*, `code` and ~~strike~~ into tags."""
+def inline_md(t: str, link_resolver=None) -> str:
+    """Escape first, then turn **bold**, *italic*, `code`, ~~strike~~ and [[wiki links]] into tags.
+    link_resolver(target) -> (url, exists) makes [[target]] a link; without one [[..]] stays text."""
     import re
     t = esc(t)
+    if link_resolver:
+        def _wiki(m):
+            target, label = m.group(1).strip(), (m.group(2) or m.group(1)).strip()
+            url, exists = link_resolver(target)
+            if not exists:
+                return f'<span class="wikilink missing">{esc(label)}</span>'
+            return f'<a class=wikilink href="{url}">{esc(label)}</a>'
+        t = re.sub(r"\[\[([^\[\]|]{1,120})(?:\|([^\[\]]{1,120}))?\]\]", _wiki, t)
     t = re.sub(r"`([^`]+)`", r"<code>\1</code>", t)
     t = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", t)
     t = re.sub(r"(?<![\w*])\*([^*\s][^*]*?)\*(?![\w*])", r"<em>\1</em>", t)
     t = re.sub(r"~~([^~]+)~~", r"<del>\1</del>", t)
     return t
 
-def render_notes_md(md: str, skip_title: bool = True) -> str:
+def render_notes_md(md: str, skip_title: bool = True, link_resolver=None) -> str:
     import re
+    def inline_md_r(t):
+        return inline_md(t, link_resolver)
     out = []
     first = True
     for line in md.splitlines():
@@ -392,12 +435,12 @@ def render_notes_md(md: str, skip_title: bool = True) -> str:
             if skip_title and line.startswith("# "):
                 continue  # generated notes: page title already shown
         if line.startswith("# "):
-            out.append(f"<h2 class=big>{inline_md(line[2:])}</h2>")
+            out.append(f"<h2 class=big>{inline_md_r(line[2:])}</h2>")
         elif line.startswith("## "):
             t = line[3:]
-            out.append(f"<h2>{heading_icon(t)}{inline_md(t)}</h2>")
+            out.append(f"<h2>{heading_icon(t)}{inline_md_r(t)}</h2>")
         elif line.startswith("### "):
-            out.append(f"<h3>{inline_md(line[4:])}</h3>")
+            out.append(f"<h3>{inline_md_r(line[4:])}</h3>")
         elif line.strip() in ("---", "***"):
             out.append("<hr class=divider>")
         elif line.startswith("  > ") or line.startswith("> "):
@@ -406,23 +449,23 @@ def render_notes_md(md: str, skip_title: bool = True) -> str:
             if m:
                 out.append(f'<blockquote>&ldquo;{esc(m.group(1))}&rdquo; <span class=ts>{m.group(2)}</span></blockquote>')
             else:
-                out.append(f"<blockquote>{inline_md(body)}</blockquote>")
+                out.append(f"<blockquote>{inline_md_r(body)}</blockquote>")
         elif re.match(r"^\s*- \[[xX]\] ", line):
-            out.append(f'<div class="todo done"><span class="box on"></span><span>{inline_md(line.split("] ", 1)[1])}</span></div>')
+            out.append(f'<div class="todo done"><span class="box on"></span><span>{inline_md_r(line.split("] ", 1)[1])}</span></div>')
         elif re.match(r"^\s*- \[ \] ", line):
-            out.append(f'<div class=todo><span class=box></span><span>{inline_md(line.split("] ", 1)[1])}</span></div>')
+            out.append(f'<div class=todo><span class=box></span><span>{inline_md_r(line.split("] ", 1)[1])}</span></div>')
         elif re.match(r"^\s*- ", line):
             depth = (len(line) - len(line.lstrip())) // 2
-            out.append(f'<div class=bullet style="margin-left:{depth * 20}px">{inline_md(line.lstrip()[2:])}</div>')
+            out.append(f'<div class=bullet style="margin-left:{depth * 20}px">{inline_md_r(line.lstrip()[2:])}</div>')
         elif re.match(r"^\d+\. ", line):
             n, rest = line.split(". ", 1)
-            out.append(f'<div class=num><span class=n>{n}.</span> {inline_md(rest)}</div>')
+            out.append(f'<div class=num><span class=n>{n}.</span> {inline_md_r(rest)}</div>')
         elif line.startswith("_integrity"):
             m = re.search(r"(\d+)/(\d+)", line)
             label = f"{m.group(1)}/{m.group(2)} claims verified" if m else esc(line)
             out.append(f'<p><span class=pill>{label}</span></p>')
         elif line.strip():
-            out.append(f"<p>{inline_md(line)}</p>")
+            out.append(f"<p>{inline_md_r(line)}</p>")
     return "\n".join(out)
 
 def meeting_nav(store_dir: str, mid: str) -> str:
@@ -554,7 +597,7 @@ def sidebar(store_dir: str, active: str | None, active_folder: str | None = None
             + '<button>+ New note</button></form>'
             + '<a class=folder href="/record" style="margin:2px 0 6px"><span class=chev></span>Record a meeting</a>'
             + _switcher(metas)
-            + '<div class=nav>' + out + '<a class=folder href="/cloud"><span class=chev></span>Cloud sync</a><a class=folder href="/trash"><span class=chev></span>Trash</a></div>'
+            + '<div class=nav>' + out + '<a class=folder href="/graph"><span class=chev></span>Graph</a><a class=folder href="/cloud"><span class=chev></span>Cloud sync</a><a class=folder href="/trash"><span class=chev></span>Trash</a></div>'
             + '<div class=themes><span class=lbl>Theme</span>'
             + ''.join(f'<button class=dot data-t="{t}" title="{t or "blue"}" '
                       f'onclick="pickTheme(\'{t}\',this)"></button>'
@@ -782,6 +825,17 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
                              '<input name=token type=password placeholder="Sync token" autocomplete=off aria-label="Token">'
                              f'<label style="font-size:13px"><input type=checkbox name=transcripts value=1 {"checked" if st["transcripts"] else ""}> Also send transcripts (the cloud only keeps them if you allow it in Account)</label>'
                              '<button>Save</button></form>')
+            elif path == "/graph":
+                from iris import links as LK
+                self._active = None
+                g = LK.graph(store_dir)
+                data = json.dumps(g)
+                empty = (not g["edges"])
+                self._html('<h1>Note graph</h1><div class=doc-meta>'
+                           + (f'{len(g["nodes"])} notes, {len(g["edges"])} links. Drag nodes, click one to open it.' if not empty
+                              else 'No links yet. Write [[another note\'s title]] in a note to connect them.')
+                           + '</div><canvas id=graph style="width:100%;height:520px;border:1px solid var(--border);border-radius:12px;margin-top:14px"></canvas>'
+                           + '<script>window.__graph=' + data.replace("</", "<\\/") + ';</script>' + GRAPH_JS)
             elif path == "/trash":
                 self._active = None
                 items = L.list_trash(store_dir)
@@ -881,7 +935,11 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
                       f'<button class=danger>Delete</button></form></div></details></div>')
                 notes_txt = texts.get("notes.md", "")
                 is_note = meta.get("kind") == "note" or not notes_txt.strip()
-                body += (f'<div id=view{" hidden" if is_note else ""}>{render_notes_md(notes_txt, skip_title=meta.get("kind") != "note") if notes_txt.strip() else ""}</div>'
+                from iris import links as LK
+                def _resolve(target):
+                    m2 = LK.resolve(store_dir, target)
+                    return (f"/meeting/{m2}", True) if m2 else ("#", False)
+                body += (f'<div id=view{" hidden" if is_note else ""}>{render_notes_md(notes_txt, skip_title=meta.get("kind") != "note", link_resolver=_resolve) if notes_txt.strip() else ""}</div>'
                          f'<div id=edit class=edwrap{"" if is_note else " hidden"}>'
                          f'<textarea id=ed data-mid="{mid}" spellcheck=true placeholder="Write notes. # heading, - list, - [ ] task, > quote">{esc(notes_txt)}</textarea>'
                          f'<div class=edmeta><span id=saved>Saved</span><span>Markdown. Saved on this device only.</span></div></div>'
@@ -892,6 +950,11 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
                     body += (f'<p style="font-size:12.5px"><a class=back href="/raw/{mid}/notes.md">download notes.md</a> &middot; <a class=back href="/raw/{mid}/transcript.md">download transcript.md</a></p>'
                          f'<details class=tdrawer{"" if is_note and False else (" open" if not notes_txt.strip() else "")}><summary>{heading_icon("transcript")}Transcript</summary>'
                              f'<pre class=transcript>{lines}</pre></details>' + SPEAKER_JS)
+                backs = LK.backlinks(store_dir, mid)
+                if backs:
+                    body += ('<details class=drawer style="margin-top:22px"><summary>Linked from (' + str(len(backs)) + ')</summary>'
+                             + "".join(f'<div style="margin:6px 0"><a class=wikilink href="/meeting/{b}">{esc(t)}</a></div>' for b, t in backs)
+                             + '</details>')
                 body += meeting_nav(store_dir, mid)
                 self._html(body)
             else:

@@ -151,3 +151,23 @@ def test_auto_sync_toggle_roundtrip_and_cross_site_refused(local):
     code, _ = _req(base + "/cloud/auto", "POST", b"auto=1", {**h, "Origin": "https://evil.example"})
     assert code == 403
     assert "<b>off</b>" in _req(base + "/cloud")[1]
+
+
+def test_graph_page_and_wikilinks_render(local):
+    import urllib.request, json as J
+    base, mid, d = local
+    from iris import store as S
+    other = S.new_meeting(d, "Second note")
+    S.write_text(d, other, "notes.md", "# Second note\n- links to [[Secret]] and [[No such note]]")
+    html = _req(base + f"/meeting/{other}")[1]
+    assert f'<a class=wikilink href="/meeting/{mid}">Secret</a>' in html
+    assert '<span class="wikilink missing">No such note</span>' in html
+    assert "Linked from (1)" in _req(base + f"/meeting/{mid}")[1]
+    g = _req(base + "/graph")[1]
+    assert "window.__graph=" in g and "<canvas id=graph" in g
+    data = J.loads(g.split("window.__graph=", 1)[1].split(";</script>", 1)[0].replace("<\\/", "</"))
+    assert {n["id"] for n in data["nodes"]} >= {mid, other}
+    assert any(e["from"] == other and e["to"] == mid for e in data["edges"])
+    # no external resources: graph page must not load scripts/styles from other origins
+    assert "http://" not in g.split("<script>window.__graph")[1].replace("<\\/", "")
+    assert 'src="http' not in g and 'href="http' not in g
