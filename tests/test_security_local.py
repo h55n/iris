@@ -139,3 +139,15 @@ def test_saved_banner_only_claims_encryption_when_the_meeting_is_encrypted():
         assert "nothing leaves your devices" not in body
     finally:
         srv.shutdown()
+
+
+def test_auto_sync_toggle_roundtrip_and_cross_site_refused(local):
+    base, mid, d = local
+    h = {"Origin": base, "Content-Type": "application/x-www-form-urlencoded"}
+    _req(base + "/cloud/save", "POST", b"server=https://x.test/sync&token=t", h)
+    assert "Auto-sync after each meeting: <b>on</b>" in _req(base + "/cloud")[1]
+    _req(base + "/cloud/auto", "POST", b"auto=0", h)
+    assert "Auto-sync after each meeting: <b>off</b>" in _req(base + "/cloud")[1]
+    code, _ = _req(base + "/cloud/auto", "POST", b"auto=1", {**h, "Origin": "https://evil.example"})
+    assert code == 403
+    assert "<b>off</b>" in _req(base + "/cloud")[1]

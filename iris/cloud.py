@@ -36,7 +36,7 @@ def forget(store_dir):
 def status(store_dir):
     cfg = load(store_dir)
     return {"linked": bool(cfg.get("token")), "server": cfg.get("server", DEFAULT_SERVER),
-            "transcripts": bool(cfg.get("transcripts")), "last": cfg.get("last_sync")}
+            "transcripts": bool(cfg.get("transcripts")), "auto": cfg.get("auto") is not False, "last": cfg.get("last_sync")}
 
 def sync_now(store_dir):
     """Push changed notes, then pull edits made elsewhere. Returns a one-line result."""

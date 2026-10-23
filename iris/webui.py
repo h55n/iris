@@ -621,12 +621,15 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
             def ok_mid(m):
                 return bool(m) and "/" not in m and ".." not in m and os.path.isfile(os.path.join(store_dir, m, "meta.json"))
             parts = self.path.strip("/").split("/")
-            if self.path in ("/cloud/save", "/cloud/sync", "/cloud/forget"):
+            if self.path in ("/cloud/save", "/cloud/sync", "/cloud/forget", "/cloud/auto"):
                 from iris import cloud as CL
                 try:
                     if self.path == "/cloud/save":
                         CL.save(store_dir, form.get("server", ""), form.get("token", ""), form.get("transcripts") == "1")
                         msg = "Saved."
+                    elif self.path == "/cloud/auto":
+                        CL.set_auto(store_dir, form.get("auto") == "1")
+                        msg = "Auto-sync is on." if form.get("auto") == "1" else "Auto-sync is off. Use Sync now when you want to."
                     elif self.path == "/cloud/forget":
                         CL.forget(store_dir); msg = "Disconnected. Notes already on the cloud stay there until you remove them on the site."
                     else:
@@ -770,7 +773,9 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
                            + "</div>" + (f"<p class=card>{esc(m)}</p>" if m else "")
                            + (f'<p>Linked to <b>{esc(st["server"])}</b>. Last sync: {last}.</p>'
                               '<form method=post action="/cloud/sync" class=inline><button>Sync now</button></form> '
-                              '<form method=post action="/cloud/forget" class=inline><button class=danger>Disconnect</button></form>' if st["linked"] else
+                              '<form method=post action="/cloud/forget" class=inline><button class=danger>Disconnect</button></form>'
+                              '<form method=post action="/cloud/auto" style="margin-top:12px"><input type=hidden name=auto value="' + ("0" if st["auto"] else "1") + '">'
+                              '<span style="font-size:13px">Auto-sync after each meeting: <b>' + ("on" if st["auto"] else "off") + '</b></span> <button>Turn ' + ("off" if st["auto"] else "on") + '</button></form>' if st["linked"] else
                               "<p>Make a token on your Iris Cloud account page, then paste it here.</p>")
                            + '<form method=post action="/cloud/save" style="display:flex;flex-direction:column;gap:8px;max-width:420px;margin-top:18px">'
                              f'<input name=server value="{esc(st["server"])}" aria-label="Server">'
