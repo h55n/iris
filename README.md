@@ -47,7 +47,12 @@ without it they are plain text, so use a relay you trust (Iris Cloud sends notes
 </p>
 <p>
 <img src="docs/screenshots/folder_1024_light.png" width="49%" alt="A project folder">
+<img src="docs/screenshots/ask_1440_light.png" width="49%" alt="Ask questions across your meetings">
+</p>
+<p>
 <img src="docs/screenshots/home_390_dark.png" width="22%" alt="Phone width, dark">
+<img src="docs/screenshots/note_390_light.png" width="22%" alt="A meeting note on phone width">
+<img src="docs/screenshots/trash_1024_light.png" width="49%" alt="Trash with restore">
 </p>
 
 Dark mode follows your system; six accent themes live in the sidebar footer.
