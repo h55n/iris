@@ -115,6 +115,19 @@ xmlB3 = dump("B3-stopped")
 shot("B3-stopped")
 report("button back to Start recording after stop", has(xmlB3, "Start recording"))
 
+# the service broadcasts RECORDING_DONE when the WAV is finalized; the UI must
+# confirm the save, not hang on "saving..." (regression: v0.1.0 had no receiver)
+deadline = time.time() + 20
+saved = False
+while time.time() < deadline:
+    if has(xmlB3, "saved meeting-"):
+        saved = True; break
+    time.sleep(2)
+    xmlB3 = dump("B3-saved-poll")
+shot("B3-saved")
+report("status confirms save completion (saved meeting-...)", saved,
+       "status left 'saving...'" if saved else "status stuck on 'saving...'")
+
 lsout = sh(f"adb shell run-as {PKG} ls -l /data/data/{PKG}/files", check=False)
 print("files dir:", lsout.strip()[:300])
 m = re.search(r"(\d+)\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}\s+(meeting-\d{8}-\d{6}\.wav)", lsout)

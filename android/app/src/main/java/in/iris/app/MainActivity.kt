@@ -2,7 +2,10 @@ package `in`.iris.app
 
 import android.Manifest
 import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
@@ -19,6 +22,13 @@ class MainActivity : Activity() {
     private var recording = false
 
     private val prefs by lazy { getSharedPreferences("iris", MODE_PRIVATE) }
+
+    private val recordingDone = object : BroadcastReceiver() {
+        override fun onReceive(c: Context?, i: Intent?) {
+            val f = RecorderService.lastFile
+            status.text = if (f != null) "saved ${f.name} (${f.length() / 1024} KB)" else "saved"
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,6 +78,12 @@ class MainActivity : Activity() {
         val scroll = ScrollView(this).apply { addView(list) }
         root.addView(scroll, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
         setContentView(root)
+        registerReceiver(recordingDone, IntentFilter("in.iris.app.RECORDING_DONE"), RECEIVER_NOT_EXPORTED)
+    }
+
+    override fun onDestroy() {
+        unregisterReceiver(recordingDone)
+        super.onDestroy()
     }
 
     private fun toast(msg: String) = runOnUiThread { Toast.makeText(this, msg, Toast.LENGTH_LONG).show() }
