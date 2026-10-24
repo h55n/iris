@@ -41,11 +41,20 @@ Every claim the product makes is tied to a test that actually ran. Anything not 
 - English models tested (tiny.en/base.en). Hindi: ggml-base TRANSLATES Hindi to English instead of transcribing it; ggml-small transcribes Hindi properly in Devanagari (minor phonetic spelling errors on synthetic audio). Mixed en+hi audio currently needs one forced language; per-segment auto language is v1.5.
 - No speaker diarization yet: attempted with synthetic two-channel audio (one voice panned per channel) and whisper.cpp's -di flag; it returned "(speaker ?)" - inconclusive. Real stereo recordings and tuning needed; v1 ships without speaker labels.
 
+
+## Long-call benchmark (Oct 24, sandbox CPU)
+Test track: 33.1 min (1,986.7s) 16kHz mono WAV - four LibriSpeech test-clean readers (7127, 5639, 672, 8230) back-to-back, 232 utterances, reference text from the LibriSpeech .trans.txt files. This is READ SPEECH, one reader at a time, clean studio audio. It is NOT a real multi-speaker call and NOT Hinglish; real meetings will be worse. It answers "does the pipeline hold up over a long file" (memory, segmentation, timestamps, notes), not "does it handle real calls".
+
+- tiny.en: 301s wall (6.6x realtime), 553MB peak RSS, 433 segments, coverage 0.5s-1986.5s with no gaps (max inter-segment gap 0.5s). WER ~8.7% (first 3,000 words vs reference, difflib ratio method).
+- base.en: 974s wall (~2.0x realtime), 661MB peak RSS, 455 segments, same full coverage, no gaps. WER ~5.2% (same method). base.en is the better accuracy/speed trade for long files on CPU.
+- Notes over the long transcript: one Ultramarine hosted call on the base.en transcript (31,966 chars with [MM:SS] timestamps) -> valid notes JSON; the model correctly reported the content as read literary passages instead of inventing meeting structure (0 decisions / 0 action items, which is right for this input). Token usage logged: 8,818 prompt + 491 completion (prepaid credit, ~/.iris/hosted-usage.jsonl). The default local backend (ollama gemma3:4b) still needs Hassan's hardware.
+- Still NOT validated: real overlapping speech, Hinglish code-switching, diarization over long files (sherpa-onnx work above is short-file only), and anything over ~35 min.
+
 ## NOT tested here (Hassan must test on his devices)
 - Ollama + gemma3:4b as the notes backend (default). Sandbox has no GPU/RAM for it; the hosted fallback was used instead. Test: `ollama pull gemma3:4b && python3 iris/cli.py ingest meeting.wav` (default backend is ollama).
 - Real Hindi speech (sandbox test used synthetic gTTS audio, which is unnaturally clean). Use models/ggml-small.bin with -l hi.
 - Microphone capture on his laptop and phone (Iris/record.py written, untestable in the sandbox - no audio device).
-- Long meeting (30-60 min) transcription time and notes quality on his hardware.
+- Long meeting transcription on his hardware (33-min read-speech benchmark now done in the sandbox - see "Long-call benchmark"; his laptop/phone timing and real-meeting audio still pending).
 - Sync between two real devices (loopback test passed; real phone<->laptop sync still needs his hardware).
 - Android recorder app.
 - Auto-detection of Zoom/Meet/Teams (detector daemon in progress; needs his desktop for a real meeting test).
