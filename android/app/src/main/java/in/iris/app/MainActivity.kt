@@ -23,6 +23,8 @@ class MainActivity : Activity() {
 
     private val prefs by lazy { getSharedPreferences("iris", MODE_PRIVATE) }
 
+    companion object { private const val REQ_RECORD = 1 }
+
     private val recordingDone = object : BroadcastReceiver() {
         override fun onReceive(c: Context?, i: Intent?) {
             val f = RecorderService.lastFile
@@ -32,8 +34,6 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.POST_NOTIFICATIONS), 1)
-
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(48, 64, 48, 48)
@@ -94,10 +94,30 @@ class MainActivity : Activity() {
             recording = false; recordBtn.text = "Start recording"; status.text = "saving..."
         } else {
             if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                toast("mic permission needed"); return
+                status.text = "Iris needs the microphone to record your meeting"
+                requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.POST_NOTIFICATIONS), REQ_RECORD)
+                return
             }
-            startForegroundService(Intent(this, RecorderService::class.java).setAction(RecorderService.ACTION_START))
-            recording = true; recordBtn.text = "Stop recording"; status.text = "recording (local only)"
+            startRecording()
+        }
+    }
+
+    private fun startRecording() {
+        startForegroundService(Intent(this, RecorderService::class.java).setAction(RecorderService.ACTION_START))
+        recording = true; recordBtn.text = "Stop recording"; status.text = "recording (local only)"
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != REQ_RECORD) return
+        val mic = permissions.indexOf(Manifest.permission.RECORD_AUDIO)
+        if (mic >= 0 && grantResults.getOrNull(mic) == PackageManager.PERMISSION_GRANTED) {
+            startRecording()
+        } else {
+            status.text = if (shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO))
+                "mic access is needed to record - tap Start recording to try again"
+            else
+                "mic access is off - enable it in Android Settings > Apps > Iris > Permissions"
         }
     }
 
