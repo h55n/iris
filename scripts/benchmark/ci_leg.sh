@@ -36,8 +36,11 @@ case "$LEG" in
   mucs60_small)
     dl_model ggml-small.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin" 1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b
     AUDIO="$B/mucs/hinglish60.wav"; REF="$B/mucs/hinglish60_ref.txt"; MODEL=ggml-small.bin; LANG=auto; LBL="$MUCS_LBL"; URL=$MUCS_URL; LIC="CC BY-SA 4.0";;
-  mucs_dev_small|mucs_hold_small)
-    dl_model ggml-small.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin" 1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b
+  mucs_dev_small|mucs_hold_small|mucs_dev_turbo|mucs_hold_turbo)
+    case "$LEG" in
+      *_turbo) dl_model ggml-large-v3-turbo.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin" 1fc70f774d38eb169993ac391eea357ef47c88757ef72ee5943879b7e8e2bc69;;
+      *) dl_model ggml-small.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin" 1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b;;
+    esac
     if [ "$LEG" = mucs_dev_small ]; then
       AUDIO="$B/mucs/mucs_dev15.wav"; REF="$B/mucs/mucs_dev15_ref.txt"
       LBL="DEV split (MUCS utterances after the 60-min baseline) for pipeline tuning - development evidence only, not a held-out claim; $MUCS_LBL"
@@ -45,7 +48,8 @@ case "$LEG" in
       AUDIO="$B/mucs/mucs_hold30.wav"; REF="$B/mucs/mucs_hold30_ref.txt"
       LBL="HELD-OUT split (MUCS utterances after baseline+dev) - unbiased validation; $MUCS_LBL"
     fi
-    MODEL=ggml-small.bin; LANG=auto; URL=$MUCS_URL; LIC="CC BY-SA 4.0";;
+    case "$LEG" in *_turbo) MODEL=ggml-large-v3-turbo.bin;; *) MODEL=ggml-small.bin;; esac
+    LANG=auto; URL=$MUCS_URL; LIC="CC BY-SA 4.0";;
   ami90_base)
     dl_model ggml-base.en.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin" a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002
     AUDIO="$B/ami/ES2008abc90.wav"; REF="$B/ami/ES2008abc90_ref.txt"; MODEL=ggml-base.en.bin; LANG=en; LBL="$AMI90_LBL"; URL=$AMI_URL; LIC="CC BY 4.0";;

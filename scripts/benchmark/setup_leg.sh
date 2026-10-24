@@ -15,7 +15,7 @@ case "$LEG" in
     fi
     python3 "$REPO/scripts/benchmark/mucs_sample.py" test 60 hinglish60.wav hinglish60_ref.txt
     ;;
-  mucs_dev_small|mucs_hold_small)
+  mucs_dev_small|mucs_hold_small|mucs_dev_turbo|mucs_hold_turbo)
     # dev split: 15 min of utterances after the 60-min baseline; held-out: 30 min
     # after baseline+dev. Utterance-disjoint from baseline and each other.
     mkdir -p "$B/mucs"; cd "$B/mucs"
@@ -23,7 +23,7 @@ case "$LEG" in
       [ -f Hindi-English_test.tar.gz ] || bash "$REPO/scripts/benchmark/dl_verified.sh" "https://www.openslr.org/resources/104/Hindi-English_test.tar.gz" Hindi-English_test.tar.gz gzip
       tar xzf Hindi-English_test.tar.gz && rm -f Hindi-English_test.tar.gz
     fi
-    if [ "$LEG" = mucs_dev_small ]; then
+    if [[ "$LEG" == mucs_dev_* ]]; then
       python3 "$REPO/scripts/benchmark/mucs_sample.py" test 15 mucs_dev15.wav mucs_dev15_ref.txt 60
     else
       python3 "$REPO/scripts/benchmark/mucs_sample.py" test 30 mucs_hold30.wav mucs_hold30_ref.txt 60,15
