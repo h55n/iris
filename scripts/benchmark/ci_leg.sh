@@ -57,10 +57,13 @@ case "$LEG" in
     L=$(echo "$LEG" | sed -E 's/fleurs_(.+)30_small/\1/')
     case "$L" in hi_in) SUF=" (Hindi)";; bn_in) SUF=" (Bengali - known unsupported, expect poor)";; ta_in) SUF=" (Tamil)";; es_419) SUF=" (Spanish)";; *) SUF="";; esac
     AUDIO="$B/fleurs/$L/${L}30.wav"; REF="$B/fleurs/$L/${L}30_ref.txt"; MODEL=ggml-small.bin; LANG=auto; LBL="$FLEURS_LBL$SUF"; URL=$FLEURS_URL; LIC="CC BY 4.0";;
-  fleurs_dev_*_small|fleurs_hold_*_small)
-    dl_model ggml-small.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin" 1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b
-    L=$(echo "$LEG" | sed -E 's/fleurs_(dev|hold)_(.+)_small/\2/')
-    SPLIT=$(echo "$LEG" | sed -E 's/fleurs_(dev|hold)_(.+)_small/\1/')
+  fleurs_dev_*_small|fleurs_hold_*_small|fleurs_dev_*_turbo|fleurs_hold_*_turbo)
+    case "$LEG" in
+      *_turbo) dl_model ggml-large-v3-turbo.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin" 1fc70f774d38eb169993ac391eea357ef47c88757ef72ee5943879b7e8e2bc69;;
+      *) dl_model ggml-small.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin" 1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b;;
+    esac
+    L=$(echo "$LEG" | sed -E 's/fleurs_(dev|hold)_(.+)_(small|turbo)/\2/')
+    SPLIT=$(echo "$LEG" | sed -E 's/fleurs_(dev|hold)_(.+)_(small|turbo)/\1/')
     if [ "$SPLIT" = dev ]; then
       AUDIO="$B/fleurs/$L/${L}_dev15.wav"; REF="$B/fleurs/$L/${L}_dev15_ref.txt"
       LBL="DEV split (FLEURS test.tsv utterances 30-45min, text-disjoint from 2026-10-24 baseline) for pipeline tuning - development evidence only, not a held-out claim; text-disjoint slices, speaker overlap unverifiable (FLEURS tsv has no speaker IDs), within-corpus validation"
@@ -68,7 +71,8 @@ case "$LEG" in
       AUDIO="$B/fleurs/$L/${L}_hold30.wav"; REF="$B/fleurs/$L/${L}_hold30_ref.txt"
       LBL="HELD-OUT split (FLEURS test.tsv utterances 45-75min, text-disjoint from baseline and dev) - within-corpus validation; speaker overlap unverifiable (FLEURS tsv has no speaker IDs)"
     fi
-    MODEL=ggml-small.bin; LANG=auto; URL=$FLEURS_URL; LIC="CC BY 4.0";;
+    case "$LEG" in *_turbo) MODEL=ggml-large-v3-turbo.bin;; *) MODEL=ggml-small.bin;; esac
+    LANG=auto; URL=$FLEURS_URL; LIC="CC BY 4.0";;
   *) echo "unknown leg: $LEG" >&2; exit 2;;
 esac
 

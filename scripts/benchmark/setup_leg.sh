@@ -43,11 +43,11 @@ case "$LEG" in
     fi
     python3 "$REPO/scripts/benchmark/fleurs_concat.py" "../$L.test.tsv" test 30 "${L}30.wav" "${L}30_ref.txt"
     ;;
-  fleurs_dev_*_small|fleurs_hold_*_small)
+  fleurs_dev_*_small|fleurs_hold_*_small|fleurs_dev_*_turbo|fleurs_hold_*_turbo)
     # dev split: utterances 30-45min of test.tsv; held-out split: 45-75min.
     # Both DISJOINT from the 2026-10-24 baseline (0-30min) and from each other.
-    L=$(echo "$LEG" | sed -E 's/fleurs_(dev|hold)_(.+)_small/\2/')
-    SPLIT=$(echo "$LEG" | sed -E 's/fleurs_(dev|hold)_(.+)_small/\1/')
+    L=$(echo "$LEG" | sed -E 's/fleurs_(dev|hold)_(.+)_(small|turbo)/\2/')
+    SPLIT=$(echo "$LEG" | sed -E 's/fleurs_(dev|hold)_(.+)_(small|turbo)/\1/')
     mkdir -p "$B/fleurs/$L"; cd "$B/fleurs"
     [ -f "$L.test.tsv" ] || bash "$REPO/scripts/benchmark/dl_verified.sh" "https://huggingface.co/datasets/google/fleurs/resolve/main/data/$L/test.tsv" "$L.test.tsv" digit
     cd "$L"
