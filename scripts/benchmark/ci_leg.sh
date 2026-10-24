@@ -36,6 +36,16 @@ case "$LEG" in
   mucs60_small)
     dl_model ggml-small.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin" 1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b
     AUDIO="$B/mucs/hinglish60.wav"; REF="$B/mucs/hinglish60_ref.txt"; MODEL=ggml-small.bin; LANG=auto; LBL="$MUCS_LBL"; URL=$MUCS_URL; LIC="CC BY-SA 4.0";;
+  mucs_dev_small|mucs_hold_small)
+    dl_model ggml-small.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin" 1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b
+    if [ "$LEG" = mucs_dev_small ]; then
+      AUDIO="$B/mucs/mucs_dev15.wav"; REF="$B/mucs/mucs_dev15_ref.txt"
+      LBL="DEV split (MUCS utterances after the 60-min baseline) for pipeline tuning - development evidence only, not a held-out claim; $MUCS_LBL"
+    else
+      AUDIO="$B/mucs/mucs_hold30.wav"; REF="$B/mucs/mucs_hold30_ref.txt"
+      LBL="HELD-OUT split (MUCS utterances after baseline+dev) - unbiased validation; $MUCS_LBL"
+    fi
+    MODEL=ggml-small.bin; LANG=auto; URL=$MUCS_URL; LIC="CC BY-SA 4.0";;
   ami90_base)
     dl_model ggml-base.en.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin" a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002
     AUDIO="$B/ami/ES2008abc90.wav"; REF="$B/ami/ES2008abc90_ref.txt"; MODEL=ggml-base.en.bin; LANG=en; LBL="$AMI90_LBL"; URL=$AMI_URL; LIC="CC BY 4.0";;
@@ -53,10 +63,10 @@ case "$LEG" in
     SPLIT=$(echo "$LEG" | sed -E 's/fleurs_(dev|hold)_(.+)_small/\1/')
     if [ "$SPLIT" = dev ]; then
       AUDIO="$B/fleurs/$L/${L}_dev15.wav"; REF="$B/fleurs/$L/${L}_dev15_ref.txt"
-      LBL="DEV split (FLEURS test.tsv utterances 30-45min, disjoint from 2026-10-24 baseline) for pipeline tuning - development evidence only, not a held-out claim"
+      LBL="DEV split (FLEURS test.tsv utterances 30-45min, text-disjoint from 2026-10-24 baseline) for pipeline tuning - development evidence only, not a held-out claim; text-disjoint slices, speaker overlap unverifiable (FLEURS tsv has no speaker IDs), within-corpus validation"
     else
       AUDIO="$B/fleurs/$L/${L}_hold30.wav"; REF="$B/fleurs/$L/${L}_hold30_ref.txt"
-      LBL="HELD-OUT split (FLEURS test.tsv utterances 45-75min, disjoint from baseline and dev) - unbiased validation"
+      LBL="HELD-OUT split (FLEURS test.tsv utterances 45-75min, text-disjoint from baseline and dev) - within-corpus validation; speaker overlap unverifiable (FLEURS tsv has no speaker IDs)"
     fi
     MODEL=ggml-small.bin; LANG=auto; URL=$FLEURS_URL; LIC="CC BY 4.0";;
   *) echo "unknown leg: $LEG" >&2; exit 2;;
