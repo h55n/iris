@@ -29,6 +29,24 @@ case "$LEG" in
     fi
     python3 "$REPO/scripts/benchmark/fleurs_concat.py" "../$L.test.tsv" test 30 "${L}30.wav" "${L}30_ref.txt"
     ;;
+  fleurs_dev_*_small|fleurs_hold_*_small)
+    # dev split: utterances 30-45min of test.tsv; held-out split: 45-75min.
+    # Both DISJOINT from the 2026-10-24 baseline (0-30min) and from each other.
+    L=$(echo "$LEG" | sed -E 's/fleurs_(dev|hold)_(.+)_small/\2/')
+    SPLIT=$(echo "$LEG" | sed -E 's/fleurs_(dev|hold)_(.+)_small/\1/')
+    mkdir -p "$B/fleurs/$L"; cd "$B/fleurs"
+    [ -f "$L.test.tsv" ] || bash "$REPO/scripts/benchmark/dl_verified.sh" "https://huggingface.co/datasets/google/fleurs/resolve/main/data/$L/test.tsv" "$L.test.tsv" digit
+    cd "$L"
+    if [ ! -d test ]; then
+      [ -f ../"$L.test.tar.gz" ] || bash "$REPO/scripts/benchmark/dl_verified.sh" "https://huggingface.co/datasets/google/fleurs/resolve/main/data/$L/audio/test.tar.gz" ../"$L.test.tar.gz" gzip
+      tar xzf ../"$L.test.tar.gz" && rm -f ../"$L.test.tar.gz"
+    fi
+    if [ "$SPLIT" = dev ]; then
+      python3 "$REPO/scripts/benchmark/fleurs_concat.py" "../$L.test.tsv" test 15 "${L}_dev15.wav" "${L}_dev15_ref.txt" 30
+    else
+      python3 "$REPO/scripts/benchmark/fleurs_concat.py" "../$L.test.tsv" test 30 "${L}_hold30.wav" "${L}_hold30_ref.txt" 30,15
+    fi
+    ;;
   *) echo "unknown leg: $LEG" >&2; exit 2;;
 esac
 echo "setup done: $LEG"

@@ -4,6 +4,7 @@ import json, os, re, shutil, subprocess, tempfile
 WHISPER_CLI = os.environ.get("IRIS_WHISPER_CLI", "vendor/whisper.cpp/build/bin/whisper-cli")
 MODEL = os.environ.get("IRIS_WHISPER_MODEL", "models/ggml-tiny.en.bin")
 VAD_MODEL = os.environ.get("IRIS_VAD_MODEL", "models/ggml-silero-v6.2.0.bin")
+EXTRA_FLAGS = os.environ.get("IRIS_WHISPER_EXTRA_FLAGS", "")  # e.g. "-mc 0 --suppress-nst" (benchmark experiments)
 
 def to_wav16k(src: str) -> str:
     """Any audio/video -> 16kHz mono wav (whisper.cpp input contract)."""
@@ -30,6 +31,9 @@ def transcribe(audio_path: str, model: str = MODEL, language: str = "en", raw_ou
     cmd = [WHISPER_CLI, "-m", model, "-f", wav, "-l", language, "-oj", "-of", out_prefix]
     if os.path.exists(VAD_MODEL):
         cmd += ["--vad", "-vm", VAD_MODEL, "-vmsd", "10"]
+    if EXTRA_FLAGS:
+        import shlex
+        cmd += shlex.split(EXTRA_FLAGS)
     subprocess.run(cmd, check=True, capture_output=True)
     raw_path = out_prefix + ".json"
     raw = open(raw_path, "rb").read()

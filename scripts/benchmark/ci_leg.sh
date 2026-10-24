@@ -47,6 +47,18 @@ case "$LEG" in
     L=$(echo "$LEG" | sed -E 's/fleurs_(.+)30_small/\1/')
     case "$L" in hi_in) SUF=" (Hindi)";; bn_in) SUF=" (Bengali - known unsupported, expect poor)";; ta_in) SUF=" (Tamil)";; es_419) SUF=" (Spanish)";; *) SUF="";; esac
     AUDIO="$B/fleurs/$L/${L}30.wav"; REF="$B/fleurs/$L/${L}30_ref.txt"; MODEL=ggml-small.bin; LANG=auto; LBL="$FLEURS_LBL$SUF"; URL=$FLEURS_URL; LIC="CC BY 4.0";;
+  fleurs_dev_*_small|fleurs_hold_*_small)
+    dl_model ggml-small.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin" 1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b
+    L=$(echo "$LEG" | sed -E 's/fleurs_(dev|hold)_(.+)_small/\2/')
+    SPLIT=$(echo "$LEG" | sed -E 's/fleurs_(dev|hold)_(.+)_small/\1/')
+    if [ "$SPLIT" = dev ]; then
+      AUDIO="$B/fleurs/$L/${L}_dev15.wav"; REF="$B/fleurs/$L/${L}_dev15_ref.txt"
+      LBL="DEV split (FLEURS test.tsv utterances 30-45min, disjoint from 2026-10-24 baseline) for pipeline tuning - development evidence only, not a held-out claim"
+    else
+      AUDIO="$B/fleurs/$L/${L}_hold30.wav"; REF="$B/fleurs/$L/${L}_hold30_ref.txt"
+      LBL="HELD-OUT split (FLEURS test.tsv utterances 45-75min, disjoint from baseline and dev) - unbiased validation"
+    fi
+    MODEL=ggml-small.bin; LANG=auto; URL=$FLEURS_URL; LIC="CC BY 4.0";;
   *) echo "unknown leg: $LEG" >&2; exit 2;;
 esac
 

@@ -15,6 +15,10 @@ on:
         description: "diagnostic: disable silero VAD (IRIS_VAD_MODEL=/nonexistent)"
         type: boolean
         default: false
+      flags:
+        description: "extra whisper-cli flags (IRIS_WHISPER_EXTRA_FLAGS), e.g. '-mc 0 --suppress-nst'"
+        required: false
+        default: ""
 jobs:
   plan:
     runs-on: ubuntu-latest
@@ -42,6 +46,7 @@ jobs:
       - run: bash scripts/benchmark/ci_leg.sh "${{ matrix.leg }}"
         env:
           IRIS_VAD_MODEL: ${{ inputs.no_vad && '/nonexistent' || 'models/ggml-silero-v6.2.0.bin' }}
+          IRIS_WHISPER_EXTRA_FLAGS: ${{ inputs.flags }}
       - uses: actions/upload-artifact@v4
         with:
           name: bench-${{ matrix.leg }}
