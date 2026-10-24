@@ -209,3 +209,26 @@ Read these as pipeline+model measurements on test corpora, not live-call quality
 - hi: S1347 D1763 I46 H697 - alignment deletions 46% of errors. No reliability claim.
 - UTF-8: whisper.cpp can write invalid UTF-8 in segment text - observed raw bytes are truncated multibyte sequences at segment-text ends (hi, mucs, bn legs). Pipeline now decodes tolerantly (U+FFFD stays in the transcript), counts replacements per leg (mucs 1, hi 2, bn 2), and preserves raw whisper bytes as CI artifacts; regression fixtures in tests/test_transcribe_utf8.py. Removing the affected hypothesis words leaves rounded WER unchanged (98.79%/82.90% both ways) - that tests the scoring substitution only; original bytes unrecoverable, upstream effects untested. ami90/es/ta legs ran before this instrumentation; their outputs parsed cleanly, which is only possible with zero invalid bytes.
 - Sandbox local test suite at this commit: 222 passed, 10 failed + 19 errors, all pre-existing sandbox-environment issues (missing age binary, subprocess limits), identical with and without today's changes; run in CI where applicable.
+
+# Improvement evaluation: whisper flag tuning + model-size probe (2026-10-25 early IST)
+
+Follow-up to Hassan's request to improve the benchmark scores. Method: frozen baseline above (commit 9e3cea4) -> tuning on disjoint DEVELOPMENT slices -> one config frozen (docs/benchmarks/dev-2026-10-24/SELECTION.md) -> a single held-out confirmation run set. Dev slices: FLEURS test.tsv utterances 30-45min, MUCS utterances after the 60-min baseline (15min). Held-out slices (never run before the confirmation): FLEURS 45-75min, MUCS next 30min. All splits text/utterance-disjoint from baseline and each other (verified intersections = 0); FLEURS speaker overlap across slices is unverifiable (no speaker IDs in the tsv), so this is within-corpus validation. Single runs per cell; observed differences; uncertainty unestimated.
+
+Selected config: ggml-small + IRIS_WHISPER_EXTRA_FLAGS="-mc 0" (no context carry between windows). Flags only - no shipped default, model, or cost change was made or is implied by this section.
+
+Held-out confirmation (30-min held-out slices, paired flags="" vs "-mc 0" on identical inputs; runs 40125620381 / 40125627501; JSONs docs/benchmarks/hold-2026-10-25/):
+
+| leg | baseline flags | -mc 0 | observed delta |
+|---|---|---|---|
+| fleurs_hold_ta_in_small | 82.5 / 84.0 | 79.7 / 82.9 | -2.8 |
+| fleurs_hold_hi_in_small | 82.4 / 84.4 | 67.4 / 69.1 | -15.0 |
+| fleurs_hold_es_419_small | 5.9 / 11.2 | 6.5 / 14.4 | +0.6 (regression) |
+| fleurs_hold_bn_in_small | 100.0 / 100.0 | 100.0 / 100.0 | 0 (unsupported stands) |
+| mucs_hold_small | 95.9 / 98.5 | 82.9 / 84.0 | -13.0 |
+
+- ami90 has no dev/held-out split; "-mc 0" on the SAME assembled baseline input gave 28.6/39.3 -> 28.3/36.5 (same-input toggle, not held-out evidence).
+- Dev did not predict held-out signs/magnitudes: hi dev showed +1.4 (worsening) but held-out -15.0; es dev -0.7 but held-out +0.6. Dev and held-out are different slices; report held-out as the confirmation evidence.
+- Rejected alternative (dev evidence): ggml-large-v3-turbo + "-mc 0" reached hi dev 52.6 but mucs dev 97.0; the turbo MUCS hypothesis is Arabic-script-dominant under lang=auto (6147 Arabic + 1311 Latin chars, 0 Devanagari) - a script/language-selection mismatch observation, not an established cause and not an excuse for the end-to-end score. Turbo also cost ~2x CI compute; es turbo 6.9 vs small 5.9.
+- Bengali: ~100 WER under every tested config including large-v3-turbo. The unsupported finding stands.
+- "-mc 0 --suppress-nst" and "-vmsd 30" variants: nst added insertions on ta dev; vmsd 30 was byte-identical to -mc 0 alone on FLEURS and MUCS (cap not binding on these corpora).
+- Mechanism statements remain hypotheses: "-mc 0" was tested because context carry was suspected in concat insertion blow-ups; the held-out numbers confirm the observed effect on these corpora, not the mechanism.
