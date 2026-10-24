@@ -1,0 +1,37 @@
+name: adb-device-test
+# Manual-only deterministic device smoke test: no LLM, no secrets, no quota.
+# Drives the debug APK on an emulated Pixel via plain adb: cold-launch capture,
+# user-style permission grant, 10s record, stop, WAV-on-disk verification.
+on:
+  workflow_dispatch:
+
+jobs:
+  adb-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - name: build debug APK
+        working-directory: android
+        run: ./gradlew --no-daemon assembleDebug
+      - name: enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm trigger --name-match=kvm
+      - name: adb smoke test on the emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk && python3 android/ci/adb_smoke.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: adb-smoke-out
+          path: smoke-out
+          retention-days: 7
+          if-no-files-found: ignore
