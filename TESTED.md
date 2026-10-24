@@ -226,6 +226,7 @@ Held-out confirmation (30-min held-out slices, paired flags="" vs "-mc 0" on ide
 | fleurs_hold_bn_in_small | 100.0 / 100.0 | 100.0 / 100.0 | 0 (unsupported stands) |
 | mucs_hold_small | 95.9 / 98.5 | 82.9 / 84.0 | -13.0 |
 
+- Measured CI wall time (4-vCPU ubuntu-latest) rose with "-mc 0" on 4 of 5 held-out legs for identical 30-min audio: ta 1955s -> 3695s, hi 775s -> 2425s, bn 889s -> 3240s, mucs 990s -> 4983s; es roughly unchanged 381s -> 332s. Runner-class measurement, not device performance.
 - ami90 has no dev/held-out split; "-mc 0" on the SAME assembled baseline input gave 28.6/39.3 -> 28.3/36.5 (same-input toggle, not held-out evidence).
 - Dev did not predict held-out signs/magnitudes: hi dev showed +1.4 (worsening) but held-out -15.0; es dev -0.7 but held-out +0.6. Dev and held-out are different slices; report held-out as the confirmation evidence.
 - Rejected alternative (dev evidence): ggml-large-v3-turbo + "-mc 0" reached hi dev 52.6 but mucs dev 97.0; the turbo MUCS hypothesis is Arabic-script-dominant under lang=auto (6147 Arabic + 1311 Latin chars, 0 Devanagari) - a script/language-selection mismatch observation, not an established cause and not an excuse for the end-to-end score. Turbo also cost ~2x CI compute; es turbo 6.9 vs small 5.9.
