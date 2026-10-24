@@ -7,10 +7,10 @@ set -euo pipefail
 B=$1; REPO=$2
 mkdir -p "$B/ami"; cd "$B/ami"
 for p in a b c; do
-  [ -f "ES2008$p.Mix-Headset.wav" ] || curl -sL --retry 3 -O "https://groups.inf.ed.ac.uk/ami/AMICorpusMirror/amicorpus/ES2008$p/audio/ES2008$p.Mix-Headset.wav"
+  [ -f "ES2008$p.Mix-Headset.wav" ] || bash "$REPO/scripts/benchmark/dl_verified.sh" "https://groups.inf.ed.ac.uk/ami/AMICorpusMirror/amicorpus/ES2008$p/audio/ES2008$p.Mix-Headset.wav" "ES2008$p.Mix-Headset.wav" none
 done
 if [ ! -d ann ]; then
-  [ -f ami_public_manual_1.6.2.zip ] || curl -sL --retry 3 -O "https://groups.inf.ed.ac.uk/ami/AMICorpusAnnotations/ami_public_manual_1.6.2.zip"
+  [ -f ami_public_manual_1.6.2.zip ] || bash "$REPO/scripts/benchmark/dl_verified.sh" "https://groups.inf.ed.ac.uk/ami/AMICorpusAnnotations/ami_public_manual_1.6.2.zip" ami_public_manual_1.6.2.zip none
   unzip -q -o ami_public_manual_1.6.2.zip -d ann
 fi
 for p in a b c; do

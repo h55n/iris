@@ -9,6 +9,8 @@ tsv, audio_dir, minutes, outwav, outref = sys.argv[1], sys.argv[2], float(sys.ar
 acc, picked = 0.0, []
 for l in open(tsv, encoding='utf-8'):
     c = l.rstrip('\n').split('\t')
+    if len(c) < 6:
+        continue
     if acc >= minutes * 60:
         break
     acc += int(c[5]) / 16000.0
