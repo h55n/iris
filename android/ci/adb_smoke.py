@@ -7,8 +7,16 @@ Phases:
      15s+); then grant the runtime dialogs like a user would (tap "While using
      the app").
   B) record 10s, stop, assert UI state transitions and the WAV on disk.
+
+Android renders Button text in ALL CAPS in the accessibility/UI dump
+("Start recording" -> "START RECORDING"), while TextView status text keeps its
+original case ("recording (local only)"). All button matching here is
+case-insensitive; the status assertion uses the exact status string so a
+button label can never false-positive it (v1 bug: "START RECORDING" contains
+"recording").
+
 Prints one PASS/FAIL line per check; exits 1 on any FAIL.
-Screenshots + UI dumps land in ./smoke-out for artifact upload.
+Screenshots + UI dumps + the pulled WAV land in ./smoke-out for artifact upload.
 """
 import re, subprocess, sys, time, os
 
@@ -37,13 +45,17 @@ def shot(tag):
     sh(f"adb shell screencap -p /sdcard/{tag}.png")
     sh(f"adb pull /sdcard/{tag}.png {OUT}/{tag}.png")
 
+def has(xml, text):
+    return text.lower() in xml.lower()
+
 def tap_text(xml, text, timeout_s=15):
-    """Tap the center of the node whose @text matches; retry until timeout."""
+    """Tap the center of the node whose @text matches case-insensitively; retry until timeout."""
     deadline = time.time() + timeout_s
+    pat = re.escape(text)
     while time.time() < deadline:
-        m = re.search(r'text="%s"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"' % re.escape(text), xml)
+        m = re.search(r'text="%s"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"' % pat, xml, re.IGNORECASE)
         if not m:
-            m = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"[^>]*text="%s"' % re.escape(text), xml)
+            m = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"[^>]*text="%s"' % pat, xml, re.IGNORECASE)
         if m:
             x = (int(m.group(1)) + int(m.group(3))) // 2
             y = (int(m.group(2)) + int(m.group(4))) // 2
@@ -70,9 +82,9 @@ report("permission dialog foregrounded on fresh install (lead from Artemis run)"
 
 # grant like a user: mic dialog, then possibly notifications dialog
 for attempt in range(3):
-    if "While using the app" in xmlA:
+    if has(xmlA, "While using the app"):
         tap_text(xmlA, "While using the app"); time.sleep(2)
-    elif "Allow" in xmlA:
+    elif has(xmlA, "Allow"):
         tap_text(xmlA, "Allow"); time.sleep(2)
     else:
         break
@@ -86,27 +98,40 @@ report("app in foreground after granting dialogs", "iris" in fg2.lower(), fg2[:1
 
 print("== phase B: record 10s, stop, verify ==")
 xmlB = dump("B1-app")
-report("Start recording button present", "Start recording" in xmlB)
-tap_text(xmlB, "Start recording")
+report("Start recording button present", has(xmlB, "Start recording"))
+report("tapped Start recording", tap_text(xmlB, "Start recording"))
 time.sleep(3)
 xmlB2 = dump("B2-recording")
 shot("B2-recording")
-report("status shows recording", "recording" in xmlB2.lower())
+# exact status string from MainActivity ("recording (local only)") - a caps
+# button label can never satisfy this
+report("status shows exact 'recording (local only)'", "recording (local only)" in xmlB2)
+report("button flipped to Stop recording", has(xmlB2, "Stop recording"))
 
 time.sleep(10)
-tap_text(xmlB2, "Stop recording")
+report("tapped Stop recording", tap_text(xmlB2, "Stop recording"))
 time.sleep(4)
 xmlB3 = dump("B3-stopped")
 shot("B3-stopped")
-report("button back to Start recording after stop", "Start recording" in xmlB3)
+report("button back to Start recording after stop", has(xmlB3, "Start recording"))
 
-lsout = sh(f"adb shell run-as {PKG} ls -l files", check=False)
+lsout = sh(f"adb shell run-as {PKG} ls -l /data/data/{PKG}/files", check=False)
 print("files dir:", lsout.strip()[:300])
-m = re.search(r"(\d+)\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}\s+(meeting-\d+-\d+\.wav)", lsout)
+m = re.search(r"(\d+)\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}\s+(meeting-\d{8}-\d{6}\.wav)", lsout)
 size = int(m.group(1)) if m else 0
 report("meeting WAV saved in app files dir", bool(m), (m.group(2) + f" {size}B") if m else lsout.strip()[:120])
 # 10s of 16kHz mono 16-bit ~= 320KB; accept >100KB as real audio captured
 report("WAV has real audio payload (>100KB)", size > 100_000, f"{size}B")
+
+# pull the WAV and verify it is a real RIFF/WAVE file, not a placeholder
+if m:
+    wav = m.group(2)
+    sh(f"adb exec-out run-as {PKG} cat /data/data/{PKG}/files/{wav} > {OUT}/{wav}", check=False)
+    try:
+        head = open(f"{OUT}/{wav}", "rb").read(12)
+        report("pulled WAV has RIFF/WAVE header", head[:4] == b"RIFF" and head[8:12] == b"WAVE", repr(head))
+    except FileNotFoundError:
+        report("pulled WAV has RIFF/WAVE header", False, "pull failed")
 
 print("== RESULT:", "ALL PASS" if not fails else f"{len(fails)} FAILURES: {fails}")
 sys.exit(1 if fails else 0)
