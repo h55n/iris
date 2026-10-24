@@ -9,7 +9,7 @@ on:
     inputs:
       legs:
         description: "space-separated legs (see scripts/benchmark/ci_leg.sh)"
-        default: "mucs60_small ami90_base ami90_tiny fleurs_hi30_small fleurs_bn30_small fleurs_ta30_small fleurs_es30_small"
+        default: "mucs60_small ami90_base ami90_tiny fleurs_hi_in30_small fleurs_bn_in30_small fleurs_ta_in30_small fleurs_es_41930_small"
 jobs:
   plan:
     runs-on: ubuntu-latest
@@ -32,6 +32,7 @@ jobs:
       MEASURED_ON: "github-hosted ubuntu-latest runner (4 vCPU, 16GB RAM)"
     steps:
       - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg unzip >/dev/null
       - run: python3 -m pip install --quiet jiwer
       - run: bash scripts/benchmark/ci_leg.sh "${{ matrix.leg }}"
       - uses: actions/upload-artifact@v4
