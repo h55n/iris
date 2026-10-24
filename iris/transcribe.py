@@ -19,7 +19,7 @@ def to_wav16k(src: str) -> str:
         raise RuntimeError(f"ffmpeg could not convert {src}: {'; '.join(tail) or 'unknown error'}")
     return out
 
-def transcribe(audio_path: str, model: str = MODEL, language: str = "en") -> list[dict]:
+def transcribe(audio_path: str, model: str = MODEL, language: str = "en", raw_out: str | None = None) -> list[dict]:
     """Returns [{'start': float, 'end': float, 'text': str}] segments."""
     if not os.path.exists(model):
         raise FileNotFoundError(
@@ -31,8 +31,15 @@ def transcribe(audio_path: str, model: str = MODEL, language: str = "en") -> lis
     if os.path.exists(VAD_MODEL):
         cmd += ["--vad", "-vm", VAD_MODEL, "-vmsd", "10"]
     subprocess.run(cmd, check=True, capture_output=True)
-    with open(out_prefix + ".json", encoding="utf-8", errors="replace") as f:
-        data = json.load(f)
+    raw_path = out_prefix + ".json"
+    raw = open(raw_path, "rb").read()
+    if raw_out:
+        shutil.copyfile(raw_path, raw_out)  # preserve exact whisper bytes as evidence
+    # whisper can emit byte sequences that are not valid UTF-8 (e.g. Devanagari
+    # byte-level tokens with no completing neighbor); decode tolerantly so the
+    # pipeline survives. Replacement chars (U+FFFD) stay in the text and count
+    # as WER errors - they mark real model output defects, not clean accuracy.
+    data = json.loads(raw.decode("utf-8", errors="replace"))
     segs = []
     for s in data["transcription"]:
         segs.append({"start": _ts(s["offsets"]["from"]), "end": _ts(s["offsets"]["to"]),

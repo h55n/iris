@@ -21,6 +21,7 @@ metrics = {
   "date": datetime.date.today().isoformat(),
   "audio_minutes": dur_min, "model": os.path.basename(d["model"]), "language_arg": d["language"],
   "wall_s": d["wall_s"], "peak_child_mb": d["peak_child_mb"], "segments": d["segments"],
+  "utf8_replacements": d.get("utf8_replacements", 0),
   "wer": round(m.wer * 100, 1), "wer_lowercase_only_punct_counted": round(m_lc.wer * 100, 1),
   "mer": round(m.mer * 100, 1), "wil": round(m.wil * 100, 1), "hits": m.hits,
   "substitutions": m.substitutions, "deletions": m.deletions, "insertions": m.insertions,

@@ -42,3 +42,4 @@ jobs:
           path: |
             docs/benchmarks/2026-10-24-${{ matrix.leg }}.json
             /tmp/bench-ci/out_${{ matrix.leg }}.json
+            /tmp/bench-ci/raw_${{ matrix.leg }}.json
