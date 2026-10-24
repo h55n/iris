@@ -44,8 +44,8 @@ jobs:
           script: |
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
             git clone --depth 1 https://github.com/google/artemis.git /tmp/artemis
-            cd /tmp/artemis
-            uv run artemis run "${{ github.event.inputs.scenario }}" --profile flash
+            # NOTE: each script line is its own sh -c; cd does not persist. One line.
+            cd /tmp/artemis && uv run artemis run "${{ github.event.inputs.scenario }}" --profile flash
       - uses: actions/upload-artifact@v4
         if: always()
         with:
