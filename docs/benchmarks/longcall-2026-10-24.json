@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-24",
+  "environment": "sandbox CPU (2 vCPU, 1GB RAM), whisper.cpp CPU-only, silero VAD v6.2.0",
+  "track": {
+    "file": "33.1 min (1986.7s) 16kHz mono WAV",
+    "source": "4 LibriSpeech test-clean readers back-to-back (7127, 5639, 672, 8230), 232 utterances",
+    "label": "READ SPEECH, one reader at a time, clean studio audio. NOT a real multi-speaker call, NOT Hinglish.",
+    "reference": "official LibriSpeech .trans.txt"
+  },
+  "results": [
+    {
+      "model": "ggml-tiny.en.bin",
+      "wall_s": 301,
+      "speed": "6.6x realtime",
+      "peak_rss_mb": 553,
+      "segments": 433,
+      "coverage": "0.5s-1986.5s, no gaps (max inter-segment gap 0.5s)",
+      "wer_approx_pct": 8.7,
+      "wer_method": "APPROXIMATION: difflib 1-ratio on first 3000 words vs reference, not full standard WER"
+    },
+    {
+      "model": "ggml-base.en.bin",
+      "wall_s": 974,
+      "speed": "~2.0x realtime",
+      "peak_rss_mb": 661,
+      "segments": 455,
+      "coverage": "full, no gaps",
+      "wer_approx_pct": 5.2,
+      "wer_method": "same approximation, same caveat"
+    }
+  ],
+  "notes_call": {
+    "backend": "Ultramarine hosted (one call, prepaid credit)",
+    "input": "base.en transcript, 31966 chars with [MM:SS] timestamps",
+    "tokens": {
+      "prompt": 8818,
+      "completion": 491
+    },
+    "output": "valid notes JSON; correctly identified content as read literary passages, 0 decisions / 0 action items (correct for non-meeting input)"
+  },
+  "open": [
+    "real overlapping-speaker calls",
+    "Hinglish code-switching",
+    "long-file diarization",
+    "files >35 min",
+    "on-device timing (Hassan hardware)"
+  ]
+}
