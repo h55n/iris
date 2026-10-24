@@ -35,6 +35,8 @@ jobs:
           ARTEMIS_DEFAULT_MODEL: gemini-2.5-flash
           EVENTS_OUTPUT_PATH: /tmp/artemis-out/events.jsonl
           RESULTS_OUTPUT_PATH: /tmp/artemis-out/results
+          ARTEMIS_DEBUG: "true"
+          KEEP_VIDEOS: "true"
         with:
           api-level: 33
           target: google_apis
@@ -51,8 +53,7 @@ jobs:
         with:
           name: artemis-trace
           path: |
-            /tmp/artemis/sessions
+            /tmp/artemis/traces
             /tmp/artemis-out
-            ~/.artemis
           retention-days: 7
           if-no-files-found: ignore
