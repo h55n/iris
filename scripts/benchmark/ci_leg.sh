@@ -44,7 +44,7 @@ case "$LEG" in
     AUDIO="$B/ami/ES2008abc90.wav"; REF="$B/ami/ES2008abc90_ref.txt"; MODEL=ggml-tiny.en.bin; LANG=en; LBL="$AMI90_LBL"; URL=$AMI_URL; LIC="CC BY 4.0";;
   fleurs_*30_small)
     dl_model ggml-small.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin" 1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b
-    L=$(echo "$LEG" | sed -E 's/fleurs_([a-z_]+)30_small/\1/')
+    L=$(echo "$LEG" | sed -E 's/fleurs_(.+)30_small/\1/')
     case "$L" in hi_in) SUF=" (Hindi)";; bn_in) SUF=" (Bengali - known unsupported, expect poor)";; ta_in) SUF=" (Tamil)";; es_419) SUF=" (Spanish)";; *) SUF="";; esac
     AUDIO="$B/fleurs/$L/${L}30.wav"; REF="$B/fleurs/$L/${L}30_ref.txt"; MODEL=ggml-small.bin; LANG=auto; LBL="$FLEURS_LBL$SUF"; URL=$FLEURS_URL; LIC="CC BY 4.0";;
   *) echo "unknown leg: $LEG" >&2; exit 2;;

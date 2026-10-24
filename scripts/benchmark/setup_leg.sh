@@ -19,7 +19,7 @@ case "$LEG" in
     bash "$REPO/scripts/benchmark/ami90_build.sh" "$B" "$REPO"
     ;;
   fleurs_*30_small)
-    L=$(echo "$LEG" | sed -E 's/fleurs_([a-z_]+)30_small/\1/')
+    L=$(echo "$LEG" | sed -E 's/fleurs_(.+)30_small/\1/')
     mkdir -p "$B/fleurs/$L"; cd "$B/fleurs"
     [ -f "$L.test.tsv" ] || bash "$REPO/scripts/benchmark/dl_verified.sh" "https://huggingface.co/datasets/google/fleurs/resolve/main/data/$L/test.tsv" "$L.test.tsv" digit
     cd "$L"
