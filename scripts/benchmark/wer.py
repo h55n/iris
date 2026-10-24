@@ -3,7 +3,7 @@
 #   wer                                   lowercase + punctuation stripped + whitespace normalized (standard ASR normalization)
 #   wer_lowercase_only_punct_counted      lowercase only; punctuation mismatches count as errors
 # Appends a metrics JSON (no raw corpus transcripts) to docs/benchmarks/ and prints one line.
-import sys, json, os, datetime, wave, contextlib, math, jiwer
+import sys, json, os, datetime, wave, contextlib, jiwer
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 result_json, ref_txt, leg, label, source_url, license_ = sys.argv[1:7]
 d = json.load(open(result_json))
@@ -24,8 +24,6 @@ metrics = {
   "utf8_replacements": d.get("utf8_replacements", 0),
   "wer": round(m.wer * 100, 1), "wer_lowercase_only_punct_counted": round(m_lc.wer * 100, 1),
   "ref_words": m.hits + m.substitutions + m.deletions,
-  "wer_se_binomial": round(math.sqrt(max(m.wer * (1 - m.wer), 0) / max(m.hits + m.substitutions + m.deletions, 1)) * 100, 2),
-  "wer_se_note": "binomial +/-1 SE lower bound; word errors correlate within a run, and single runs carry no replicate variance",
   "mer": round(m.mer * 100, 1), "wil": round(m.wil * 100, 1), "hits": m.hits,
   "substitutions": m.substitutions, "deletions": m.deletions, "insertions": m.insertions,
   "wer_method": "primary 'wer': jiwer full-transcript, lowercase + punctuation stripped + whitespace normalized (standard ASR normalization). 'wer_lowercase_only_punct_counted': lowercase only, punctuation mismatches count as errors - comparable to the 2026-10-24 morning AMI-a figures (37.9/42.9).",
