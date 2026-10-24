@@ -1,0 +1,23 @@
+{
+ "leg": "ami_a_base",
+ "label": "real multi-speaker English meeting with overlap (AMI ES2008, Mix-Headset); overlap ordering inflates WER; diarization+notes stages not run, no full-pipeline claim",
+ "source_url": "https://groups.inf.ed.ac.uk/ami/corpus/",
+ "license": "CC BY 4.0",
+ "date": "2026-10-24",
+ "audio_minutes": 17.4,
+ "model": "ggml-base.en.bin",
+ "language_arg": "en",
+ "wall_s": 502.8,
+ "peak_child_mb": 506.9,
+ "segments": 251,
+ "wer": 25.9,
+ "wer_lowercase_only_punct_counted": 37.9,
+ "mer": 25.5,
+ "wil": 33.5,
+ "hits": 1876,
+ "substitutions": 219,
+ "deletions": 383,
+ "insertions": 41,
+ "wer_method": "primary 'wer': jiwer full-transcript, lowercase + punctuation stripped + whitespace normalized (standard ASR normalization). 'wer_lowercase_only_punct_counted': lowercase only, punctuation mismatches count as errors - comparable to the 2026-10-24 morning AMI-a figures (37.9/42.9).",
+ "engine": "iris.transcribe (repo product path, whisper-cli + silero VAD)"
+}
