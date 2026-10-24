@@ -29,6 +29,7 @@ class MainActivity : Activity() {
         override fun onReceive(c: Context?, i: Intent?) {
             val f = RecorderService.lastFile
             status.text = if (f != null) "saved ${f.name} (${f.length() / 1024} KB)" else "saved"
+            refreshRecordings()
         }
     }
 
@@ -50,6 +51,7 @@ class MainActivity : Activity() {
             setOnClickListener { toggleRecording() }
         }
         root.addView(status); root.addView(recordBtn)
+
 
         root.addView(label("Laptop ingest URL (same Wi-Fi, e.g. http://192.168.1.5:8472)"))
         root.addView(field("http://...:8472", "laptop"))
@@ -78,12 +80,30 @@ class MainActivity : Activity() {
         val scroll = ScrollView(this).apply { addView(list) }
         root.addView(scroll, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
         setContentView(root)
+        refreshRecordings()
         registerReceiver(recordingDone, IntentFilter("in.iris.app.RECORDING_DONE"), RECEIVER_NOT_EXPORTED)
     }
 
     override fun onDestroy() {
         unregisterReceiver(recordingDone)
         super.onDestroy()
+    }
+
+    private fun refreshRecordings() {
+        val wavs = (filesDir.listFiles { f -> f.name.matches(Regex("meeting-\\d{8}-\\d{6}\\.wav")) }
+            ?: emptyArray()).sortedByDescending { it.name }
+        if (wavs.isEmpty()) {
+            list.text = "No recordings on this phone yet.\nTap Start recording and your meetings stay here, on this device."
+            return
+        }
+        val df = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
+        val out = java.text.SimpleDateFormat("d MMM, HH:mm", java.util.Locale.US)
+        val sb = StringBuilder("On this phone (newest first):\n")
+        for (f in wavs.take(20)) {
+            val when_ = try { out.format(df.parse(f.name.removePrefix("meeting-").removeSuffix(".wav"))!!) } catch (e: Exception) { f.name }
+            sb.append("\n$when_  -  ${f.length() / 1024} KB")
+        }
+        list.text = sb.toString()
     }
 
     private fun toast(msg: String) = runOnUiThread { Toast.makeText(this, msg, Toast.LENGTH_LONG).show() }
