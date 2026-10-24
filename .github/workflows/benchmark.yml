@@ -1,0 +1,43 @@
+name: benchmark-long-audio
+# Manual, on-demand long-audio benchmark. Each matrix leg rebuilds its inputs
+# from the original public corpus sources (see scripts/benchmark/), runs the
+# repo product transcription path and uploads the metrics JSON as an artifact.
+# Nothing corpus-derived is committed; a human reviews artifacts before
+# committing metrics to docs/benchmarks/.
+on:
+  workflow_dispatch:
+    inputs:
+      legs:
+        description: "space-separated legs (see scripts/benchmark/ci_leg.sh)"
+        default: "mucs60_small ami90_base ami90_tiny fleurs_hi30_small fleurs_bn30_small fleurs_ta30_small fleurs_es30_small"
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      legs: ${{ steps.m.outputs.legs }}
+    steps:
+      - id: m
+        run: |
+          legs=$(echo "${{ inputs.legs }}" | jq -R -c 'split(" ") | map(select(length>0))')
+          echo "legs=$legs" >> "$GITHUB_OUTPUT"
+  leg:
+    needs: plan
+    strategy:
+      fail-fast: false
+      matrix:
+        leg: ${{ fromJSON(needs.plan.outputs.legs) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      MEASURED_ON: "github-hosted ubuntu-latest runner (4 vCPU, 16GB RAM)"
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install --quiet jiwer
+      - run: bash scripts/benchmark/ci_leg.sh "${{ matrix.leg }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bench-${{ matrix.leg }}
+          if-no-files-found: error
+          path: |
+            docs/benchmarks/2026-10-24-${{ matrix.leg }}.json
+            /tmp/bench-ci/out_${{ matrix.leg }}.json
