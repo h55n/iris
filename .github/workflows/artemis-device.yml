@@ -1,0 +1,39 @@
+name: artemis-device-test
+# Manual-only: drives the debug APK on an emulated Pixel with Google's ARTEMIS
+# (github.com/google/artemis, natural-language Android automation). Needs the
+# GEMINI_API_KEY repo secret (Google AI Studio key) - the runner sends emulator
+# screenshots and the UI tree to the Gemini API. Test data only, never real notes.
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: Natural-language test goal for Artemis
+        default: "Open the Iris app, grant any permission dialogs, start a recording, wait 10 seconds, stop it, and confirm the meeting appears in the list. Report any crash dialog."
+jobs:
+  device-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - name: build debug APK
+        working-directory: android
+        run: ./gradlew --no-daemon assembleDebug
+      - name: drive Iris with Artemis on the emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          # the emulator lives only for this step, so install and test happen here
+          script: |
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            git clone --depth 1 https://github.com/google/artemis.git /tmp/artemis
+            cd /tmp/artemis
+            uv run artemis run "${{ github.event.inputs.scenario }}" --profile flash
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: artemis-trace, path: /tmp/artemis/sessions, retention-days: 7, if-no-files-found: ignore }
