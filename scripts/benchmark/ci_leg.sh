@@ -41,7 +41,7 @@ case "$LEG" in
       *_turbo) dl_model ggml-large-v3-turbo.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin" 1fc70f774d38eb169993ac391eea357ef47c88757ef72ee5943879b7e8e2bc69;;
       *) dl_model ggml-small.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin" 1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b;;
     esac
-    if [ "$LEG" = mucs_dev_small ]; then
+    if [[ "$LEG" == mucs_dev_* ]]; then
       AUDIO="$B/mucs/mucs_dev15.wav"; REF="$B/mucs/mucs_dev15_ref.txt"
       LBL="DEV split (MUCS utterances after the 60-min baseline) for pipeline tuning - development evidence only, not a held-out claim; $MUCS_LBL"
     else
