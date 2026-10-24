@@ -7,9 +7,10 @@ Every claim the product makes is tied to a test that actually ran. Anything not 
 | area | status |
 |---|---|
 | transcription (en, VAD) | LIVE-TESTED (synthetic + LibriSpeech) |
-| Hindi transcription (ggml-small) | TESTED synthetic; real speech = Hassan |
-| Tamil/Spanish | TESTED synthetic |
-| Bengali | FAILS (wrong script) - unsupported |
+| Hindi transcription (ggml-small) | TESTED synthetic; real-speech 30-min read-speech WER 82.9% (see Oct 24 evening) - no reliability claim |
+| Tamil | real-speech 30-min read-speech WER 93.3% (77.4% with VAD disabled) - no reliability claim (see Oct 24 evening) |
+| Spanish (es-419, ggml-small) | real-speech 30-min read-speech WER 16.1% |
+| Bengali | FAILS (wrong script) - unsupported; real-speech WER 100% (script mismatch) |
 | claim verifier | 8 edge-case tests + pipeline demotion tests + live demotions |
 | retention sweep | unit-tested + demoed |
 | encryption (age) | unit + live roundtrip |
@@ -185,3 +186,26 @@ Real whisper.cpp runs, one utterance each. Synthetic TTS input - clean studio sp
 - Auto-sync: after linking the hosted account, notes push silently after each meeting; unlinked or toggled-off means no network call and no error raised (unit + security tests, cross-site push refused).
 - Sync guards: a pull never overwrites a local note with browser-encrypted ciphertext from the hosted site (unit); second push of an unchanged note sends nothing (incremental tests).
 - Android CI: every push builds assembleDebug AND assembleRelease on GitHub's free runner (release unsigned unless credentials are supplied via gitignored properties or env) and runs the 4 Kotlin unit test classes. Verified green on the first run.
+
+# Hour-long CI benchmarks (2026-10-24 evening)
+
+All legs: github-hosted ubuntu-latest (4 vCPU, 16GB), whisper.cpp pinned 231638a, sha256-pinned models, GGML_NATIVE=OFF, repo product path (iris.transcribe + silero VAD unless noted), inputs rebuilt from original corpus sources per leg. Metrics JSONs: docs/benchmarks/2026-10-24-*.json. WER = jiwer full-transcript, lowercase+punct-stripped (second figure: lowercase-only, punctuation counted).
+
+| leg | corpus | model | audio | WER | wall |
+|---|---|---|---|---|---|
+| ami90_base | AMI ES2008 a+b+c 90-min assembled compilation (parts concatenated; session gaps possible; real multi-speaker overlap inflates WER) | base.en | 89.6min | 28.6% / 39.3% | 647s |
+| ami90_tiny | same | tiny.en | 89.6min | 30.4% / 36.8% | 370s |
+| mucs60_small | MUCS 2021 sub-task2 test, single-speaker code-switched Hindi-English lectures (NOT a real Hinglish multi-speaker call) | small | 60.7min | 98.8% / 98.9% | 1138s |
+| fleurs_es_41930_small | FLEURS es-419 read speech, 30-min bounded subset | small | 30.4min | 16.1% / 23.5% | 646s |
+| fleurs_hi_in30_small | FLEURS hi read speech | small | 30.2min | 82.9% / 84.3% | 2051s |
+| fleurs_bn_in30_small | FLEURS bn read speech | small | 30.1min | 100.0% / 100.0% | 2472s |
+| fleurs_ta_in30_small | FLEURS ta read speech | small | 30.1min | 93.3% / 93.8% | 967s |
+
+Read these as pipeline+model measurements on test corpora, not live-call quality and not pure model capability:
+
+- Tamil: withhold any reliability claim. A matched diagnostic rerun of the identical ta corpus with VAD disabled (same runner class, same audio/model, only IRIS_VAD_MODEL off) measured 77.4% vs the product-path 93.3% - the pipeline's VAD stage contributes substantially to measured ta error. A 5-clip diagnostic sample (121 ref words) gave: independent-clips+VAD 65.7%, independent-noVAD 70.6%, concatenated-VAD 162.7%, concatenated-noVAD 86.3% (concat spans derived from full-transcript alignment - an extraction approximation, and a diagnostic sample, not a corpus estimate). ta error breakdown (VAD run): 69% substitutions of near-miss word forms, 24% alignment deletions, 2% insertions; output is grammatical-looking Tamil, no loops; Unicode NFC/NFD normalization ruled out (corpus-wide); auto-vs-fixed language identical on 2 clips (sample-limited).
+- Bengali: model does not emit Bengali script for this audio - an isolated clip gives Latin-script romanization with both -l auto and -l bn (phonetically close to the reference), the 30-min concatenated run produced Devanagari script plus repeat loops. The reference is Bengali script, so word overlap is zero and measured WER is 100%: a script-mismatch-dominated measurement, consistent with the pre-existing synthetic finding ("Bengali FAILS wrong script - unsupported").
+- MUCS: S3279 D3489 I0 H83 on 6851 ref words - substitution+alignment-deletion dominated, zero insertions; different failure shape from ta. No reliability claim for code-switched lectures.
+- hi: S1347 D1763 I46 H697 - alignment deletions 46% of errors. No reliability claim.
+- UTF-8: whisper.cpp can write invalid UTF-8 in segment text - observed raw bytes are truncated multibyte sequences at segment-text ends (hi, mucs, bn legs). Pipeline now decodes tolerantly (U+FFFD stays in the transcript), counts replacements per leg (mucs 1, hi 2, bn 2), and preserves raw whisper bytes as CI artifacts; regression fixtures in tests/test_transcribe_utf8.py. Removing the affected hypothesis words leaves rounded WER unchanged (98.79%/82.90% both ways) - that tests the scoring substitution only; original bytes unrecoverable, upstream effects untested. ami90/es/ta legs ran before this instrumentation; their outputs parsed cleanly, which is only possible with zero invalid bytes.
+- Sandbox local test suite at this commit: 222 passed, 10 failed + 19 errors, all pre-existing sandbox-environment issues (missing age binary, subprocess limits), identical with and without today's changes; run in CI where applicable.
