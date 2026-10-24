@@ -9,7 +9,12 @@ on:
     inputs:
       legs:
         description: "space-separated legs (see scripts/benchmark/ci_leg.sh)"
+        required: true
         default: "mucs60_small ami90_base ami90_tiny fleurs_hi_in30_small fleurs_bn_in30_small fleurs_ta_in30_small fleurs_es_41930_small"
+      no_vad:
+        description: "diagnostic: disable silero VAD (IRIS_VAD_MODEL=/nonexistent)"
+        type: boolean
+        default: false
 jobs:
   plan:
     runs-on: ubuntu-latest
@@ -35,6 +40,8 @@ jobs:
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg unzip >/dev/null
       - run: python3 -m pip install --quiet jiwer
       - run: bash scripts/benchmark/ci_leg.sh "${{ matrix.leg }}"
+        env:
+          IRIS_VAD_MODEL: ${{ inputs.no_vad && '/nonexistent' || 'models/ggml-silero-v6.2.0.bin' }}
       - uses: actions/upload-artifact@v4
         with:
           name: bench-${{ matrix.leg }}
