@@ -74,35 +74,39 @@ sh(f"adb shell am start -n {PKG}/.MainActivity")
 time.sleep(6)
 fg = foreground()
 print("foreground after cold launch:", fg)
-xmlA = dump("A1-permission")
-shot("A1-permission")
+xmlA = dump("A1-launch")
+shot("A1-launch")
 report("cold-launch foreground captured", bool(fg), fg[:120])
-report("permission dialog foregrounded on fresh install (lead from Artemis run)",
-       "permissioncontroller" in fg, fg[:120])
+report("app in foreground on cold launch (no upfront permission wall)",
+       "iris" in fg.lower(), fg[:120])
+report("no permission dialog before first record tap",
+       "permissioncontroller" not in fg, fg[:120])
 
-# grant like a user: mic dialog, then possibly notifications dialog
-for attempt in range(3):
-    if has(xmlA, "While using the app"):
-        tap_text(xmlA, "While using the app"); time.sleep(2)
-    elif has(xmlA, "Allow"):
-        tap_text(xmlA, "Allow"); time.sleep(2)
-    else:
-        break
-    xmlA = dump(f"A{attempt+2}-postgrant")
-
-time.sleep(3)
-fg2 = foreground()
-print("foreground after grants:", fg2)
-shot("A3-app")
-report("app in foreground after granting dialogs", "iris" in fg2.lower(), fg2[:120])
-
-print("== phase B: record 10s, stop, verify ==")
+print("== phase B: first record tap asks for mic in context ==")
 xmlB = dump("B1-app")
 report("Start recording button present", has(xmlB, "Start recording"))
 report("tapped Start recording", tap_text(xmlB, "Start recording"))
 time.sleep(3)
-xmlB2 = dump("B2-recording")
-shot("B2-recording")
+fgp = foreground()
+print("foreground after first record tap:", fgp)
+xmlP = dump("B2-permission")
+shot("B2-permission")
+report("mic permission dialog shown in context of first record tap",
+       "permissioncontroller" in fgp, fgp[:120])
+
+# grant like a user: mic dialog, then the notifications dialog
+for attempt in range(3):
+    if has(xmlP, "While using the app"):
+        tap_text(xmlP, "While using the app"); time.sleep(2)
+    elif has(xmlP, "Allow"):
+        tap_text(xmlP, "Allow"); time.sleep(2)
+    else:
+        break
+    xmlP = dump(f"B{attempt+3}-postgrant")
+
+time.sleep(3)
+xmlB2 = dump("B5-recording")
+shot("B5-recording")
 # exact status string from MainActivity ("recording (local only)") - a caps
 # button label can never satisfy this
 report("status shows exact 'recording (local only)'", "recording (local only)" in xmlB2)
