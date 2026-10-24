@@ -31,7 +31,7 @@ def transcribe(audio_path: str, model: str = MODEL, language: str = "en") -> lis
     if os.path.exists(VAD_MODEL):
         cmd += ["--vad", "-vm", VAD_MODEL, "-vmsd", "10"]
     subprocess.run(cmd, check=True, capture_output=True)
-    with open(out_prefix + ".json") as f:
+    with open(out_prefix + ".json", encoding="utf-8", errors="replace") as f:
         data = json.load(f)
     segs = []
     for s in data["transcription"]:
