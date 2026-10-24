@@ -8,7 +8,7 @@ on:
     inputs:
       scenario:
         description: Natural-language test goal for Artemis
-        default: "Open the Iris app, grant any permission dialogs, start a recording, wait 10 seconds, stop it, and confirm the meeting appears in the list. Report any crash dialog."
+        default: "Open the Iris app, grant any permission dialogs, tap START RECORDING, wait 10 seconds, tap STOP RECORDING, and confirm the status text confirms the recording was saved locally (for example saved meeting-...). The recordings list is for synced meetings and stays empty on a fresh offline install - do not treat an empty list as a failure. Report any crash dialog."
 jobs:
   device-test:
     runs-on: ubuntu-latest
