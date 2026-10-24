@@ -47,7 +47,9 @@ jobs:
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
             git clone --depth 1 https://github.com/google/artemis.git /tmp/artemis
             # NOTE: each script line is its own sh -c; cd does not persist. One line.
-            cd /tmp/artemis && uv run artemis run "${{ github.event.inputs.scenario }}" --profile flash
+            # The jsonc config (not env) drives the flash runner's model; pin models
+            # that Hassan's free-tier key actually has (verified via /v1beta/models).
+            cd /tmp/artemis && sed -i 's/gemini-3.8-flash/gemini-2.5-flash/g; s/gemini-3.7-flash/gemini-2.5-flash/g; s/gemini-3.5-flash-lite/gemini-2.5-flash-lite/g; s/gemini-3.1-flash-lite/gemini-2.5-flash-lite/g' config/artemis.jsonc && uv run artemis run "${{ github.event.inputs.scenario }}" --profile flash
       - uses: actions/upload-artifact@v4
         if: always()
         with:
