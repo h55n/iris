@@ -52,24 +52,30 @@ class MainActivity : Activity() {
         }
         root.addView(status); root.addView(recordBtn)
 
-
-        root.addView(label("Laptop ingest URL (same Wi-Fi, e.g. http://192.168.1.5:8472)"))
-        root.addView(field("http://...:8472", "laptop"))
+        val syncPanel = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; visibility = View.GONE }
         root.addView(Button(this).apply {
+            text = "Sync setup (optional - laptop, relay, encryption key)"
+            setOnClickListener { syncPanel.visibility = if (syncPanel.visibility == View.GONE) View.VISIBLE else View.GONE }
+        })
+        root.addView(syncPanel)
+
+        syncPanel.addView(label("Laptop ingest URL (same Wi-Fi, e.g. http://192.168.1.5:8472)"))
+        syncPanel.addView(field("http://...:8472", "laptop"))
+        syncPanel.addView(Button(this).apply {
             text = "Send last recording to laptop"
             setOnClickListener { sendToLaptop() }
         })
 
-        root.addView(label("Sync relay URL + token"))
-        root.addView(field("http://...:8471", "relay"))
-        root.addView(field("sync token", "token"))
-        root.addView(Button(this).apply {
+        syncPanel.addView(label("Sync relay URL + token"))
+        syncPanel.addView(field("http://...:8471", "relay"))
+        syncPanel.addView(field("sync token", "token"))
+        syncPanel.addView(Button(this).apply {
             text = "Sync notes now"
             setOnClickListener { syncNow() }
         })
 
-        root.addView(label("age secret key (AGE-SECRET-KEY-1...) - stays on this phone"))
-        root.addView(field("AGE-SECRET-KEY-1...", "agekey"))
+        syncPanel.addView(label("age secret key (AGE-SECRET-KEY-1...) - stays on this phone"))
+        syncPanel.addView(field("AGE-SECRET-KEY-1...", "agekey"))
 
         root.addView(Button(this).apply {
             text = "Enable meeting nudges (Zoom/Meet/Teams)"
