@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="44dp" android:height="44dp"
+    android:viewportWidth="48" android:viewportHeight="48">
+    <!-- hand-drawn plant: flat colour fills offset from the loose ink line -->
+    <group android:translateX="-1" android:translateY="-1">
+        <path android:pathData="M16,34 L32,34 L30,44 L18,44 Z" android:fillColor="#E5A15B"/>
+        <path android:pathData="M24,26 C19,25 15,21 14,15 C20,16 23,20 24,26 Z" android:fillColor="#8F7FC4"/>
+        <path android:pathData="M24,20 C29,19 33,15 34,9 C28,10 25,14 24,20 Z" android:fillColor="#DD6B4F"/>
+    </group>
+    <path android:pathData="M16,34 L32,34 L30,44 L18,44 Z"
+        android:strokeColor="#2B2926" android:strokeWidth="1.8" android:strokeLineJoin="round" android:fillColor="#00000000"/>
+    <path android:pathData="M24,34 C24,29 24,24 24,18"
+        android:strokeColor="#2B2926" android:strokeWidth="2" android:strokeLineCap="round" android:fillColor="#00000000"/>
+    <path android:pathData="M24,26 C19,25 15,21 14,15 C20,16 23,20 24,26 Z"
+        android:strokeColor="#2B2926" android:strokeWidth="1.8" android:strokeLineJoin="round" android:fillColor="#00000000"/>
+    <path android:pathData="M24,20 C29,19 33,15 34,9 C28,10 25,14 24,20 Z"
+        android:strokeColor="#2B2926" android:strokeWidth="1.8" android:strokeLineJoin="round" android:fillColor="#00000000"/>
+</vector>

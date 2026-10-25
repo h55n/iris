@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
-    <application android:label="Iris" android:allowBackup="false" android:usesCleartextTraffic="true" android:theme="@android:style/Theme.Material.NoActionBar">
+    <application android:label="Iris" android:allowBackup="false" android:usesCleartextTraffic="true" android:icon="@drawable/ic_sprout" android:theme="@android:style/Theme.Material.NoActionBar">
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
