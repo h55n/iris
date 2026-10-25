@@ -17,7 +17,7 @@ Every claim the product makes is tied to a test that actually ran. Anything not 
 | sync relay | live two-store roundtrip, zero plaintext at relay |
 | speaker diarization | LIVE-TESTED (16/16 real-human turns); similar voices degrade |
 | meeting auto-detect | unit-tested (fake probes); live laptop = Hassan |
-| Android app | builds in CI every push (debug + unsigned release); 4 unit test classes pass; ALL on-device behavior = Hassan |
+| Android app | builds in CI every push (debug + unsigned release); 4 unit test classes pass; emulator UI scenario (record 10s -> saved-locally UI) PASS via Artemis Oct 25 (UI-text verification only, see section); real-device/mic behavior = Hassan |
 | wikilinks, local graph, recap, auto-sync | unit + live browser tests (see Oct 23 section) |
 | local web UI | live-tested + screenshots |
 | ollama/gemma3:4b notes | NOT testable in sandbox - Hassan's laptop |
@@ -233,3 +233,13 @@ Held-out confirmation (30-min held-out slices, paired flags="" vs "-mc 0" on ide
 - Bengali: ~100 WER under every tested config including large-v3-turbo. The unsupported finding stands.
 - "-mc 0 --suppress-nst" and "-vmsd 30" variants: nst added insertions on ta dev; vmsd 30 was byte-identical to -mc 0 alone on FLEURS and MUCS (cap not binding on these corpora).
 - Mechanism statements remain hypotheses: "-mc 0" was tested because context carry was suspected in concat insertion blow-ups; the held-out numbers confirm the observed effect on these corpora, not the mechanism.
+
+# Artemis on-device UI test (Android emulator, CI) - PASS 2026-10-25
+
+- Run: artemis-device.yml manual dispatch, run 40173266552 (https://github.com/h55n/iris/actions/runs/40173266552), started 2026-10-25T07:34:15Z, completed success in 5m02s. First green after five failure/cancelled attempts on Oct 24; those failures correlate with the Gemini free-tier 20-RPD daily cap being exhausted (owner-visible AI Studio peak 25/20 on Oct 24), and this pass ran after the midnight-Pacific reset with 0/20 used - correlation, not a proven cause.
+- What passed: Google's Artemis agent (gemini-3-flash-preview default + gemini-3.5-flash-lite visual lens) drove the CI-built debug APK on an emulated Pixel through the default scenario: launch -> grant microphone ("While using the app") and notification permissions -> START RECORDING -> 10-second hold -> STOP RECORDING -> status text "saved meeting-20261025-073849.wav (611 KB)" with a new "On this phone (newest first): 25 Oct, 07:38 - 611 KB" list row (the list read "No recordings on this phone yet" pre-run). No crash dialogs. Trace screenshots and compiled replay video: artifact artemis-trace, ID 12591272206 (~90-day GitHub retention).
+- Agent-reported LLM usage for the run: 15 calls total (gemini-3-flash-preview 8, gemini-3.5-flash-lite 7), 109,862 prompt tokens. Free tier only; no billing enabled.
+- What this does NOT establish:
+  - Audio-byte validity: the saved file was never read, hashed, or played back; the evidence is UI text plus the list row (that UI check is the scenario's designed success criterion). 611 KB for ~10s is consistent with a real non-empty file but is not proof of one.
+  - Real microphone capture: the emulator has no real audio source; recorded content is unverified.
+  - Real-device behavior: emulator-only result. On-device behavior on Hassan's phone remains his to test.
