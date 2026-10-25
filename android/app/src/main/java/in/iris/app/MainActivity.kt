@@ -258,7 +258,7 @@ class MainActivity : Activity() {
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            minHeight = dp(56)
+            minimumHeight = dp(56)
             setPadding(dp(14), dp(8), dp(14), dp(8))
             background = RippleDrawable(ColorStateList.valueOf(0x14000000), rounded(Color.WHITE, 16f, border), null)
             isClickable = true
