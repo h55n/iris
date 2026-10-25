@@ -17,7 +17,7 @@ Every claim the product makes is tied to a test that actually ran. Anything not 
 | sync relay | live two-store roundtrip, zero plaintext at relay |
 | speaker diarization | LIVE-TESTED (16/16 real-human turns); similar voices degrade |
 | meeting auto-detect | unit-tested (fake probes); live laptop = Hassan |
-| Android app | builds in CI every push (debug + unsigned release); 4 unit test classes pass; emulator UI scenario (record 10s -> saved-locally UI) PASS via Artemis Oct 25 (UI-text verification only, see section); real-device/mic behavior = Hassan |
+| Android app | builds in CI every push (debug + unsigned release); 4 unit test classes pass; main-screen UI redesigned Oct 25 (Iris plant look); deterministic adb smoke ALL PASS on the redesign (run 40178169679, incl RIFF WAV bytes + screenshots); emulator UI scenario PASS via Artemis Oct 25 (UI-text only, see section); real-device/mic behavior = Hassan |
 | wikilinks, local graph, recap, auto-sync | unit + live browser tests (see Oct 23 section) |
 | local web UI | live-tested + screenshots |
 | ollama/gemma3:4b notes | NOT testable in sandbox - Hassan's laptop |
@@ -91,6 +91,7 @@ Test track: 33.1 min (1,986.7s) 16kHz mono WAV - four LibriSpeech test-clean rea
 - SyncClient: pulls meeting bundles from the user's own relay; posts recordings to the user's own laptop ingest endpoint over LAN. Nothing third-party.
 - AgeDecrypt: full age v1 decryption in-app (bech32 key import, X25519 via API 33 platform crypto, HKDF-SHA256, ChaCha20-Poly1305, STREAM chunks) - the phone reads encrypted notes with the user's own key.
 - TESTED: compiles to a working APK (app-debug.apk builds clean). NOT testable in sandbox - Hassan's on-device list: mic recording quality, nudge firing in a real Zoom/Meet call, LAN upload to laptop, encrypted notes read on phone, Android 13+ gate message on older phones.
+- UI redesign (Oct 25, commit 99af226): warm-paper Iris plant look - sprout wordmark + launcher icon, state-tinted status card (idle lavender / recording coral with pulse / saved blue), pill record button, recordings as rows in a card, grouped Settings rows (sync setup, meeting nudges), masked sync-token/age-key fields, 48dp+ touch targets, status live-region. Record flow, permission timing, sync clients and smoke-test-visible strings unchanged. Verified by adb smoke run 40178169679 (https://github.com/h55n/iris/actions/runs/40178169679): ALL 15 PASS incl 656KB RIFF WAV on disk + screenshots of idle/recording/saved states. Sync-setup panel interior restyled but not screenshot-verified.
 - Laptop ingest server (Iris/ingest_server.py): phone -> laptop over LAN, full pipeline runs on the laptop, results sync back encrypted via relay.
 
 ## Multi-language transcription (ggml-small multilingual, synthetic gTTS speech) - tested Oct 21
