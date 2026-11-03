@@ -19,8 +19,8 @@ Every claim the product makes is tied to a test that actually ran. Anything not 
 | meeting auto-detect | unit-tested (fake probes); live laptop = Hassan |
 | Android app | builds in CI every push (debug + unsigned release); 4 unit test classes pass; main-screen UI redesigned Oct 25 (Iris plant look); deterministic adb smoke ALL PASS on the redesign (run 40178169679, incl RIFF WAV bytes + screenshots); emulator UI scenario PASS via Artemis Oct 25 (UI-text only, see section); real-device/mic behavior = Hassan |
 | wikilinks, local graph, recap, auto-sync | unit + live browser tests (see Oct 23 section) |
-| local web UI | live-tested + screenshots |
-| ollama/gemma3:4b notes | NOT testable in sandbox - Hassan's laptop |
+| local web UI | live-tested + screenshots; serves on Windows 11 + screenshots (Nov 4) |
+| ollama/gemma3:4b notes | verified end-to-end on Hassan's Windows PC (Nov 4); hosted fallback unchanged |
 
 # What is tested vs untested (honest build log)
 
@@ -306,3 +306,75 @@ Held-out confirmation (30-min held-out slices, paired flags="" vs "-mc 0" on ide
   - Audio-byte validity: the saved file was never read, hashed, or played back; the evidence is UI text plus the list row (that UI check is the scenario's designed success criterion). 611 KB for ~10s is consistent with a real non-empty file but is not proof of one.
   - Real microphone capture: the emulator has no real audio source; recorded content is unverified.
   - Real-device behavior: emulator-only result. On-device behavior on Hassan's phone remains his to test.
+
+# Real Windows PC validation (hssn, Windows 11) - 2026-11-04
+
+First full run of the product on real Windows hardware, over Chrome Remote
+Desktop. Machine: Windows 11, 13th Gen Intel i7-13700HX, 15.7 GB RAM,
+Python 3.11.15, git 2.54.0, ffmpeg 8.1.2, whisper.cpp v1.9.1 prebuilt
+binaries (pinned: v1.9.5+ ships no Windows assets; the v1.9.1 zip nests
+binaries under Release\, handled by run_one_win.py / setup guard in
+f6313fd). Test audio: public FLEURS test-set recordings (CC BY 4.0),
+not synthetic. Bench harness: scripts/benchmark/{windows_setup,bench,
+run_one_win,ingesttest,servertest_win,pullbench,stage3,verify2}.*.
+Runner scripts live in the repo so the owner can rerun everything with
+one command each.
+
+Benchmarks (ggml-small.bin, MEASURED_ON=windows-i7-13700HX):
+- leg1 smoke: en_3min.wav (3.1 min, FLEURS en_us), lang en, standard
+  decode: 31.4s wall (~5.9x realtime), 16 segments, WER 68.1%. No
+  baseline - smoke leg only; WER on 3 minutes of read speech is not a
+  reliability claim.
+- leg2 validated config: hi_hold30.wav (25.7 min, FLEURS hi_in), lang
+  auto, careful -mc 0: 1571.0s wall, 171 segments, WER 68.5%.
+  CI comparator (GitHub 4vCPU, docs/benchmarks/hold-2026-10-25): 2424.9s,
+  WER 67.4. The PC ran the leg 1.54x faster than CI; WER within 1.1
+  points of CI on the same model file name and source URL (bytes not
+  re-hashed on the PC - stated, not assumed).
+- Bench JSONs were written on the PC at D:\iris-test\iris\docs\
+  benchmarks\2026-10-24-win-*.json; the console output (above numbers)
+  and screenshots are the evidence committed here.
+
+Product tests on the PC (scripts committed, results from console + UI):
+- T3 device enumeration: record.py --list-devices lists "Microphone Array
+  (Realtek(R) Audio)" through the new Windows dshow path (9623c9b, 12
+  tests). Enumeration only - no room audio was captured (owner boundary);
+  real mic capture stays pending intentional test input.
+- T1 cli ingest with ollama default gemma3:4b (pulled to the default
+  store C:\Users\hassa\.ollama\models, 3.4 GB - confirmed the store
+  location before relying on it): meeting created, transcript + notes
+  written. Integrity 5/5 claims verified on the first run, 0/0 on the
+  rerun - gemma3:4b claim-extraction variance on read-speech test audio,
+  not a code failure (both meetings render full notes in the UI).
+- T6 ingest-server header test on 127.0.0.1:8472 with a throwaway store:
+  bad token -> 403; X-Iris-Title -> 200 and stored title 'win header test
+  iris'; legacy X-Convo-Title -> 200 and stored title 'win header test
+  legacy'. PASS (d8ca41d).
+- T7 webui serve check: FIRST RUN FAILED (http 000). Root cause: webui.py
+  used glibc-only strftime flags %-d/%-I in four render paths (sidebar
+  nav item, day label, search results, meeting header); the Windows CRT
+  raises ValueError: Invalid format string, killing every page render.
+  Fixed in d42cf40 (portable _when/_day/_day_short/_when_full helpers,
+  identical strings) + 6 regression tests (tests/test_webui_stamp.py).
+  Rerun: GET / -> http 200; visually verified in Chrome on the PC -
+  meeting list with correct "Nov 4, 4:31 AM" stamps, meeting page header
+  "November 4, 2026 at 4:31 AM - 70 words", summary/decisions/action
+  items all render. Screenshots taken.
+
+Real bugs found and fixed during this validation:
+- d42cf40: the strftime Windows crash above (would have made the web UI
+  unusable on every Windows machine).
+- 899ae52: ffmpeg on Windows reads console stdin; stray CRD clipboard
+  probe text wedged the concat step. Scripts now run ffmpeg with
+  -nostdin / stdin=DEVNULL.
+- f6313fd: whisper.cpp v1.9.1 zip nests binaries under Release\;
+  run_one_win.py and the setup guard now resolve both layouts.
+
+NOT tested on the PC (explicit):
+- Real microphone capture (owner boundary while unattended; device
+  enumeration only).
+- detect.py on Windows (documented gap - Linux/macOS probes only).
+- Relay sync from the PC, encryption key init on the PC, Android keystore
+  signing (owner gate), real Android phone (owner gate).
+- lfm2.5 ollama backend remains limited-backend-compatibility only, not a
+  validated default (per owner ruling).
