@@ -61,3 +61,49 @@ Conclusions:
 - Remaining unknowns: per-clip vs concat difference (~4-5 points vs the
   hold legs, unattributed); whether Urdu-script emissions correlate with
   specific speakers/clips; larger-model behavior.
+
+## Same-slice config comparison: explicit `-l hi` vs `-l auto` (ggml-small.bin)
+
+Identical 30-clip FLEURS hi_in test slice, identical decode flags
+(--vad silero v6.2.0 -vmsd 10 -mc 0 -oj, whisper.cpp v1.9.1,
+ggml-small.bin sha256 1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b).
+Per-clip alignment dumps: alignments-small-auto.json, alignments-small-hi.json.
+
+| config | WER | hits | subs | del | ins | utf8-repl chars |
+|---|---|---|---|---|---|---|
+| small + `-l auto` | 63.1% | 335 | 404 | 55 | 42 | 0 |
+| small + `-l hi` | 57.6% | 391 | 346 | 57 | 54 | 1 |
+
+Substitution classes (manual/heuristic categories, method unchanged):
+
+| class | auto | hi |
+|---|---|---|
+| different_word | 267 (66%) | 301 (87%) |
+| script_mismatch | 100 (24%) | 2 (<1%) |
+| orthographic_variant | 32 (7%) | 38 (11%) |
+| number_form | 5 (1%) | 5 (1%) |
+
+Grounded finding: on this slice, explicit `-l hi` collapses the wrong-script
+emission mode (100 -> 2 substitution pairs) and lowers WER by 5.5 points. This
+is consistent with auto language-ID sometimes selecting Urdu (Arabic script) or
+emitting Latin tokens; the model itself produces Devanagari when the language
+is pinned. The residual error mass stays in within-Devanagari different_word
+substitutions.
+
+Not a winner declaration: one 30-clip slice, per-clip decode, insertions are
+slightly higher with `-l hi` (42 -> 54), the code-switching (Hinglish) cost of
+pinning the language is untested here, and the classes are heuristic. The
+existing benchmark baseline (auto, hold-2026-10-25) is unchanged.
+
+## ggml-medium leg: blocked by sandbox memory (not a model result)
+
+Attempted ggml-medium.bin (sha256
+6c14d5adee5f86394037b4e4e8b59f1673b6cee10e3cf0b11bbdbee79c156208) on the same
+slice in this sandbox: 6/6 attempted clips were SIGKILLed by the OOM killer.
+The box has 1982 MB RAM; whisper-cli reached ~1.8 GB RSS during model load/
+decode before being killed, so zero medium JSONs were produced. This is an
+environmental limit, not evidence about medium's quality. Options to complete
+the capacity comparison: run on a machine with >=4 GB free RAM (e.g. the user's
+PC, needs owner permission), or a quantized medium build (a different artifact
+than the pinned hash; would be labeled separately and confounds capacity with
+quantization).
