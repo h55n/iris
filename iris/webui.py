@@ -485,6 +485,34 @@ def meeting_nav(store_dir: str, mid: str) -> str:
             'font-size:12.5px">'
             + lbl(older, "&larr;") + lbl(newer, "&rarr;") + "</div>")
 
+
+def _ampm(t):
+    return "AM" if t.tm_hour < 12 else "PM"
+
+def _h12(t):
+    return t.tm_hour % 12 or 12
+
+def _when(ts):
+    # "Nov 4, 4:25 AM" - no %-d/%-I: those are glibc-only and raise
+    # ValueError on the Windows CRT, killing every page render there.
+    t = time.localtime(ts)
+    return f"{time.strftime('%b', t)} {t.tm_mday}, {_h12(t)}:{t.tm_min:02d} {_ampm(t)}"
+
+def _day(ts):
+    # "Tuesday, Nov 4"
+    t = time.localtime(ts)
+    return f"{time.strftime('%A, %b', t)} {t.tm_mday}"
+
+def _day_short(ts):
+    # "Tue Nov 4"
+    t = time.localtime(ts)
+    return f"{time.strftime('%a %b', t)} {t.tm_mday}"
+
+def _when_full(ts):
+    # "November 4, 2026 at 4:25 AM"
+    t = time.localtime(ts)
+    return f"{time.strftime('%B', t)} {t.tm_mday}, {t.tm_year} at {_h12(t)}:{t.tm_min:02d} {_ampm(t)}"
+
 def _title_in(store_dir: str, mid: str) -> str:
     try:
         return json.load(open(os.path.join(store_dir, mid, "meta.json"))).get("title", mid)
@@ -494,7 +522,7 @@ def _title_in(store_dir: str, mid: str) -> str:
 def _nav_item(mid, meta, active, group=""):
     integ = meta.get("integrity") or {}
     iv = f' &middot; {integ.get("passed")}/{integ.get("checked")} verified' if integ else ""
-    when = time.strftime("%b %-d, %-I:%M %p", time.localtime(meta.get("created", 0)))
+    when = _when(meta.get("created", 0))
     cls = "nav-item active" if mid == active else "nav-item"
     kind = "note" if meta.get("kind") == "note" else ("locked" if meta.get("encrypted") else "")
     tail = f' &middot; {kind}' if kind else ""
@@ -506,7 +534,7 @@ def _day_label(ts: float) -> str:
     d = time.strftime("%Y-%m-%d", time.localtime(ts))
     if d == time.strftime("%Y-%m-%d"): return "Today"
     if d == time.strftime("%Y-%m-%d", time.localtime(time.time() - 86400)): return "Yesterday"
-    return time.strftime("%A, %b %-d", time.localtime(ts))
+    return _day(ts)
 
 def _preview(store_dir: str, mid: str, meta: dict) -> str:
     if meta.get("encrypted"):
@@ -846,7 +874,7 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
                         'Locked notes are not included.</div>')
                 body += f'<h2>{len(r["meetings"])} note{"s" if len(r["meetings"]) != 1 else ""}</h2>'
                 for m3 in r["meetings"]:
-                    when2 = time.strftime("%a %b %-d", time.localtime(m3["created"]))
+                    when2 = _day_short(m3["created"])
                     body += f'<div class=bullet>{esc2(m3["title"])} <span style="color:var(--muted);font-size:12.5px">{when2}</span></div>'
                 if r["decisions"]:
                     body += f"<h2>{heading_icon('decisions')}Decisions</h2>"
@@ -939,7 +967,7 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
                                + '<div class=t>This meeting is locked</div>'
                                + '<div class=s>the key that sealed it is not on this device</div></div>')
                     return
-                when = time.strftime("%B %-d, %Y at %-I:%M %p", time.localtime(meta.get("created", 0)))
+                when = _when_full(meta.get("created", 0))
                 fresh = 0 < (time.time() - meta.get("created", 0)) < 600
                 body = (confetti(mid) if fresh else "")
                 if fresh:
