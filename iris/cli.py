@@ -7,16 +7,17 @@ from iris import transcribe as T, backends, verify, store, crypto as C, render, 
 STORE = os.environ.get("IRIS_STORE", "store")
 
 def cmd_ingest(audio, backend_name="ollama", title="", diarize=False, speakers=0, multilingual=False,
-               language="en", careful=False):
+               language="en", careful=False, allow_unsupported=False):
     mid = store.new_meeting(STORE, title)
     store.attach_audio(STORE, mid, audio)
     if multilingual:
-        segs = T.transcribe_multilingual(audio, careful=careful)
+        segs = T.transcribe_multilingual(audio, careful=careful, allow_unsupported=allow_unsupported)
     elif language != "en":
         # non-English single language needs a multilingual model; the .en models
         # translate or drop it (tested: base.en turns Hindi into English)
         ml_model = os.environ.get("IRIS_WHISPER_MULTILINGUAL_MODEL", "models/ggml-small.bin")
-        segs = T.transcribe(audio, model=ml_model, language=language, careful=careful)
+        segs = T.transcribe(audio, model=ml_model, language=language, careful=careful,
+                            allow_unsupported=allow_unsupported)
     else:
         segs = T.transcribe(audio, careful=careful)
     tmd = None
@@ -163,7 +164,7 @@ def main(args):
         print(f"pushed {len(pushed)} ({len(skipped)} unchanged), pulled {len(got)}: {got}")
     elif args[0] == "ingest":
         if len(args) < 2:
-            print("usage: iris ingest <audio-file> [--backend ollama|ultramarine] [--language CODE] [--careful] [--diarize [--speakers N]] [--multilingual] [--title T]"); sys.exit(1)
+            print("usage: iris ingest <audio-file> [--backend ollama|ultramarine] [--language CODE] [--careful] [--diarize [--speakers N]] [--multilingual] [--title T] [--allow-unsupported]"); sys.exit(1)
         if not os.path.exists(args[1]):
             print(f"error: audio not found: {args[1]}", file=sys.stderr); sys.exit(1)
         backend = "ollama"
@@ -194,13 +195,14 @@ def main(args):
                 print(f"bad --language code: {lang or '(missing)'} (e.g. hi, ta, es)", file=sys.stderr); sys.exit(1)
             if ml:
                 print("--language and --multilingual conflict: --multilingual auto-detects per segment", file=sys.stderr); sys.exit(1)
-            if lang in T.UNSUPPORTED_LANGS:
+            if lang in T.UNSUPPORTED_LANGS and "--allow-unsupported" not in args:
                 print(f"error: {lang} (Bengali) is not supported: whisper writes the wrong script for it "
-                      f"(measured 100% WER - see TESTED.md). Not transcribing a garbage result.", file=sys.stderr); sys.exit(1)
+                      f"(measured 100% WER - see TESTED.md). Pass --allow-unsupported to force it anyway.",
+                      file=sys.stderr); sys.exit(1)
         careful = "--careful" in args
         try:
             cmd_ingest(args[1], backend, title=title, diarize=dia, speakers=spk, multilingual=ml,
-                       language=lang, careful=careful)
+                       language=lang, careful=careful, allow_unsupported="--allow-unsupported" in args)
         except T.UnsupportedLanguageError as e:
             print(f"error: {e}", file=sys.stderr); sys.exit(1)
     elif args[0] == "sweep":

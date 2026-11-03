@@ -235,13 +235,26 @@ Held-out confirmation (30-min held-out slices, paired flags="" vs "-mc 0" on ide
 - "-mc 0 --suppress-nst" and "-vmsd 30" variants: nst added insertions on ta dev; vmsd 30 was byte-identical to -mc 0 alone on FLEURS and MUCS (cap not binding on these corpora).
 - Mechanism statements remain hypotheses: "-mc 0" was tested because context carry was suspected in concat insertion blow-ups; the held-out numbers confirm the observed effect on these corpora, not the mechanism.
 
-# Careful decode shipped as opt-in + Bengali refused (2026-11-03)
+# Careful decode shipped as opt-in + Bengali guarded (2026-11-03)
 
 - What shipped: `iris ingest --careful` / IRIS_WHISPER_CAREFUL=1 applies
-  `-mc 0` only for hi, ta and the multilingual (auto) path; `iris ingest
-  --language CODE` forces a single language (auto-switches to the multilingual
-  model for non-English); `-l bn` exits 1 and multilingual Bengali detection
-  warns that the transcript is unreliable.
+  `-mc 0` only for the validated combination: language hi, ta or the
+  multilingual (auto) path AND the ggml-small model (basename contains
+  "ggml-small"). Any other model prints a note and keeps the standard decode,
+  because every held-out leg ran ggml-small (fleurs_hold_{ta,hi,es,bn}_in_small,
+  mucs_hold_small; ami90 was a same-input toggle on base.en, not held-out) and
+  the large-v3-turbo probe measured a script-selection failure on code-switched
+  dev audio (mucs dev 97.0). Applying -mc 0 to other sizes is unvalidated.
+- `iris ingest --language CODE` forces a single language (auto-switches to the
+  multilingual model for non-English). Note: `ingest` had NO --language flag
+  before today, so `-l bn` refused nothing that previously worked via the CLI;
+  the Python API (used by scripts/benchmark/run_one.py for the bn leg) did
+  accept language="bn" - that path is preserved via the override.
+- Bengali guard: `-l bn` and the API refuse by default with the measured
+  reason; `--allow-unsupported` / IRIS_ALLOW_UNSUPPORTED_LANGS=1 /
+  allow_unsupported=True forces it (with a stderr warning) so the benchmark
+  harness keeps measuring the bn leg. Multilingual detection of Bengali speech
+  warns the transcript is unreliable.
 - Evidence basis: the 2026-10-25 held-out confirmation above (hi -15.0, ta
   -2.8, mucs -13.0; es +0.6 regression so es NOT included; en neutral so en
   NOT included; bn 100% under every config so refused). No new benchmark runs
@@ -252,8 +265,8 @@ Held-out confirmation (30-min held-out slices, paired flags="" vs "-mc 0" on ide
 - Wall-time cost is real (~2-5x on CI hardware for the affected legs), which
   is why this is opt-in and documented in README rather than the default.
   On-device speed on Hassan's hardware remains his check, as before.
-- Tests: tests/test_transcribe_careful.py (12) + tests/test_cli_ingest_language.py
-  (6), all mocked-whisper unit tests; CI whisper legs unchanged.
+- Tests: tests/test_transcribe_careful.py (14) + tests/test_cli_ingest_language.py
+  (7), all mocked-whisper unit tests; CI whisper legs unchanged.
 
 # Artemis on-device UI test (Android emulator, CI) - PASS 2026-10-25
 

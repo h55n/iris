@@ -16,6 +16,7 @@ def test_language_and_careful_reach_ingest(monkeypatch, tmp_path):
     assert cap["kwargs"]["language"] == "hi"
     assert cap["kwargs"]["careful"] is True
     assert cap["kwargs"]["multilingual"] is False
+    assert cap["kwargs"]["allow_unsupported"] is False
 
 def test_default_language_english_careful_off(monkeypatch, tmp_path):
     cap = {}
@@ -28,8 +29,16 @@ def test_bengali_refused_at_flag(monkeypatch, tmp_path, capsys):
     with pytest.raises(SystemExit) as e:
         _run_cli(monkeypatch, tmp_path, ["ingest", "{audio}", "--language", "bn"], cap)
     assert e.value.code == 1
-    assert "not supported" in capsys.readouterr().err
+    err = capsys.readouterr().err
+    assert "not supported" in err
+    assert "--allow-unsupported" in err  # the escape hatch is named
     assert cap == {}  # ingest never ran
+
+def test_bengali_allowed_with_explicit_override(monkeypatch, tmp_path):
+    cap = {}
+    _run_cli(monkeypatch, tmp_path, ["ingest", "{audio}", "--language", "bn", "--allow-unsupported"], cap)
+    assert cap["kwargs"]["language"] == "bn"
+    assert cap["kwargs"]["allow_unsupported"] is True
 
 def test_language_multilingual_conflict(monkeypatch, tmp_path, capsys):
     cap = {}

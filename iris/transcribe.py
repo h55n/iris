@@ -12,8 +12,13 @@ EXTRA_FLAGS = os.environ.get("IRIS_WHISPER_EXTRA_FLAGS", "")  # e.g. "-mc 0 --su
 # vs standard decode; Spanish regressed +0.6 and English was neutral, so
 # careful applies only where a held-out win was measured. Cost: ~2-5x wall
 # time on CI hardware. The default decode is unchanged.
+# Every held-out leg ran ggml-small, and the large-v3-turbo probe measured a
+# script-selection failure on code-switched audio (mucs dev 97.0), so careful
+# is applied ONLY with the tested ggml-small model - other model sizes are an
+# unvalidated extension and stay on the standard decode.
 CAREFUL_FLAGS = ["-mc", "0"]
 CAREFUL_LANGS = {"hi", "ta", "auto"}  # "auto" = the multilingual / code-switched path
+CAREFUL_MODEL_MARK = "ggml-small"  # model basename substring; the only validated size
 
 # Bengali is unsupported: ggml-small and large-v3-turbo both emit the wrong
 # script for Bengali audio (measured 100% WER, TESTED.md). Refuse it loudly
@@ -22,6 +27,13 @@ UNSUPPORTED_LANGS = {"bn"}
 
 class UnsupportedLanguageError(RuntimeError):
     pass
+
+def unsupported_allowed(allow_unsupported: bool | None) -> bool:
+    """Explicit argument wins; otherwise IRIS_ALLOW_UNSUPPORTED_LANGS. Benchmarks
+    intentionally measure unsupported languages, so the guard has an override."""
+    if allow_unsupported is not None:
+        return allow_unsupported
+    return os.environ.get("IRIS_ALLOW_UNSUPPORTED_LANGS", "").strip().lower() in ("1", "true", "yes", "on")
 
 def careful_requested(careful: bool | None) -> bool:
     """Explicit argument wins; otherwise the IRIS_WHISPER_CAREFUL env var."""
@@ -44,14 +56,20 @@ def to_wav16k(src: str) -> str:
     return out
 
 def transcribe(audio_path: str, model: str = MODEL, language: str = "en", raw_out: str | None = None,
-               careful: bool | None = None) -> list[dict]:
+               careful: bool | None = None, allow_unsupported: bool | None = None) -> list[dict]:
     """Returns [{'start': float, 'end': float, 'text': str}] segments.
     careful=True (or IRIS_WHISPER_CAREFUL=1) opts into the measured -mc 0 decode;
-    it is applied only for languages with a held-out win (CAREFUL_LANGS)."""
+    it is applied only for the validated combination: a held-out-win language
+    (CAREFUL_LANGS) with the tested ggml-small model (CAREFUL_MODEL_MARK).
+    Unsupported languages (bn) raise unless explicitly overridden."""
     if language in UNSUPPORTED_LANGS:
-        raise UnsupportedLanguageError(
-            f"language '{language}' is not supported: whisper emits the wrong script for it "
-            f"(measured 100% WER at every tested model size - see TESTED.md)")
+        if not unsupported_allowed(allow_unsupported):
+            raise UnsupportedLanguageError(
+                f"language '{language}' is not supported: whisper emits the wrong script for it "
+                f"(measured 100% WER at every tested model size - see TESTED.md). "
+                f"Pass allow_unsupported=True / --allow-unsupported to force it anyway.")
+        print(f"warning: '{language}' is unsupported (wrong script, measured 100% WER) - "
+              f"proceeding only because it was explicitly forced", file=sys.stderr)
     if not os.path.exists(model):
         raise FileNotFoundError(
             f"whisper model not found: {model} - download it from "
@@ -64,13 +82,16 @@ def transcribe(audio_path: str, model: str = MODEL, language: str = "en", raw_ou
     if EXTRA_FLAGS:
         cmd += shlex.split(EXTRA_FLAGS)
     if careful_requested(careful):
-        if language in CAREFUL_LANGS:
-            if "-mc" not in cmd:
-                cmd += CAREFUL_FLAGS
-        else:
+        if language not in CAREFUL_LANGS:
             print(f"note: careful decode has no measured win for '{language}' "
                   f"(Spanish regressed slightly, English neutral - TESTED.md); standard decode used",
                   file=sys.stderr)
+        elif CAREFUL_MODEL_MARK not in os.path.basename(model):
+            print(f"note: careful decode is validated only with {CAREFUL_MODEL_MARK} "
+                  f"(model in use: {os.path.basename(model)}); standard decode used - "
+                  f"applying it to other sizes is unvalidated (TESTED.md)", file=sys.stderr)
+        elif "-mc" not in cmd:
+            cmd += CAREFUL_FLAGS
     subprocess.run(cmd, check=True, capture_output=True)
     raw_path = out_prefix + ".json"
     raw = open(raw_path, "rb").read()
@@ -114,7 +135,8 @@ def transcript_markdown(segs: list[dict], speaker_names: dict[int, str] | None =
     return "\n".join(lines)
 
 
-def transcribe_multilingual(audio_path: str, model: str = None, careful: bool | None = None) -> list[dict]:
+def transcribe_multilingual(audio_path: str, model: str = None, careful: bool | None = None,
+                            allow_unsupported: bool | None = None) -> list[dict]:
     """Mixed-language meetings (Hinglish): segment with the multilingual
     model, then detect language per segment. A base.en pass drops non-English
     speech entirely (tested: Hindi turns vanished from segmentation), so this
@@ -122,7 +144,7 @@ def transcribe_multilingual(audio_path: str, model: str = None, careful: bool | 
     model = model or os.environ.get("IRIS_WHISPER_MULTILINGUAL_MODEL", "models/ggml-small.bin")
     segs = transcribe(audio_path, model=model, language="auto", careful=careful)
     segs = detect_segment_languages(audio_path, segs, model)
-    if any(s.get("lang") in UNSUPPORTED_LANGS for s in segs):
+    if any(s.get("lang") in UNSUPPORTED_LANGS for s in segs) and not unsupported_allowed(allow_unsupported):
         print("warning: Bengali speech detected - Bengali is UNSUPPORTED (whisper writes the "
               "wrong script, measured 100% WER). This transcript is unreliable; see TESTED.md.",
               file=sys.stderr)

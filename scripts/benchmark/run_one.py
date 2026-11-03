@@ -9,7 +9,9 @@ from iris import transcribe as T
 audio, model, lang, out = sys.argv[1:5]
 t0 = time.time()
 raw_out = out.replace("out_", "raw_")
-segs = T.transcribe(audio, model=model, language=lang, raw_out=raw_out)
+segs = T.transcribe(audio, model=model, language=lang, raw_out=raw_out,
+                        # benchmarks intentionally measure unsupported languages (bn 100% WER leg)
+                        allow_unsupported=True)
 dt = time.time() - t0
 peak = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss / 1024
 bad = sum(s["text"].count("\ufffd") for s in segs)

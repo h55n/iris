@@ -26,18 +26,18 @@ def _whisper_cmds(captured):
 
 def test_careful_hindi_gets_mc0(monkeypatch, tmp_path):
     c = _patch(monkeypatch, tmp_path)
-    T.transcribe(str(tmp_path / "a.wav"), model=str(tmp_path / "m.bin"), language="hi", careful=True)
+    T.transcribe(str(tmp_path / "a.wav"), model=str(tmp_path / "ggml-small.bin"), language="hi", careful=True)
     cmd = _whisper_cmds(c)[0]
     assert cmd[-2:] == T.CAREFUL_FLAGS == ["-mc", "0"]
 
 def test_careful_tamil_gets_mc0(monkeypatch, tmp_path):
     c = _patch(monkeypatch, tmp_path)
-    T.transcribe(str(tmp_path / "a.wav"), model=str(tmp_path / "m.bin"), language="ta", careful=True)
+    T.transcribe(str(tmp_path / "a.wav"), model=str(tmp_path / "ggml-small.bin"), language="ta", careful=True)
     assert _whisper_cmds(c)[0][-2:] == ["-mc", "0"]
 
 def test_careful_auto_multilingual_gets_mc0(monkeypatch, tmp_path):
     c = _patch(monkeypatch, tmp_path)
-    T.transcribe(str(tmp_path / "a.wav"), model=str(tmp_path / "m.bin"), language="auto", careful=True)
+    T.transcribe(str(tmp_path / "a.wav"), model=str(tmp_path / "ggml-small.bin"), language="auto", careful=True)
     assert _whisper_cmds(c)[0][-2:] == ["-mc", "0"]
 
 def test_careful_spanish_not_applied_with_note(monkeypatch, tmp_path, capsys):
@@ -54,7 +54,7 @@ def test_careful_english_not_applied(monkeypatch, tmp_path):
 def test_env_var_enables_careful(monkeypatch, tmp_path):
     c = _patch(monkeypatch, tmp_path)
     monkeypatch.setenv("IRIS_WHISPER_CAREFUL", "1")
-    T.transcribe(str(tmp_path / "a.wav"), model=str(tmp_path / "m.bin"), language="hi")
+    T.transcribe(str(tmp_path / "a.wav"), model=str(tmp_path / "ggml-small.bin"), language="hi")
     assert _whisper_cmds(c)[0][-2:] == ["-mc", "0"]
 
 def test_default_decode_unchanged(monkeypatch, tmp_path):
@@ -65,8 +65,17 @@ def test_default_decode_unchanged(monkeypatch, tmp_path):
 
 def test_careful_not_duplicated_when_extra_flags_already_carry_it(monkeypatch, tmp_path):
     c = _patch(monkeypatch, tmp_path, extra_flags="-mc 0")
-    T.transcribe(str(tmp_path / "a.wav"), model=str(tmp_path / "m.bin"), language="hi", careful=True)
+    T.transcribe(str(tmp_path / "a.wav"), model=str(tmp_path / "ggml-small.bin"), language="hi", careful=True)
     assert _whisper_cmds(c)[0].count("-mc") == 1
+
+def test_careful_unvalidated_model_not_applied(monkeypatch, tmp_path, capsys):
+    """The held-out wins were all ggml-small (and turbo+mc0 measured a script
+    failure on code-switched dev audio), so other sizes keep standard decode."""
+    c = _patch(monkeypatch, tmp_path)
+    T.transcribe(str(tmp_path / "a.wav"), model=str(tmp_path / "ggml-large-v3-turbo.bin"),
+                 language="hi", careful=True)
+    assert "-mc" not in _whisper_cmds(c)[0]
+    assert "validated only with ggml-small" in capsys.readouterr().err
 
 def test_bengali_refused(monkeypatch, tmp_path):
     _patch(monkeypatch, tmp_path)
@@ -77,6 +86,20 @@ def test_bengali_refused_even_with_careful(monkeypatch, tmp_path):
     _patch(monkeypatch, tmp_path)
     with pytest.raises(T.UnsupportedLanguageError):
         T.transcribe(str(tmp_path / "a.wav"), model=str(tmp_path / "m.bin"), language="bn", careful=True)
+
+def test_bengali_override_allows_with_warning(monkeypatch, tmp_path, capsys):
+    """Benchmarks and deliberate experiments can force it; a warning still prints."""
+    c = _patch(monkeypatch, tmp_path)
+    segs = T.transcribe(str(tmp_path / "a.wav"), model=str(tmp_path / "ggml-small.bin"),
+                        language="bn", allow_unsupported=True)
+    assert segs[0]["text"] == "hello"
+    assert "explicitly forced" in capsys.readouterr().err
+
+def test_bengali_override_via_env(monkeypatch, tmp_path):
+    c = _patch(monkeypatch, tmp_path)
+    monkeypatch.setenv("IRIS_ALLOW_UNSUPPORTED_LANGS", "1")
+    segs = T.transcribe(str(tmp_path / "a.wav"), model=str(tmp_path / "ggml-small.bin"), language="bn")
+    assert segs[0]["text"] == "hello"
 
 def test_multilingual_bengali_detection_warns(monkeypatch, tmp_path, capsys):
     """If per-segment detection finds Bengali speech, warn that the transcript is unreliable."""
@@ -108,6 +131,6 @@ def test_multilingual_careful_reaches_main_pass(monkeypatch, tmp_path):
     monkeypatch.setattr(T.subprocess, "run", fake_run)
     monkeypatch.setattr(T.os.path, "exists", lambda p: True)
     monkeypatch.delenv("IRIS_WHISPER_CAREFUL", raising=False)
-    T.transcribe_multilingual(str(tmp_path / "a.wav"), model=str(tmp_path / "m.bin"), careful=True)
+    T.transcribe_multilingual(str(tmp_path / "a.wav"), model=str(tmp_path / "ggml-small.bin"), careful=True)
     main_pass = [c for c in captured["cmds"] if "-oj" in c and "-ss" not in c][0]
     assert main_pass[-2:] == ["-mc", "0"]

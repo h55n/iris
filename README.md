@@ -97,14 +97,19 @@ between whisper's 30s windows) cut measured WER on never-used-before audio by
 wall time. It ships as an opt-in, not a default:
 
 - `--careful` (or `IRIS_WHISPER_CAREFUL=1`) applies it for Hindi, Tamil and the
-  `--multilingual` path only. Spanish regressed slightly and English was
-  neutral in the same tests, so those stay on the standard decode.
+  `--multilingual` path only, and only with the model it was validated on
+  (ggml-small - every held-out leg used it, and a large-v3-turbo probe measured
+  a script-selection failure on code-switched audio). Other sizes stay on the
+  standard decode with a note. Spanish regressed slightly and English was
+  neutral in the same tests, so those stay on the standard decode too.
 - `--language hi` (or ta, es, ...) forces one language with the multilingual
   model - the English models translate or drop non-English speech.
 - Bengali is unsupported: whisper writes the wrong script for it at every
   tested model size (100% WER). Iris refuses `-l bn` and warns when the
   multilingual path detects Bengali speech, rather than return a transcript
-  that looks usable and is not.
+  that looks usable and is not. `--allow-unsupported` (or
+  IRIS_ALLOW_UNSUPPORTED_LANGS=1) forces it anyway - the benchmark harness uses
+  that to keep measuring it.
 
 ## Layout
 
