@@ -46,7 +46,8 @@ lst = outwav + ".concat.txt"
 with open(lst, "w") as f:
     for fn, _ in picked:
         f.write(f"file '{os.path.abspath(os.path.join(audio_dir, fn))}'\n")
-subprocess.run(["ffmpeg", "-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", lst,
-                "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", outwav], check=True)
+subprocess.run(["ffmpeg", "-nostdin", "-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", lst,
+                "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", outwav], check=True,
+               stdin=subprocess.DEVNULL)
 os.remove(lst)
 print(f"fleurs subset: {len(picked)} utts, {acc:.0f}s -> {outwav}", file=sys.stderr)
