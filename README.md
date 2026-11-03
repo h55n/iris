@@ -5,7 +5,8 @@
 Private, local-first meeting notes. Records when you tell it to, transcribes on your
 own machine, writes notes you can trust, deletes the audio after a week.
 
-- **Local transcription** - whisper.cpp (tiny/base/small, English + Hindi tested)
+- **Local transcription** - whisper.cpp (tiny/base/small, English + Hindi tested).
+  Hindi/Tamil/Hinglish: add `--careful` for the measured-accuracy decode (below).
 - **Notes with receipts** - every decision and action item quotes the exact transcript
   lines it came from, with a timestamp. A verifier checks each claim; anything the
   model invented (a task, a name, a quote) is demoted to "unverified" instead of
@@ -75,6 +76,8 @@ curl -L -o models/ggml-silero-v6.2.0.bin https://huggingface.co/ggml-org/whisper
 # notes backend (default, local): ollama pull gemma3:4b
 python3 iris/cli.py ingest meeting.wav                      # local notes
 python3 iris/cli.py ingest meeting.wav --backend ultramarine  # hosted fallback
+python3 iris/cli.py ingest meeting.wav --multilingual --careful   # Hinglish / mixed, accurate decode
+python3 iris/cli.py ingest meeting.wav --language hi --careful    # forced Hindi, accurate decode
 python3 iris/cli.py sweep                                   # delete >7-day recordings
 python3 iris/cli.py sweep --dry-run                         # preview what would be deleted
 python3 iris/cli.py list
@@ -84,6 +87,24 @@ python3 iris/cli.py sync --server https://iris-cloud-one.vercel.app/sync --notes
 # sync server (self-host, stdlib only)
 python3 iris/sync_server.py --dir syncdata --token S3CRET --port 8471
 ```
+
+## Hindi, Tamil, Hinglish: the careful decode
+
+Non-English transcription is honest about its limits (WER numbers in TESTED.md).
+One tuning result survived held-out confirmation: `-mc 0` (no context carry
+between whisper's 30s windows) cut measured WER on never-used-before audio by
+15.0 (Hindi), 2.8 (Tamil) and 13.0 (code-switched Hindi-English), at ~2-5x
+wall time. It ships as an opt-in, not a default:
+
+- `--careful` (or `IRIS_WHISPER_CAREFUL=1`) applies it for Hindi, Tamil and the
+  `--multilingual` path only. Spanish regressed slightly and English was
+  neutral in the same tests, so those stay on the standard decode.
+- `--language hi` (or ta, es, ...) forces one language with the multilingual
+  model - the English models translate or drop non-English speech.
+- Bengali is unsupported: whisper writes the wrong script for it at every
+  tested model size (100% WER). Iris refuses `-l bn` and warns when the
+  multilingual path detects Bengali speech, rather than return a transcript
+  that looks usable and is not.
 
 ## Layout
 

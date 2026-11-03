@@ -235,6 +235,26 @@ Held-out confirmation (30-min held-out slices, paired flags="" vs "-mc 0" on ide
 - "-mc 0 --suppress-nst" and "-vmsd 30" variants: nst added insertions on ta dev; vmsd 30 was byte-identical to -mc 0 alone on FLEURS and MUCS (cap not binding on these corpora).
 - Mechanism statements remain hypotheses: "-mc 0" was tested because context carry was suspected in concat insertion blow-ups; the held-out numbers confirm the observed effect on these corpora, not the mechanism.
 
+# Careful decode shipped as opt-in + Bengali refused (2026-11-03)
+
+- What shipped: `iris ingest --careful` / IRIS_WHISPER_CAREFUL=1 applies
+  `-mc 0` only for hi, ta and the multilingual (auto) path; `iris ingest
+  --language CODE` forces a single language (auto-switches to the multilingual
+  model for non-English); `-l bn` exits 1 and multilingual Bengali detection
+  warns that the transcript is unreliable.
+- Evidence basis: the 2026-10-25 held-out confirmation above (hi -15.0, ta
+  -2.8, mucs -13.0; es +0.6 regression so es NOT included; en neutral so en
+  NOT included; bn 100% under every config so refused). No new benchmark runs
+  today; this ships the already-measured config, it does not re-measure it.
+- The DEFAULT decode is unchanged: `iris ingest meeting.wav` without
+  `--careful` runs the same command as before (unit test:
+  test_default_decode_unchanged).
+- Wall-time cost is real (~2-5x on CI hardware for the affected legs), which
+  is why this is opt-in and documented in README rather than the default.
+  On-device speed on Hassan's hardware remains his check, as before.
+- Tests: tests/test_transcribe_careful.py (12) + tests/test_cli_ingest_language.py
+  (6), all mocked-whisper unit tests; CI whisper legs unchanged.
+
 # Artemis on-device UI test (Android emulator, CI) - PASS 2026-10-25
 
 - Run: artemis-device.yml manual dispatch, run 40173266552 (https://github.com/h55n/iris/actions/runs/40173266552), started 2026-10-25T07:34:15Z, completed success in 5m02s. First green after five failure/cancelled attempts on Oct 24; those failures correlate with the Gemini free-tier 20-RPD daily cap being exhausted (owner-visible AI Studio peak 25/20 on Oct 24), and this pass ran after the midnight-Pacific reset with 0/20 used - correlation, not a proven cause.
