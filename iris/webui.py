@@ -462,7 +462,8 @@ def render_notes_md(md: str, skip_title: bool = True, link_resolver=None) -> str
             out.append(f'<div class=num><span class=n>{n}.</span> {inline_md_r(rest)}</div>')
         elif line.startswith("_integrity"):
             m = re.search(r"(\d+)/(\d+)", line)
-            label = f"{m.group(1)}/{m.group(2)} claims verified" if m else esc(line)
+            label = (f"{m.group(1)}/{m.group(2)} claims verified" if int(m.group(2)) > 0
+                     else "no claims to verify") if m else esc(line)
             out.append(f'<p><span class=pill>{label}</span></p>')
         elif line.strip():
             out.append(f"<p>{inline_md_r(line)}</p>")
@@ -519,9 +520,26 @@ def _title_in(store_dir: str, mid: str) -> str:
     except Exception:
         return mid
 
+
+def _saved_subline(meta, store_dir):
+    # "verified" only when claims were actually checked; privacy tail names
+    # what syncs. Audio is never in the sync bundle (iris/sync.py), so that
+    # claim holds in every state.
+    integ = meta.get("integrity") or {}
+    lead = []
+    if meta.get("encrypted"): lead.append("encrypted")
+    if integ.get("checked"): lead.append("verified")
+    head = (" and ".join(lead) + ", ") if lead else ""
+    from iris import cloud as CL
+    cfg = CL.load(store_dir)
+    if cfg.get("token"):
+        scope = "notes and transcripts sync" if cfg.get("transcripts") else "notes sync"
+        return f"{head}saved on this device; {scope} to your linked cloud. Audio never leaves it."
+    return f"{head}saved on this device. Audio never leaves it."
+
 def _nav_item(mid, meta, active, group=""):
     integ = meta.get("integrity") or {}
-    iv = f' &middot; {integ.get("passed")}/{integ.get("checked")} verified' if integ else ""
+    iv = f' &middot; {integ.get("passed")}/{integ.get("checked")} verified' if integ.get("checked") else ""
     when = _when(meta.get("created", 0))
     cls = "nav-item active" if mid == active else "nav-item"
     kind = "note" if meta.get("kind") == "note" else ("locked" if meta.get("encrypted") else "")
@@ -783,8 +801,9 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
                 stats = ('<div class=stats>'
                          f'<div class=stat><div class=n>{len(mids)}</div><div class=l>meeting{"s" if len(mids)!=1 else ""}</div></div>'
                          f'<div class=stat><div class=n>{n_enc}</div><div class=l>encrypted</div></div>'
-                         f'<div class=stat><div class=n>{n_pass}/{n_checked}</div><div class=l>claims verified</div></div>'
-                         '</div>') if mids else ""
+                         + (f'<div class=stat><div class=n>{n_pass}/{n_checked}</div><div class=l>claims verified</div></div>' if n_checked
+                            else '<div class=stat><div class=n>0</div><div class=l>claims checked</div></div>')
+                         + '</div>') if mids else ""
                 recent = _recent_cards(store_dir, mids)
                 self._html(f'<div class=greet>{greet}.</div>'
                            '<div class=empty style="padding-top:2px">' + mascot(120)
@@ -973,8 +992,7 @@ def make_handler(store_dir: str, token: str = "", backend: str = "ollama"):
                 if fresh:
                     body += ('<div class=empty style="padding-top:6px">' + mascot(124, "celebrate")
                              + '<div class=t>Meeting saved</div>'
-                             + '<div class=s>' + ('encrypted and verified' if meta.get("encrypted") else 'verified')
-                             + ', saved on this device. Audio never leaves it.</div></div>')
+                             + '<div class=s>' + _saved_subline(meta, store_dir) + '</div></div>')
                 lock = ' &middot; <span style="color:var(--pill-ok)">encrypted at rest</span>' if meta.get("encrypted") else ""
                 fl = L.list_folders(store_dir)
                 cur = meta.get("folder")

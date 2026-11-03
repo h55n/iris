@@ -135,7 +135,9 @@ def test_saved_banner_only_claims_encryption_when_the_meeting_is_encrypted():
     try:
         code, body = _req(f"http://127.0.0.1:18605/meeting/{mid}")
         assert code == 200 and "Meeting saved" in body
-        assert "encrypted and verified" not in body and "verified, saved on this device" in body
+        # zero claims checked: the banner must not claim "verified"
+        assert "encrypted and verified" not in body and "verified, saved on this device" not in body
+        assert "saved on this device. Audio never leaves it." in body
         assert "nothing leaves your devices" not in body
     finally:
         srv.shutdown()
