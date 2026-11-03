@@ -15,7 +15,7 @@ Set-Location D:\iris-test\iris
 "--- pip ---" | Tee-Object -Append $log
 python -m pip install --quiet numpy jiwer 2>&1 | Tee-Object -Append $log
 "--- whisper.cpp binary ---" | Tee-Object -Append $log
-if (-not (Test-Path D:\iris-test\whisper-bin-x64\whisper-cli.exe)) {
+if (-not (Get-ChildItem -Recurse D:\iris-test\whisper-bin-x64 -Filter whisper-cli.exe -ErrorAction SilentlyContinue)) {
   # v1.9.1 is the last release shipping prebuilt Windows binaries (v1.9.5+ ships none)
   curl.exe -sL -o D:\iris-test\whisper-bin-x64.zip https://github.com/ggml-org/whisper.cpp/releases/download/v1.9.1/whisper-bin-x64.zip
   Expand-Archive -Force D:\iris-test\whisper-bin-x64.zip D:\iris-test\whisper-bin-x64
