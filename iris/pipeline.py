@@ -7,9 +7,14 @@ class PipelineError(Exception):
         super().__init__(message); self.meeting = meeting
 
 def process_audio(store_dir: str, audio: bytes, title: str = "", backend: str = "ollama",
-                  source: str = "phone-lan", ext: str = "wav") -> dict:
+                  source: str = "phone-lan", ext: str = "wav", language: str = "en",
+                  multilingual: bool = False, careful: bool = False,
+                  allow_unsupported: bool = False) -> dict:
     """Stores the audio, transcribes, writes verified notes, encrypts if a key exists.
-    Raises PipelineError (audio kept on disk) if a later step fails."""
+    Raises PipelineError (audio kept on disk) if a later step fails.
+    language/multilingual/careful mirror `iris ingest` flags: without them a phone
+    recording of a Hindi/Hinglish meeting would silently get the English model
+    (tested: base.en translates or drops Hindi), so the phone sends its setting."""
     from iris import transcribe as T, backends as B, verify, store, crypto as C, render
     ext = "".join(ch for ch in ext.lower() if ch.isalnum())[:5] or "wav"
     mid = store.new_meeting(store_dir, title)
@@ -19,9 +24,18 @@ def process_audio(store_dir: str, audio: bytes, title: str = "", backend: str = 
     mp = os.path.join(store_dir, mid, "meta.json")
     meta = json.load(open(mp))
     meta["audio_files"] = [name]; meta["source"] = source
+    meta["transcription"] = {"language": language, "multilingual": multilingual, "careful": careful}
     json.dump(meta, open(mp, "w"), indent=2)
     try:
-        segs = T.transcribe(tmp)
+        if multilingual:
+            segs = T.transcribe_multilingual(tmp, careful=careful, allow_unsupported=allow_unsupported)
+        elif language != "en":
+            # non-English needs a multilingual model; the .en models translate or drop it
+            ml_model = os.environ.get("IRIS_WHISPER_MULTILINGUAL_MODEL", "models/ggml-small.bin")
+            segs = T.transcribe(tmp, model=ml_model, language=language, careful=careful,
+                                allow_unsupported=allow_unsupported)
+        else:
+            segs = T.transcribe(tmp, careful=careful)
         tmd = T.transcript_markdown(segs)
         store.write_text(store_dir, mid, "transcript.md", tmd)
         notes = verify.verify_notes(B.get_backend(backend).notes(tmd), segs)

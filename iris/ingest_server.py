@@ -5,7 +5,11 @@ back to the phone through the normal relay as ciphertext.
 
   python3 iris/ingest_server.py --token S3CRET --port 8472
 
-POST /ingest  (body = raw audio bytes, X-Iris-Token, optional X-Iris-Title)
+POST /ingest  (body = raw audio bytes, X-Iris-Token, optional X-Iris-Title,
+               optional X-Iris-Language: en|hi|ta|... (2-3 letter code),
+               optional X-Iris-Multilingual: 1 (mixed Hinglish: per-segment detect),
+               optional X-Iris-Careful: 1 (measured-accuracy decode, slower),
+               optional X-Iris-Allow-Unsupported: 1 (force e.g. bn past the guard))
   -> {"meeting": "<id>", "integrity": {...}}
 Audio lands in store/<mid>/audio.* and is swept by the 7-day retention like
 any other recording.
@@ -20,8 +24,29 @@ def _meeting_title(headers) -> str:
     """New header wins; legacy X-Convo-Title keeps already-built APKs working."""
     return headers.get("X-Iris-Title", headers.get("X-Convo-Title", ""))
 
+def _on(headers, name) -> bool:
+    return headers.get(name, "").strip().lower() in ("1", "true", "yes", "on")
+
+def _transcription_opts(headers):
+    """Phone-declared transcription settings -> (opts, error). Defaults keep the
+    pre-header behavior exactly: English, single language, standard decode."""
+    import re
+    from iris import transcribe as T
+    lang = headers.get("X-Iris-Language", "en").strip().lower() or "en"
+    if not re.fullmatch(r"[a-z]{2,3}", lang):
+        return None, f"bad X-Iris-Language: {lang!r} (e.g. en, hi, ta)"
+    multilingual = _on(headers, "X-Iris-Multilingual")
+    if multilingual and lang != "en":
+        return None, "X-Iris-Language and X-Iris-Multilingual conflict (multilingual auto-detects)"
+    allow = _on(headers, "X-Iris-Allow-Unsupported")
+    if lang in T.UNSUPPORTED_LANGS and not allow:
+        return None, (f"{lang} is not supported (whisper writes the wrong script, measured "
+                      f"100% WER) - send X-Iris-Allow-Unsupported: 1 to force it anyway")
+    return {"language": lang, "multilingual": multilingual,
+            "careful": _on(headers, "X-Iris-Careful"), "allow_unsupported": allow}, None
+
 def make_handler(store_dir, token, backend):
-    from iris import transcribe as T, backends as B, verify, store, crypto as C, render
+    from iris import transcribe as T, backends as B, verify, store, crypto as C, render  # noqa: F401 (T used by do_POST)
     class H(BaseHTTPRequestHandler):
         def _auth(self):
             import hmac
@@ -44,9 +69,13 @@ def make_handler(store_dir, token, backend):
                 return self._send(413, {"error": "audio too large"})
             audio = self.rfile.read(size)
             if len(audio) < 1000: return self._send(400, {"error": "audio too small"})
+            opts, err = _transcription_opts(self.headers)
+            if err: return self._send(400, {"error": err})
             from iris.pipeline import process_audio, PipelineError
             try:
-                out = process_audio(store_dir, audio, _meeting_title(self.headers), backend)
+                out = process_audio(store_dir, audio, _meeting_title(self.headers), backend, **opts)
+            except T.UnsupportedLanguageError as e:
+                return self._send(400, {"error": str(e)})
             except PipelineError as e:
                 # audio is kept on disk; the phone gets a real answer, not a dropped socket
                 return self._send(500, {"error": str(e), "meeting": e.meeting})
