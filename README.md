@@ -20,6 +20,14 @@ own machine, writes notes you can trust, deletes the audio after a week.
 
 Android reads Iris Cloud notes too: in the app set the relay URL to `https://iris-cloud-one.vercel.app/sync` and paste a sync token from the site's Account page. (Pull works through the existing relay client; not yet tried on a real phone.)
 
+The app also tells the laptop what it recorded: the "Meeting language" row
+(English / Hindi / Hinglish) and the "Careful decode" toggle are sent as
+`X-Iris-Language` / `X-Iris-Multilingual` / `X-Iris-Careful` headers with each
+upload, and the ingest server routes them exactly like `iris ingest
+--language/--multilingual/--careful`. Without them a Hindi or Hinglish phone
+recording would silently get the English model, which translates or drops it.
+Old APKs that send no headers still get the English default, unchanged.
+
 ## How it fits together
 
 ```

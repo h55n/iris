@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.2 - 2026-11-03
+- Phone-to-laptop ingest is no longer English-only: the Android app sends its
+  "Meeting language" (English/Hindi/Hinglish) and "Careful decode" settings as
+  headers, and the ingest server + pipeline route them like the CLI flags
+  (--language / --multilingual / --careful, same model routing and Bengali
+  guard). Previously a Hindi/Hinglish phone recording silently ran the
+  English model. Header-less uploads (old APKs, the web recorder) keep the
+  English default, unchanged.
+- New settings rows in the Android app: "Meeting language" (cycles
+  English / Hindi / Hinglish) and "Careful decode" (on/off).
+- Meeting meta.json records the transcription settings used (provenance for
+  later WER checks on real meetings).
+- 14 new Python tests (header parsing, pipeline routing, live 400 rejections)
+  + 4 new Android JVM tests (header builder).
+
 ## 0.3.1 - 2026-11-03
 - Careful decode ships as an opt-in: `iris ingest --careful` (or
   IRIS_WHISPER_CAREFUL=1) applies the held-out-confirmed `-mc 0` configuration

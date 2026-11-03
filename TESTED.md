@@ -235,6 +235,29 @@ Held-out confirmation (30-min held-out slices, paired flags="" vs "-mc 0" on ide
 - "-mc 0 --suppress-nst" and "-vmsd 30" variants: nst added insertions on ta dev; vmsd 30 was byte-identical to -mc 0 alone on FLEURS and MUCS (cap not binding on these corpora).
 - Mechanism statements remain hypotheses: "-mc 0" was tested because context carry was suspected in concat insertion blow-ups; the held-out numbers confirm the observed effect on these corpora, not the mechanism.
 
+# Phone ingest path learns language + careful (2026-11-03 evening)
+
+- Gap found: the phone -> laptop ingest path (ingest_server.py + pipeline.py)
+  always ran T.transcribe(tmp) - English model, English language. A Hindi or
+  Hinglish phone recording would silently get the English treatment (tested
+  behavior of the .en models: translate or drop non-English). This closed the
+  last English-only path between the phone and a transcript.
+- What shipped: X-Iris-Language / X-Iris-Multilingual / X-Iris-Careful /
+  X-Iris-Allow-Unsupported headers on POST /ingest, validated and routed in
+  pipeline.process_audio exactly like the CLI flags (same multilingual-model
+  routing for non-English, same ggml-small.bin-gated careful, same Bengali
+  refusal + override). meta.json records the transcription settings per meeting.
+  Android app: "Meeting language" (cycles English/Hindi/Hinglish) and "Careful
+  decode" rows; the upload sends them. No headers = English default, unchanged
+  (old APKs and the web recorder unaffected).
+- Tests: 14 Python (7 header-parse units, 4 pipeline routing units incl. meta
+  provenance, 3 live-server 400 rejections) + 4 Android JVM header-builder tests.
+- NOT tested: real Hindi/Hinglish phone audio through the new path (needs
+  Hassan's phone + laptop; the routing and headers are unit/live tested, the
+  transcription quality on real audio is the same open real-speech question as
+  the CLI path). New UI rows are compile- and JVM-tested only; the next
+  adb/emulator UI run should eyeball them (ui_capture does not cover them yet).
+
 # Careful decode shipped as opt-in + Bengali guarded (2026-11-03)
 
 - What shipped: `iris ingest --careful` / IRIS_WHISPER_CAREFUL=1 applies
