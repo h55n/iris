@@ -6,10 +6,19 @@ from iris import transcribe as T, backends, verify, store, crypto as C, render, 
 
 STORE = os.environ.get("IRIS_STORE", "store")
 
-def cmd_ingest(audio, backend_name="ollama", title="", diarize=False, speakers=0, multilingual=False):
+def cmd_ingest(audio, backend_name="ollama", title="", diarize=False, speakers=0, multilingual=False,
+               language="en", careful=False):
     mid = store.new_meeting(STORE, title)
     store.attach_audio(STORE, mid, audio)
-    segs = T.transcribe_multilingual(audio) if multilingual else T.transcribe(audio)
+    if multilingual:
+        segs = T.transcribe_multilingual(audio, careful=careful)
+    elif language != "en":
+        # non-English single language needs a multilingual model; the .en models
+        # translate or drop it (tested: base.en turns Hindi into English)
+        ml_model = os.environ.get("IRIS_WHISPER_MULTILINGUAL_MODEL", "models/ggml-small.bin")
+        segs = T.transcribe(audio, model=ml_model, language=language, careful=careful)
+    else:
+        segs = T.transcribe(audio, careful=careful)
     tmd = None
     if diarize:
         if not DZ.available():
@@ -41,7 +50,7 @@ def cmd_ingest(audio, backend_name="ollama", title="", diarize=False, speakers=0
     r = CL.auto_sync(STORE)
     if r: print(f"cloud: synced ({r['pushed']} pushed, {r['pulled']} pulled)")
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 def _need(args, i, what):
     if len(args) <= i:
@@ -154,7 +163,7 @@ def main(args):
         print(f"pushed {len(pushed)} ({len(skipped)} unchanged), pulled {len(got)}: {got}")
     elif args[0] == "ingest":
         if len(args) < 2:
-            print("usage: iris ingest <audio-file> [--backend ollama|ultramarine] [--diarize [--speakers N]] [--multilingual] [--title T]"); sys.exit(1)
+            print("usage: iris ingest <audio-file> [--backend ollama|ultramarine] [--language CODE] [--careful] [--diarize [--speakers N]] [--multilingual] [--title T]"); sys.exit(1)
         if not os.path.exists(args[1]):
             print(f"error: audio not found: {args[1]}", file=sys.stderr); sys.exit(1)
         backend = "ollama"
@@ -176,7 +185,24 @@ def main(args):
                 print("--speakers must be 1-19", file=sys.stderr); sys.exit(1)
         title = args[args.index("--title") + 1] if "--title" in args and args.index("--title") + 1 < len(args) else ""
         ml = "--multilingual" in args
-        cmd_ingest(args[1], backend, title=title, diarize=dia, speakers=spk, multilingual=ml)
+        lang = "en"
+        if "--language" in args:
+            i = args.index("--language")
+            lang = args[i + 1].lower() if i + 1 < len(args) else ""
+            import re as _re
+            if not _re.fullmatch(r"[a-z]{2,3}", lang):
+                print(f"bad --language code: {lang or '(missing)'} (e.g. hi, ta, es)", file=sys.stderr); sys.exit(1)
+            if ml:
+                print("--language and --multilingual conflict: --multilingual auto-detects per segment", file=sys.stderr); sys.exit(1)
+            if lang in T.UNSUPPORTED_LANGS:
+                print(f"error: {lang} (Bengali) is not supported: whisper writes the wrong script for it "
+                      f"(measured 100% WER - see TESTED.md). Not transcribing a garbage result.", file=sys.stderr); sys.exit(1)
+        careful = "--careful" in args
+        try:
+            cmd_ingest(args[1], backend, title=title, diarize=dia, speakers=spk, multilingual=ml,
+                       language=lang, careful=careful)
+        except T.UnsupportedLanguageError as e:
+            print(f"error: {e}", file=sys.stderr); sys.exit(1)
     elif args[0] == "sweep":
         dry = "--dry-run" in args
         for p in store.sweep(STORE, dry_run=dry): print(f"{'would delete' if dry else 'deleted'} {p}")

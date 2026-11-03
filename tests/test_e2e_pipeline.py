@@ -22,7 +22,7 @@ def test_full_ingest_pipeline(tmp_path, monkeypatch):
     store_dir = str(tmp_path / "store")
     key = str(tmp_path / "key.txt")
     monkeypatch.setattr(cli, "STORE", store_dir)
-    monkeypatch.setattr(cli.T, "transcribe", lambda a: list(SEGMENTS))
+    monkeypatch.setattr(cli.T, "transcribe", lambda a, **kw: list(SEGMENTS))
     monkeypatch.setattr(cli.backends, "get_backend", lambda name: StubBackend())
     monkeypatch.setattr(C, "DEFAULT_KEY", key)
     monkeypatch.setattr("iris.store.C.DEFAULT_KEY", key)
@@ -51,7 +51,7 @@ def test_verifier_demotes_invented_claim_in_pipeline(tmp_path, monkeypatch):
     store_dir = str(tmp_path / "store")
     key = str(tmp_path / "key.txt")
     monkeypatch.setattr(cli, "STORE", store_dir)
-    monkeypatch.setattr(cli.T, "transcribe", lambda a: list(SEGMENTS))
+    monkeypatch.setattr(cli.T, "transcribe", lambda a, **kw: list(SEGMENTS))
     bad = dict(NOTES); bad["action_items"] = [
         {"text": "Buy servers", "owner": "Alex", "evidence": "Alex will buy servers", "at": "00:05"}]
     class Bad:
