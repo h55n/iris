@@ -69,13 +69,33 @@ def test_careful_not_duplicated_when_extra_flags_already_carry_it(monkeypatch, t
     assert _whisper_cmds(c)[0].count("-mc") == 1
 
 def test_careful_unvalidated_model_not_applied(monkeypatch, tmp_path, capsys):
-    """The held-out wins were all ggml-small (and turbo+mc0 measured a script
-    failure on code-switched dev audio), so other sizes keep standard decode."""
+    """The held-out wins were all the multilingual ggml-small.bin (and turbo+mc0
+    measured a script failure on code-switched dev audio), so other models keep
+    standard decode."""
     c = _patch(monkeypatch, tmp_path)
     T.transcribe(str(tmp_path / "a.wav"), model=str(tmp_path / "ggml-large-v3-turbo.bin"),
                  language="hi", careful=True)
     assert "-mc" not in _whisper_cmds(c)[0]
-    assert "validated only with ggml-small" in capsys.readouterr().err
+    assert "validated only with the multilingual ggml-small.bin" in capsys.readouterr().err
+
+@pytest.mark.parametrize("lookalike", [
+    "ggml-small.en.bin",          # English-only build, never benchmarked with -mc 0
+    "ggml-small-q5_0.bin",        # quantized variant, not the tested file
+    "ggml-small.bin.backup",      # suffix lookalike
+    "my-ggml-small.bin",          # prefix lookalike
+    "GGML-SMALL.BIN",             # case lookalike
+])
+def test_careful_lookalike_models_rejected(monkeypatch, tmp_path, lookalike):
+    """Only the exact benchmarked basename ggml-small.bin gets -mc 0."""
+    c = _patch(monkeypatch, tmp_path)
+    T.transcribe(str(tmp_path / "a.wav"), model=str(tmp_path / lookalike), language="hi", careful=True)
+    assert "-mc" not in _whisper_cmds(c)[0]
+
+def test_careful_exact_tested_model_in_subdirectory_applies(monkeypatch, tmp_path):
+    d = tmp_path / "models"; d.mkdir()
+    c = _patch(monkeypatch, tmp_path)
+    T.transcribe(str(tmp_path / "a.wav"), model=str(d / "ggml-small.bin"), language="ta", careful=True)
+    assert _whisper_cmds(c)[0][-2:] == ["-mc", "0"]
 
 def test_bengali_refused(monkeypatch, tmp_path):
     _patch(monkeypatch, tmp_path)

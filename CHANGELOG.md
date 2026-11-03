@@ -5,7 +5,8 @@
   IRIS_WHISPER_CAREFUL=1) applies the held-out-confirmed `-mc 0` configuration
   for Hindi, Tamil and multilingual/code-switched audio (measured WER -15.0,
   -2.8, -13.0 on held-out slices; ~2-5x slower). The validated combination is
-  ggml-small + `-mc 0` only; other model sizes stay on the standard decode.
+  exactly the multilingual ggml-small.bin + `-mc 0`; small.en, quantized
+  variants and all other models stay on the standard decode.
   Spanish/English keep the standard decode; the default is unchanged.
 - `iris ingest --language CODE` forces a single language (uses the
   multilingual model automatically for non-English).

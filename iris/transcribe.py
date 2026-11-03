@@ -12,13 +12,14 @@ EXTRA_FLAGS = os.environ.get("IRIS_WHISPER_EXTRA_FLAGS", "")  # e.g. "-mc 0 --su
 # vs standard decode; Spanish regressed +0.6 and English was neutral, so
 # careful applies only where a held-out win was measured. Cost: ~2-5x wall
 # time on CI hardware. The default decode is unchanged.
-# Every held-out leg ran ggml-small, and the large-v3-turbo probe measured a
-# script-selection failure on code-switched audio (mucs dev 97.0), so careful
-# is applied ONLY with the tested ggml-small model - other model sizes are an
-# unvalidated extension and stay on the standard decode.
+# Every held-out leg ran the multilingual ggml-small.bin, and the
+# large-v3-turbo probe measured a script-selection failure on code-switched
+# audio (mucs dev 97.0), so careful is applied ONLY with that exact file -
+# small.en (English-only), quantized variants and any other model are
+# unvalidated extensions and stay on the standard decode.
 CAREFUL_FLAGS = ["-mc", "0"]
 CAREFUL_LANGS = {"hi", "ta", "auto"}  # "auto" = the multilingual / code-switched path
-CAREFUL_MODEL_MARK = "ggml-small"  # model basename substring; the only validated size
+CAREFUL_MODEL = "ggml-small.bin"  # exact basename of the benchmarked multilingual model
 
 # Bengali is unsupported: ggml-small and large-v3-turbo both emit the wrong
 # script for Bengali audio (measured 100% WER, TESTED.md). Refuse it loudly
@@ -60,7 +61,7 @@ def transcribe(audio_path: str, model: str = MODEL, language: str = "en", raw_ou
     """Returns [{'start': float, 'end': float, 'text': str}] segments.
     careful=True (or IRIS_WHISPER_CAREFUL=1) opts into the measured -mc 0 decode;
     it is applied only for the validated combination: a held-out-win language
-    (CAREFUL_LANGS) with the tested ggml-small model (CAREFUL_MODEL_MARK).
+    (CAREFUL_LANGS) with the exact benchmarked multilingual model (CAREFUL_MODEL).
     Unsupported languages (bn) raise unless explicitly overridden."""
     if language in UNSUPPORTED_LANGS:
         if not unsupported_allowed(allow_unsupported):
@@ -86,10 +87,10 @@ def transcribe(audio_path: str, model: str = MODEL, language: str = "en", raw_ou
             print(f"note: careful decode has no measured win for '{language}' "
                   f"(Spanish regressed slightly, English neutral - TESTED.md); standard decode used",
                   file=sys.stderr)
-        elif CAREFUL_MODEL_MARK not in os.path.basename(model):
-            print(f"note: careful decode is validated only with {CAREFUL_MODEL_MARK} "
+        elif os.path.basename(model) != CAREFUL_MODEL:
+            print(f"note: careful decode is validated only with the multilingual {CAREFUL_MODEL} "
                   f"(model in use: {os.path.basename(model)}); standard decode used - "
-                  f"applying it to other sizes is unvalidated (TESTED.md)", file=sys.stderr)
+                  f"applying it to other models is unvalidated (TESTED.md)", file=sys.stderr)
         elif "-mc" not in cmd:
             cmd += CAREFUL_FLAGS
     subprocess.run(cmd, check=True, capture_output=True)

@@ -239,8 +239,9 @@ Held-out confirmation (30-min held-out slices, paired flags="" vs "-mc 0" on ide
 
 - What shipped: `iris ingest --careful` / IRIS_WHISPER_CAREFUL=1 applies
   `-mc 0` only for the validated combination: language hi, ta or the
-  multilingual (auto) path AND the ggml-small model (basename contains
-  "ggml-small"). Any other model prints a note and keeps the standard decode,
+  multilingual (auto) path AND the exact benchmarked model file (basename
+  equals "ggml-small.bin"; small.en, quantized variants and lookalike names
+  are rejected by test). Any other model prints a note and keeps the standard decode,
   because every held-out leg ran ggml-small (fleurs_hold_{ta,hi,es,bn}_in_small,
   mucs_hold_small; ami90 was a same-input toggle on base.en, not held-out) and
   the large-v3-turbo probe measured a script-selection failure on code-switched
