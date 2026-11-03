@@ -1,5 +1,5 @@
 """Local store. Transcripts+notes kept; recordings auto-deleted after 7 days.
-Encryption at rest lands in v1.5 (age). Layout:
+Encryption at rest via age when a key exists (iris key init). Layout:
   store/<meeting-id>/audio.*   (deleted by sweep after RETENTION_DAYS)
   store/<meeting-id>/transcript.md
   store/<meeting-id>/notes.md

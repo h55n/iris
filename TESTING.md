@@ -16,7 +16,7 @@ Checks that only a real device can answer (not tested by us):
 - [ ] Mic recording quality and the always-visible notification
 - [ ] Meeting nudge via Usage Access
 - [ ] Upload over your Wi-Fi
-- [ ] Hindi/English mix ("Hinglish") transcript on real speech
+- [ ] Hindi/English mix ("Hinglish") transcript on real speech - ingest it with --careful and compare against the default (careful measured better on held-out code-switched audio, but ~2-5x slower; your laptop speed is the open question)
 - [ ] Naming a speaker (`iris enroll Name sample.wav`, or click a speaker chip in the web UI)
 - [ ] Web UI at phone width (390px), tablet (~820px) and laptop; light and dark
 - [ ] Folders, pins, drag reorder, Ctrl/Cmd+K, slash menu, Trash restore
