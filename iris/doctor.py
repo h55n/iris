@@ -17,8 +17,9 @@ def main():
                 "download ggml-base.en.bin from hf.co/ggerganov/whisper.cpp")
     _ok("silero VAD model", os.path.exists("models/ggml-silero-v6.2.0.bin"),
         "download ggml-silero-v6.2.0.bin from hf.co/ggml-org/whisper-vad")
-    _ok("multilingual model (small, for Hindi)", os.path.exists("models/ggml-small.bin"),
-        "download ggml-small.bin - needed for non-English meetings")
+    if _ok("multilingual model (small, for Hindi)", os.path.exists("models/ggml-small.bin"),
+        "download ggml-small.bin - needed for non-English meetings"):
+        print("  tip  Hindi/Tamil/Hinglish meetings: ingest with --careful for the measured-accuracy decode (slower)")
     _ok("encryption key", os.path.exists(C.DEFAULT_KEY),
         "python3 iris/cli.py key init")
     _ok("diarization models", os.path.exists("models/pyannote-seg-3-0.onnx") and os.path.exists("models/eres2net_en.onnx"),
