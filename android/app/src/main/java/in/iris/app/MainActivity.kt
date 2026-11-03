@@ -188,21 +188,21 @@ class MainActivity : Activity() {
         content.addBlock(settingRow("Meeting nudges", "Notice when Zoom/Meet/Teams opens") { enableNudges() }, 8)
 
         var langSub: TextView? = null
-        content.addBlock(settingRow("Meeting language", langLabel(prefs.getString("lang", "en") ?: "en"), {
+        content.addBlock(settingRow("Meeting language", langLabel(prefs.getString("lang", "en") ?: "en"), { langSub = it }) {
             val order = listOf("en", "hi", "multi")
             val cur = prefs.getString("lang", "en") ?: "en"
             val i = order.indexOf(cur)
             val next = order[(if (i < 0) 0 else i + 1) % order.size]
             prefs.edit().putString("lang", next).apply()
             langSub?.text = langLabel(next)
-        }, { langSub = it }), 8)
+        }, 8)
 
         var carefulSub: TextView? = null
-        content.addBlock(settingRow("Careful decode", carefulLabel(prefs.getBoolean("careful", false)), {
+        content.addBlock(settingRow("Careful decode", carefulLabel(prefs.getBoolean("careful", false)), { carefulSub = it }) {
             val next = !prefs.getBoolean("careful", false)
             prefs.edit().putBoolean("careful", next).apply()
             carefulSub?.text = carefulLabel(next)
-        }, { carefulSub = it }), 8)
+        }, 8)
 
         setContentView(scroll)
         refreshRecordings()
@@ -271,8 +271,9 @@ class MainActivity : Activity() {
         setOnClickListener { onClick() }
     }
 
-    private fun settingRow(title: String, sub: String, onClick: () -> Unit,
-                           subOut: ((TextView) -> Unit)? = null): LinearLayout {
+    private fun settingRow(title: String, sub: String,
+                           subOut: ((TextView) -> Unit)? = null,
+                           onClick: () -> Unit): LinearLayout {
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
