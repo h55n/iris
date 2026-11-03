@@ -187,6 +187,23 @@ class MainActivity : Activity() {
 
         content.addBlock(settingRow("Meeting nudges", "Notice when Zoom/Meet/Teams opens") { enableNudges() }, 8)
 
+        var langSub: TextView? = null
+        content.addBlock(settingRow("Meeting language", langLabel(prefs.getString("lang", "en") ?: "en"), {
+            val order = listOf("en", "hi", "multi")
+            val cur = prefs.getString("lang", "en") ?: "en"
+            val i = order.indexOf(cur)
+            val next = order[(if (i < 0) 0 else i + 1) % order.size]
+            prefs.edit().putString("lang", next).apply()
+            langSub?.text = langLabel(next)
+        }, { langSub = it }), 8)
+
+        var carefulSub: TextView? = null
+        content.addBlock(settingRow("Careful decode", carefulLabel(prefs.getBoolean("careful", false)), {
+            val next = !prefs.getBoolean("careful", false)
+            prefs.edit().putBoolean("careful", next).apply()
+            carefulSub?.text = carefulLabel(next)
+        }, { carefulSub = it }), 8)
+
         setContentView(scroll)
         refreshRecordings()
         registerReceiver(recordingDone, IntentFilter("in.iris.app.RECORDING_DONE"), RECEIVER_NOT_EXPORTED)
@@ -254,7 +271,8 @@ class MainActivity : Activity() {
         setOnClickListener { onClick() }
     }
 
-    private fun settingRow(title: String, sub: String, onClick: () -> Unit): LinearLayout {
+    private fun settingRow(title: String, sub: String, onClick: () -> Unit,
+                           subOut: ((TextView) -> Unit)? = null): LinearLayout {
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -266,12 +284,24 @@ class MainActivity : Activity() {
         }
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         col.addView(TextView(this).apply { text = title; textSize = 15f; setTextColor(ink) })
-        col.addView(TextView(this).apply { text = sub; textSize = 12f; setTextColor(gray) })
+        val subView = TextView(this).apply { text = sub; textSize = 12f; setTextColor(gray) }
+        col.addView(subView)
+        subOut?.invoke(subView)
         row.addView(col, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         row.addView(TextView(this).apply { text = "›"; textSize = 22f; setTextColor(gray) })
         row.setOnClickListener { onClick() }
         return row
     }
+
+    private fun langLabel(v: String) = when (v) {
+        "hi" -> "Hindi"
+        "multi" -> "Hinglish (Hindi + English mix)"
+        else -> "English"
+    }
+
+    private fun carefulLabel(on: Boolean) =
+        if (on) "On - slower, better measured Hindi/Tamil/Hinglish accuracy"
+        else "Off - standard speed"
 
     private fun setStatus(text: String, tint: Int, dotColor: Int) {
         status.text = text
@@ -390,7 +420,9 @@ class MainActivity : Activity() {
         setStatus("uploading to your laptop...", coralTint, coral)
         thread {
             try {
-                val res = SyncClient.uploadForIngest(laptop, token, f, f.nameWithoutExtension)
+                val res = SyncClient.uploadForIngest(laptop, token, f, f.nameWithoutExtension,
+                    language = prefs.getString("lang", "en") ?: "en",
+                    careful = prefs.getBoolean("careful", false))
                 val integ = res.optJSONObject("integrity")
                 toast("transcribed: ${res.getString("meeting")} (${integ?.optInt("passed")}/${integ?.optInt("checked")} claims verified)")
                 runOnUiThread { setStatus("sent ${f.name} (${f.length() / 1024} KB) -> ${res.getString("meeting")}", blueTint, blue) }

@@ -67,16 +67,29 @@ object SyncClient {
         return JSONObject(String(bytes))
     }
 
+    /** Headers for the laptop ingest path. language is "en", a forced 2-letter
+     *  code like "hi", or "multi" (Hinglish: per-segment detection on the laptop).
+     *  English sends no language header, matching the laptop's pre-header default
+     *  exactly; careful opts into the measured slower decode (see TESTED.md). */
+    fun ingestHeaders(title: String, language: String = "en", careful: Boolean = false): Map<String, String> {
+        val h = mutableMapOf("X-Iris-Title" to title)
+        if (language == "multi") h["X-Iris-Multilingual"] = "1"
+        else if (language != "en") h["X-Iris-Language"] = language
+        if (careful) h["X-Iris-Careful"] = "1"
+        return h
+    }
+
     /** Upload a recording to the user's laptop over LAN for transcription.
      *  Retries twice with backoff: phones drop off Wi-Fi mid-upload often. */
     fun uploadForIngest(laptop: String, token: String, wav: File, title: String,
+                        language: String = "en", careful: Boolean = false,
                         retries: Int = 2): JSONObject {
         val payload = wav.readBytes()
         var lastErr: Exception? = null
         for (attempt in 0..retries) {
             try {
                 val (code, bytes) = req("$laptop/ingest", token, payload,
-                    contentType = "audio/wav", extraHeaders = mapOf("X-Iris-Title" to title))
+                    contentType = "audio/wav", extraHeaders = ingestHeaders(title, language, careful))
                 if (code == 200) return JSONObject(String(bytes))
                 lastErr = Exception("ingest failed: $code ${String(bytes)}")
             } catch (e: Exception) {
