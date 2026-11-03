@@ -255,8 +255,13 @@ Held-out confirmation (30-min held-out slices, paired flags="" vs "-mc 0" on ide
 - NOT tested: real Hindi/Hinglish phone audio through the new path (needs
   Hassan's phone + laptop; the routing and headers are unit/live tested, the
   transcription quality on real audio is the same open real-speech question as
-  the CLI path). New UI rows are compile- and JVM-tested only; the next
-  adb/emulator UI run should eyeball them (ui_capture does not cover them yet).
+  the CLI path). The new UI rows were verified on a live emulator by ui_capture in
+  adb-device-test run 41643727504 (commit d0d0838,
+  https://github.com/h55n/iris/actions/runs/41643727504): C8 cycles the
+  Meeting language row English -> Hindi -> Hinglish -> English and C9 toggles
+  Careful decode Off -> On -> Off, both with rendered-subtitle assertions,
+  ALL PASS, screenshots in the run artifact. Real-device rendering still
+  unverified (emulator API-level rendering only).
 
 # Careful decode shipped as opt-in + Bengali guarded (2026-11-03)
 
