@@ -7,11 +7,20 @@ we need to know how much is fixture/reference alignment vs recognition.
 Method: fresh 30-clip slice of FLEURS hi_in test (public recordings,
 CC BY 4.0), first 30 test rows, per-clip decode (NOT the concat harness),
 whisper-cli built from v1.9.1 source on Linux 2-CPU, model
-ggml-small.bin (487,601,967 bytes - byte-size-identical download from the
-same hf.co/ggerganov/whisper.cpp URL the PC used), silero v6.2.0 VAD,
+ggml-small.bin sha256 1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b
+(from hf.co/ggerganov/whisper.cpp; the PC's file matches by byte SIZE
+only - 487,601,967 - its hash was never captured, so exact identity with
+the PC/CI model files is NOT established), silero v6.2.0 VAD, fixture
+FLEURS hi_in test.tar.gz sha256
+47c238b9cf7016ba596639bb3038b0c89dc6e85759f16d09c4f58c6dfa25c65f,
 flags exactly the hold leg: `-l auto --vad -vmsd 10 -mc 0`.
 WER metric: jiwer, lowercase+punct-stripped+whitespace-normalized, same as
 scripts/benchmark/wer.py. Substitution classes from jiwer word alignments.
+The classes below are a MANUAL/HEURISTIC assessment (NFKC + combining-mark
+stripping, digit presence, Devanagari-range test) over one small slice -
+method and uncertainty stated, not proven causal percentages. Per-clip
+alignment dumps (ref/hyp pairs with classes) are kept out of the repo as
+working artifacts.
 
 Slice result: WER 63.1% (794 ref words; 335 hits, 404 substitutions,
 55 deletions, 42 insertions, 0 UTF-8 replacements). Same range as the
