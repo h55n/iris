@@ -36,7 +36,7 @@ for a in m.alignments[0]:
         c = classify(r, h); cats[c] += 1
         pairs.append({'ref': r, 'hyp': h, 'class': c})
         if len(ex[c]) < 4: ex[c].append([r, h])
-out = {'model': 'ggml-medium.bin', 'lang': 'auto', 'clips': n,
+out = {'model': 'ggml-medium.bin', 'lang': (sys.argv[4] if len(sys.argv)>4 else 'auto'), 'clips': n,
        'wer': round(m.wer*100,1), 'hits': m.hits, 'subs': m.substitutions,
        'del': m.deletions, 'ins': m.insertions,
        'ref_words': m.hits+m.substitutions+m.deletions,
