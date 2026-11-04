@@ -54,10 +54,11 @@ Conclusions:
 - A quarter of substitutions are wrong-script (Urdu/Latin) emissions - a
   distinct, fixable-looking failure mode worth its own probe (e.g. does a
   Devanagari-only constrained decode or a different model avoid it).
-- Hypothesis, NOT established: model capacity (ggml-small is the only
-  size benchmarked on hi). No larger-model comparison exists yet; naming
-  capacity as the cause requires a ggml-medium/large leg on the same
-  harness.
+- Capacity hypothesis now tested on this slice (medium legs below):
+  medium reduces different_word substitutions (267 -> 171 with auto) and
+  overall WER (-11.3 points) but does NOT remove wrong-script emissions -
+  script_mismatch grows to 157 with medium+auto, and only language
+  pinning collapses it (157 -> 1 with medium+hi).
 - Remaining unknowns: per-clip vs concat difference (~4-5 points vs the
   hold legs, unattributed); whether Urdu-script emissions correlate with
   specific speakers/clips; larger-model behavior.
@@ -95,15 +96,51 @@ slightly higher with `-l hi` (42 -> 54), the code-switching (Hinglish) cost of
 pinning the language is untested here, and the classes are heuristic. The
 existing benchmark baseline (auto, hold-2026-10-25) is unchanged.
 
-## ggml-medium leg: blocked by sandbox memory (not a model result)
+## ggml-medium leg: blocked by sandbox memory (not a model result) (superseded: completed on the PC)
 
-Attempted ggml-medium.bin (sha256
-6c14d5adee5f86394037b4e4e8b59f1673b6cee10e3cf0b11bbdbee79c156208) on the same
-slice in this sandbox: 6/6 attempted clips were SIGKILLed by the OOM killer.
-The box has 1982 MB RAM; whisper-cli reached ~1.8 GB RSS during model load/
-decode before being killed, so zero medium JSONs were produced. This is an
-environmental limit, not evidence about medium's quality. Options to complete
-the capacity comparison: run on a machine with >=4 GB free RAM (e.g. the user's
-PC, needs owner permission), or a quantized medium build (a different artifact
-than the pinned hash; would be labeled separately and confounds capacity with
-quantization).
+The sandbox attempt (1982 MB RAM) OOM-killed 6/6 clips at ~1.8 GB RSS, so the
+leg ran on the user's Windows PC instead (i7-13700HX, 15.7 GB RAM, authorized
+scope, public fixtures only). whisper.cpp v1.9.1 binary
+(whisper-bin-x64/Release), ggml-medium.bin downloaded from the same pinned HF
+URL, sha256 re-verified on the PC:
+6c14d5adee5f86394037b4e4e8b59f1673b6cee10e3cf0b11bbdbee79c156208
+(size 1,533,763,059 B). Identical 30-clip slice, identical decode flags
+(-l auto --vad -vmsd 10 -mc 0). Per-clip times 24-146.5 s; leg 05:23-05:47 IST
+2026-11-04. Outputs persist on the PC: D:\iris-test\wer-attr\out-med\
+(30 whisper JSONs), alignments-med-auto.json (per-clip alignment dump),
+analysis-med-auto.json (summary), D:\iris-test\medleg.log (timings).
+
+medium + `-l hi` leg: same PC, same model file, identical slice and flags
+except `-l hi`. Per-clip times 23.8-187.9 s; leg completed 06:21 IST
+2026-11-04. Outputs persist on the PC: D:\iris-test\wer-attr\out-med-hi\
+(30 whisper JSONs), alignments-med-hi.json (per-clip alignment dump),
+analysis-med-hi.json (summary), D:\iris-test\medleghi.log (timings).
+
+## Full same-slice comparison (FLEURS hi_in, 30 clips, per-clip decode)
+
+| config | WER | hits | subs | del | ins | utf8-repl |
+|---|---|---|---|---|---|---|
+| small + `-l auto` | 63.1% | 335 | 404 | 55 | 42 | 0 |
+| small + `-l hi` | 57.6% | 391 | 346 | 57 | 54 | 1 |
+| medium + `-l auto` | 51.8% | 409 | 369 | 16 | 26 | 0 |
+| medium + `-l hi` | 39.8% | 514 | 267 | 13 | 36 | 0 |
+
+Substitution classes (manual/heuristic categories, method unchanged):
+
+| class | small+auto | small+hi | medium+auto | medium+hi |
+|---|---|---|---|---|
+| different_word | 267 (66%) | 301 (87%) | 171 (46%) | 214 (80%) |
+| script_mismatch | 100 (24%) | 2 (<1%) | 157 (43%) | 1 (<1%) |
+| orthographic_variant | 32 (7%) | 38 (11%) | 37 (10%) | 49 (18%) |
+| number_form | 5 (1%) | 5 (1%) | 4 (1%) | 3 (1%) |
+
+Grounded reading on this slice: model capacity (small -> medium) reduces
+genuine misrecognition (different_word 267 -> 171, deletions 55 -> 16, WER
+-11.3 points) but does NOT remove the wrong-script mode - script_mismatch grows
+to 157 (43% of remaining substitutions). Pinning the language remains the only
+observed lever that removes wrong-script emissions (100 -> 2 with
+small+hi, 157 -> 1 with medium+hi).
+The two levers are orthogonal here. Still not a winner declaration: one
+30-clip read-speech slice, per-clip decode, heuristic classes, Hinglish
+code-switching cost of language pinning untested, and the existing auto
+baseline (hold-2026-10-25) is unchanged.
