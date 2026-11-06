@@ -394,3 +394,16 @@ NOT tested on the PC (explicit):
   This does not prove a real Zoom/Teams/Webex meeting or notification on a PC.
 - A running native app is only a possible-meeting signal. It can be idle.
   Existing debounce behavior and manual recording confirmation are unchanged.
+
+## 2026-11-06: per-relay incremental sync
+
+Fixed the incremental upload cache so a successful delivery to one relay does
+not skip the first upload to a different relay. Notes and project folders have
+independent per-relay hashes. Older caches without a recorded destination cause
+one safe resend. Relay URLs and authentication tokens are not stored in the new
+cache keys. This does not change audio exclusion or the notes-only setting.
+
+Local validation: 326 passed, 5 skipped, including six new destination-cache
+regressions and a real two-relay HTTP test with synthetic notes and folders.
+Four initial regressions failed on the unchanged source. No real recordings,
+personal notes, remote relay, model calls or PC access were used.

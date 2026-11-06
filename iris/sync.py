@@ -1,7 +1,7 @@
 """Sync client: push local meetings to / pull remote meetings from the sync server.
 Audio files are explicitly excluded - they never leave their device.
 Push is incremental: a per-meeting content hash in .sync-state.json skips
-meetings that have not changed since the last push."""
+meetings that have not changed since the last push to that relay."""
 import hashlib, json, os, time, urllib.request
 
 def _req(url, token, payload=None):
@@ -31,10 +31,22 @@ def bundle_hash(store_dir, mid, notes_only=False):
 def push(store_dir, mid, server, token, notes_only=False):
     return _req(f"{server}/push/{mid}", token, _bundle(store_dir, mid, notes_only))
 
+def _destination_state(st, server):
+    """Only a delivery to this relay can suppress a later push to it.
+
+    Legacy top-level hashes have no recorded destination, so cannot prove
+    delivery to any relay. The first push after upgrading safely resends once.
+    Hash the URL to avoid adding relay addresses or embedded credentials to
+    the local state file. Tokens are deliberately never persisted.
+    """
+    key = hashlib.sha256(server.encode()).hexdigest()
+    return st.setdefault("destinations", {}).setdefault(key, {})
+
 def push_changed(store_dir, server, token, notes_only=False):
     """Push only meetings whose content changed since the last push."""
     st = state_file(store_dir)
-    hashes = st.get("push_hashes", {})
+    destination = _destination_state(st, server)
+    hashes = destination.get("push_hashes", {})
     pushed, skipped = [], []
     for mid in sorted(os.listdir(store_dir)):
         if mid.startswith((".", "_")) or not os.path.isfile(os.path.join(store_dir, mid, "meta.json")):
@@ -48,7 +60,7 @@ def push_changed(store_dir, server, token, notes_only=False):
         (push(store_dir, mid, server, token, notes_only=True) if notes_only else push(store_dir, mid, server, token))
         hashes[mid] = h
         pushed.append(mid)
-    st["push_hashes"] = hashes
+    destination["push_hashes"] = hashes
     save_state(store_dir, st)
     return pushed, skipped
 
@@ -58,10 +70,11 @@ def push_folders(store_dir, server, token):
     folders = L.list_folders(store_dir)
     st = state_file(store_dir)
     h = hashlib.sha256(json.dumps(folders, sort_keys=True).encode()).hexdigest()
-    if st.get("folders_hash") == h:
+    destination = _destination_state(st, server)
+    if destination.get("folders_hash") == h:
         return False
     _req(f"{server}/push/_folders", token, {"id": "_folders", "folders": folders})
-    st["folders_hash"] = h
+    destination["folders_hash"] = h
     save_state(store_dir, st)
     return True
 
