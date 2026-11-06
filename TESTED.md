@@ -407,3 +407,13 @@ Local validation: 326 passed, 5 skipped, including six new destination-cache
 regressions and a real two-relay HTTP test with synthetic notes and folders.
 Four initial regressions failed on the unchanged source. No real recordings,
 personal notes, remote relay, model calls or PC access were used.
+
+## 2026-11-06: timestamp citation validation
+
+The integrity checker now rejects signed, whitespace-padded, non-string and
+out-of-range-second citations instead of converting them into nearby valid
+seconds. The supported format remains MM:SS, with three or more minute digits
+for long recordings (for example 100:05). Four new tests cover these boundaries;
+two initially failed on the unchanged source. Full local suite: 330 passed,
+5 skipped. Existing quote matching and 30-second timestamp tolerance are
+unchanged. This improves citation validation, not transcription accuracy.

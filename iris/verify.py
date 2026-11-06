@@ -20,9 +20,11 @@ def _quote_in_transcript(quote: str, transcript: str) -> bool:
     return ok >= max(2, int(0.8 * len(words)))
 
 def _at_exists(at: str, segs: list[dict]) -> bool:
+    if not isinstance(at, str) or not re.fullmatch(r"[0-9]{2,}:[0-5][0-9]", at):
+        return False
     try:
         m, s = at.split(":"); t = int(m) * 60 + int(s)
-    except Exception:
+    except ValueError:
         return False
     return any(seg["start"] - 30 <= t <= seg["end"] + 30 for seg in segs)  # 30s tolerance
 
