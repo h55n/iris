@@ -230,3 +230,71 @@ def test_encrypted_note_encrypt_failure_keeps_previous_text(tmp_path, monkeypatc
     assert open(os.path.join(d, mid, 'notes.md.age'), 'rb').read() == before
     assert S.decrypt_meeting(d, mid, key)['notes.md'] == 'Previous synthetic text'
     assert not os.path.exists(os.path.join(d, mid, 'notes.md'))
+
+
+def test_encrypted_edit_replace_failure_preserves_ciphertext(tmp_path, monkeypatch):
+    from iris import crypto as C
+    key = str(tmp_path / 'key.txt')
+    C.generate_key(key)
+    d = str(tmp_path / 'store')
+    mid = L.new_note(d, 'Synthetic atomic edit')
+    L.save_notes(d, mid, 'Previous synthetic text')
+    S.encrypt_meeting(d, mid, key)
+    before = open(os.path.join(d, mid, 'notes.md.age'), 'rb').read()
+    meta = S._load_meta(d, mid)
+    files = sorted(os.listdir(os.path.join(d, mid)))
+    def fail_replace(src, dst):
+        raise OSError('synthetic replace failure')
+    monkeypatch.setattr(os, 'replace', fail_replace)
+    with pytest.raises(OSError, match='synthetic replace failure'):
+        L.save_notes(d, mid, 'Replacement synthetic text', key_path=key)
+    assert open(os.path.join(d, mid, 'notes.md.age'), 'rb').read() == before
+    assert S.decrypt_meeting(d, mid, key)['notes.md'] == 'Previous synthetic text'
+    assert S._load_meta(d, mid) == meta
+    assert sorted(os.listdir(os.path.join(d, mid))) == files
+
+
+def test_encrypted_edit_installs_completed_ciphertext(tmp_path, monkeypatch):
+    from iris import crypto as C
+    key = str(tmp_path / 'key.txt')
+    C.generate_key(key)
+    d = str(tmp_path / 'store')
+    mid = L.new_note(d, 'Synthetic atomic edit')
+    S.encrypt_meeting(d, mid, key)
+    replace = os.replace
+    checked = []
+    def check_replace(src, dst):
+        assert os.path.dirname(src) == os.path.dirname(dst)
+        assert C.decrypt_bytes(open(src, 'rb').read(), key).decode() == 'Replacement text'
+        checked.append(dst)
+        return replace(src, dst)
+    monkeypatch.setattr(os, 'replace', check_replace)
+    L.save_notes(d, mid, 'Replacement text', key_path=key)
+    assert checked == [os.path.join(d, mid, 'notes.md.age')]
+    assert sorted(os.listdir(os.path.join(d, mid))) == ['meta.json', 'notes.md.age']
+    assert S.decrypt_meeting(d, mid, key)['notes.md'] == 'Replacement text'
+
+
+def test_encrypted_edit_partial_write_preserves_ciphertext(tmp_path, monkeypatch):
+    from iris import crypto as C
+    key = str(tmp_path / 'key.txt')
+    C.generate_key(key)
+    d = str(tmp_path / 'store')
+    mid = L.new_note(d, 'Synthetic failed write')
+    L.save_notes(d, mid, 'Previous synthetic text')
+    S.encrypt_meeting(d, mid, key)
+    before = open(os.path.join(d, mid, 'notes.md.age'), 'rb').read()
+    fdopen = os.fdopen
+    class PartialWriter:
+        def __init__(self, fd, mode): self.file = fdopen(fd, mode)
+        def __enter__(self): return self
+        def __exit__(self, *args): self.file.close()
+        def write(self, blob):
+            self.file.write(blob[:20])
+            raise OSError('synthetic full disk')
+    monkeypatch.setattr(os, 'fdopen', PartialWriter)
+    with pytest.raises(OSError, match='synthetic full disk'):
+        L.save_notes(d, mid, 'Replacement synthetic text', key_path=key)
+    assert open(os.path.join(d, mid, 'notes.md.age'), 'rb').read() == before
+    assert S.decrypt_meeting(d, mid, key)['notes.md'] == 'Previous synthetic text'
+    assert sorted(os.listdir(os.path.join(d, mid))) == ['meta.json', 'notes.md.age']

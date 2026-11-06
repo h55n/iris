@@ -449,3 +449,14 @@ ciphertext and its decryptable text. Both fail on unchanged source. Full local
 suite: 340 passed, 5 skipped. The existing encrypted note and speaker-edit tests
 also pass. This does not make the later ciphertext write atomic or change
 plaintext exports, initial note creation, audio handling or the key format.
+
+## 2026-11-07: encrypted edits preserve the prior ciphertext on write failure
+
+Write new ciphertext to a uniquely named file in the meeting directory, close
+it, then replace the destination. A write or replace failure no longer truncates
+the only encrypted copy. The staging file contains ciphertext only and is
+removed after an ordinary failure. Three new controls cover a partial write,
+a failed replace, and a real age-decryptable completed replacement. All three
+fail on unchanged source. Full local suite: 343 passed, 5 skipped. This protects
+one encrypted text file per edit; it does not make transcript-plus-notes changes
+a transaction, alter metadata writes, or promise fsync/power-loss durability.
