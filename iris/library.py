@@ -85,12 +85,9 @@ def _save_text(store_dir: str, mid: str, name: str, text: str, key_path: str | N
     d = os.path.join(store_dir, mid)
     if S.is_encrypted(store_dir, mid):
         pub = C.public_key(key_path or C.DEFAULT_KEY)
-        plain = os.path.join(d, name)
-        open(plain, "w").write(text)
-        try:
-            C.encrypt_file(plain, pub)
-        finally:
-            if os.path.exists(plain): os.remove(plain)
+        blob = C.encrypt_bytes(text.encode("utf-8"), pub)
+        with open(os.path.join(d, name + ".age"), "wb") as f:
+            f.write(blob)
     else:
         S.write_text(store_dir, mid, name, text)
     meta = S._load_meta(store_dir, mid)

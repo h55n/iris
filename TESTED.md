@@ -437,3 +437,15 @@ counts without changing short timestamps or the legacy HH:MM:SS pattern.
 Three regressions fail on unchanged source: two use the real transcript formatter
 at 100 and 1000 minutes, and one edits an actual age-encrypted synthetic transcript.
 Full local suite: 338 passed, 5 skipped. No recordings or model calls used.
+
+## 2026-11-06: encrypted edits do not stage plaintext on disk
+
+Editing an encrypted note or transcript previously wrote the replacement to a
+plaintext file before encrypting and deleting it. Encrypt the UTF-8 bytes in
+memory instead, so an interrupted encryption cannot leave that staging file.
+Two new regressions inspect the disk while the real age encryption boundary is
+called, including an injected encryption failure that preserves the prior
+ciphertext and its decryptable text. Both fail on unchanged source. Full local
+suite: 340 passed, 5 skipped. The existing encrypted note and speaker-edit tests
+also pass. This does not make the later ciphertext write atomic or change
+plaintext exports, initial note creation, audio handling or the key format.

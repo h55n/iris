@@ -190,3 +190,43 @@ def test_rename_speaker_long_encrypted_transcript(tmp_path):
     assert L.rename_speaker(d, mid, 'Speaker 2', 'Priya', key_path=key) == 1
     assert not os.path.exists(os.path.join(d, mid, 'transcript.md'))
     assert S.decrypt_meeting(d, mid, key)['transcript.md'] == '[100:05] Priya: Synthetic encrypted note'
+
+
+def test_encrypted_note_edit_does_not_stage_plaintext(tmp_path, monkeypatch):
+    from iris import crypto as C
+    key = str(tmp_path / 'key.txt')
+    C.generate_key(key)
+    d = str(tmp_path / 'store')
+    mid = L.new_note(d, 'Synthetic note')
+    S.encrypt_meeting(d, mid, key)
+    encrypt = C.encrypt_bytes
+    checked = []
+    def check_plaintext(data, recipient):
+        assert not os.path.exists(os.path.join(d, mid, 'notes.md'))
+        checked.append(data)
+        return encrypt(data, recipient)
+    monkeypatch.setattr(C, 'encrypt_bytes', check_plaintext)
+    L.save_notes(d, mid, 'Synthetic edited text हिंदी', key_path=key)
+    assert checked == ['Synthetic edited text हिंदी'.encode('utf-8')]
+    assert S.decrypt_meeting(d, mid, key)['notes.md'] == 'Synthetic edited text हिंदी'
+    assert not os.path.exists(os.path.join(d, mid, 'notes.md'))
+
+
+def test_encrypted_note_encrypt_failure_keeps_previous_text(tmp_path, monkeypatch):
+    from iris import crypto as C
+    key = str(tmp_path / 'key.txt')
+    C.generate_key(key)
+    d = str(tmp_path / 'store')
+    mid = L.new_note(d, 'Synthetic note')
+    L.save_notes(d, mid, 'Previous synthetic text')
+    S.encrypt_meeting(d, mid, key)
+    before = open(os.path.join(d, mid, 'notes.md.age'), 'rb').read()
+    def fail(data, recipient):
+        assert not os.path.exists(os.path.join(d, mid, 'notes.md'))
+        raise C.CryptoError('synthetic encryption failure')
+    monkeypatch.setattr(C, 'encrypt_bytes', fail)
+    with pytest.raises(C.CryptoError, match='synthetic encryption failure'):
+        L.save_notes(d, mid, 'Replacement synthetic text', key_path=key)
+    assert open(os.path.join(d, mid, 'notes.md.age'), 'rb').read() == before
+    assert S.decrypt_meeting(d, mid, key)['notes.md'] == 'Previous synthetic text'
+    assert not os.path.exists(os.path.join(d, mid, 'notes.md'))
