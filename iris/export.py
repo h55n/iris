@@ -36,8 +36,9 @@ def build_bundle(store_dir: str, mid: str, key_path: str | None = None) -> str:
     return "\n".join(parts)
 
 def export_meeting(store_dir: str, mid: str, out_path: str, key_path: str | None = None) -> str:
+    bundle = build_bundle(store_dir, mid, key_path)
     with open(out_path, "w") as f:
-        f.write(build_bundle(store_dir, mid, key_path))
+        f.write(bundle)
     return out_path
 
 def share_meeting(store_dir: str, mid: str, recipient_pub: str, out_path: str,

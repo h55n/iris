@@ -417,3 +417,13 @@ for long recordings (for example 100:05). Four new tests cover these boundaries;
 two initially failed on the unchanged source. Full local suite: 330 passed,
 5 skipped. Existing quote matching and 30-second timestamp tolerance are
 unchanged. This improves citation validation, not transcription accuracy.
+
+## 2026-11-06: export preparation failures preserve the destination
+
+Build the text bundle before opening an export destination. An absent meeting
+or wrong decryption key previously truncated an existing export before raising
+an error. Five new controls include real missing metadata and an actual age
+wrong-key failure, plus success and simulated failure cases. Two initial
+regressions failed on unchanged source. Full local suite: 335 passed, 5 skipped.
+This protects against bundle-preparation failure, not disk failure during a
+later write; export intentionally remains plaintext and opt-in.
