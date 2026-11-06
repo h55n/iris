@@ -32,3 +32,15 @@ jobs:
       - name: gradle unit tests
         working-directory: android
         run: ./gradlew --no-daemon testDebugUnitTest
+
+  windows-detection:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: install detector test deps
+        run: python -m pip install pytest
+      - name: detector regressions and real tasklist integration
+        run: python -m pytest tests/test_detect.py -q

@@ -16,7 +16,7 @@ foreground app name (if the user grants Usage Access) and show a
 "meeting? tap to record" notification. iOS: not possible at all.
 """
 from __future__ import annotations
-import json, os, re, subprocess, time
+import csv, io, json, os, platform, re, subprocess, time
 from dataclasses import dataclass, field
 
 MEETING_PROCESSES = {
@@ -66,13 +66,25 @@ class Detector:
     # ---- probes (overridable for tests / non-Linux) ----
     def running_processes(self) -> list[str]:
         try:
-            out = subprocess.run(["ps", "-eo", "comm="], capture_output=True, text=True, timeout=10).stdout
+            if platform.system() == "Windows":
+                result = subprocess.run(["tasklist", "/FO", "CSV", "/NH"],
+                                        capture_output=True, text=True, errors="replace", timeout=10)
+                if result.returncode != 0:
+                    return []
+                return [row[0].strip() for row in csv.reader(io.StringIO(result.stdout))
+                        if len(row) >= 2 and row[0].strip()]
+            result = subprocess.run(["ps", "-eo", "comm="], capture_output=True, text=True, timeout=10)
+            if result.returncode != 0:
+                return []
+            out = result.stdout
         except Exception:
             return []
         return [l.strip() for l in out.splitlines() if l.strip()]
 
     def mic_in_use(self) -> bool:
-        # Linux: any open capture PCM device outside our own process.
+        # Linux only: any open capture PCM device outside our own process.
+        if platform.system() != "Linux":
+            return False
         try:
             out = subprocess.run(["fuser", "/dev/snd/pcmC0D0c"], capture_output=True, text=True, timeout=5)
             return bool(out.stdout.strip())
@@ -81,7 +93,7 @@ class Detector:
 
     def window_titles(self) -> list[str]:
         # X11 only; Wayland returns [] by design (no protocol for foreign titles).
-        if not os.environ.get("DISPLAY"):
+        if platform.system() == "Windows" or not os.environ.get("DISPLAY"):
             return []
         try:
             out = subprocess.run(["xdotool", "search", "--onlyvisible", "--name", ".", "getwindowname", "%@"],
@@ -94,9 +106,13 @@ class Detector:
     def sense(self) -> list[Signal]:
         sigs = []
         procs = set(self.running_processes())
-        for p in procs:
-            if p in MEETING_PROCESSES:
-                sigs.append(Signal("process", MEETING_PROCESSES[p], p))
+        names = {name.casefold(): app for name, app in MEETING_PROCESSES.items()}
+        for p in sorted(procs):
+            name = p.casefold()
+            if name.endswith(".exe"):
+                name = name[:-4]
+            if name in names:
+                sigs.append(Signal("process", names[name], p))
         titles = self.window_titles()
         for t in titles:
             for pat, app in MEETING_URL_PATTERNS:

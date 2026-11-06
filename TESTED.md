@@ -373,8 +373,24 @@ Real bugs found and fixed during this validation:
 NOT tested on the PC (explicit):
 - Real microphone capture (owner boundary while unattended; device
   enumeration only).
-- detect.py on Windows (documented gap - Linux/macOS probes only).
+- Real Zoom/Teams/Webex meeting detection on this Windows PC remains untested.
+  The 2026-11-06 detector update adds tasklist process probing, with a separate
+  native Windows CI test using a renamed Python process (not a real meeting).
 - Relay sync from the PC, encryption key init on the PC, Android keystore
   signing (owner gate), real Android phone (owner gate).
 - lfm2.5 ollama backend remains limited-backend-compatibility only, not a
   validated default (per owner ruling).
+
+
+## Windows native-process detector - 2026-11-06
+
+- Adds read-only `tasklist /FO CSV /NH` enumeration and case-insensitive exact
+  executable matching, including `.exe` suffixes. CSV parsing handles commas in
+  memory values. Nonzero exits and timeouts return no signals.
+- Linux `ps` probing remains. Windows does not invoke Linux `fuser` or X11
+  `xdotool`. Windows browser-title and microphone-in-use probes are not added.
+- A native Windows CI integration test starts a renamed Python executable,
+  `Zoom.exe`, checks the actual tasklist-backed detection, and stops that child.
+  This does not prove a real Zoom/Teams/Webex meeting or notification on a PC.
+- A running native app is only a possible-meeting signal. It can be idle.
+  Existing debounce behavior and manual recording confirmation are unchanged.

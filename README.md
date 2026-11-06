@@ -148,7 +148,7 @@ License: MIT.
 | sync | `iris/sync.py` + `sync_server.py` | tiny self-hostable relay; moves ciphertext, NEVER audio |
 | LAN ingest | `iris/ingest_server.py` | phone posts recordings to your own laptop for transcription |
 | speaker labels | `iris/diarize.py` | sherpa-onnx: pyannote-seg + ERes2Net, `ingest --diarize` |
-| meeting detect | `iris/detect.py` | laptop: Zoom/Meet/Teams/Webex via process+window+mic signals, debounced |
+| meeting detect | `iris/detect.py` | native app processes on Windows/Linux/macOS; X11 window titles and Linux mic signals where available, debounced; running apps may be idle |
 | local web UI | `iris/webui.py` | Notion x Granola style notes at 127.0.0.1:8473 (localhost only): editor, pins, folders, drag reorder, ask, click-to-name speakers |
 | library | `iris/library.py` | pins, project folders, blank notes, free editing, speaker rename, manual order (all synced, encryption-safe) |
 | ask | `iris/ask.py` | questions across meetings answered only with quoted transcript lines + time |
