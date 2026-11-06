@@ -167,3 +167,26 @@ def test_unknown_ids_are_harmless(tmp_path):
     assert L.rename_folder(d, "f-none", "n") is False
     assert L.restore_note(d, "nope") is False
     assert L.trash_note(d, "nope") is False
+
+@pytest.mark.parametrize('minutes', [100, 1000])
+def test_rename_speaker_handles_long_transcript_minutes(tmp_path, minutes):
+    from iris.transcribe import transcript_markdown
+    transcript = transcript_markdown([
+        {'start': minutes * 60 + 5, 'end': minutes * 60 + 8,
+         'text': 'Synthetic long meeting', 'speaker': 1},
+    ])
+    d, mid = _tm(tmp_path, transcript)
+    assert L.rename_speaker(d, mid, 'Speaker 2', 'Priya') == 1
+    result = open(os.path.join(d, mid, 'transcript.md')).read()
+    assert f'[{minutes}:05] Priya: Synthetic long meeting' in result
+
+
+def test_rename_speaker_long_encrypted_transcript(tmp_path):
+    from iris import crypto as C
+    key = str(tmp_path / 'key.txt')
+    C.generate_key(key)
+    d, mid = _tm(tmp_path, '[100:05] Speaker 2: Synthetic encrypted note')
+    S.encrypt_meeting(d, mid, key)
+    assert L.rename_speaker(d, mid, 'Speaker 2', 'Priya', key_path=key) == 1
+    assert not os.path.exists(os.path.join(d, mid, 'transcript.md'))
+    assert S.decrypt_meeting(d, mid, key)['transcript.md'] == '[100:05] Priya: Synthetic encrypted note'

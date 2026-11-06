@@ -427,3 +427,13 @@ wrong-key failure, plus success and simulated failure cases. Two initial
 regressions failed on unchanged source. Full local suite: 335 passed, 5 skipped.
 This protects against bundle-preparation failure, not disk failure during a
 later write; export intentionally remains plaintext and opt-in.
+
+## 2026-11-06: speaker rename supports long recordings
+
+The transcript formatter emits minute counts with at least two digits, including
+100:05 for long meetings. Speaker renaming previously matched exactly two
+minute digits, silently leaving those labels unchanged. Accept longer minute
+counts without changing short timestamps or the legacy HH:MM:SS pattern.
+Three regressions fail on unchanged source: two use the real transcript formatter
+at 100 and 1000 minutes, and one edits an actual age-encrypted synthetic transcript.
+Full local suite: 338 passed, 5 skipped. No recordings or model calls used.

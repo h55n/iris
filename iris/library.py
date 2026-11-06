@@ -112,7 +112,7 @@ def rename_speaker(store_dir: str, mid: str, old: str, new: str, key_path: str |
         raise ValueError("speaker names are letters, numbers, spaces and - only (max 30)")
     texts = E._get_texts(store_dir, mid, key_path)
     tr = texts.get("transcript.md", "")
-    pat = re.compile(r"^(\[\d\d:\d\d(?::\d\d)?\] )" + re.escape(old) + r": ", re.M)
+    pat = re.compile(r"^(\[\d{2,}:\d\d(?::\d\d)?\] )" + re.escape(old) + r": ", re.M)
     new_tr, n = pat.subn(lambda m: f"{m.group(1)}{new}: ", tr)
     if n:
         _save_text(store_dir, mid, "transcript.md", new_tr, key_path)
