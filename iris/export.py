@@ -20,7 +20,7 @@ def _get_texts(store_dir: str, mid: str, key_path: str | None) -> dict:
     for name in S.PLAINTEXT_FILES:
         p = os.path.join(d, name)
         if os.path.exists(p):
-            out[name] = open(p).read()
+            out[name] = open(p, encoding="utf-8").read()
     return out
 
 def build_bundle(store_dir: str, mid: str, key_path: str | None = None) -> str:
@@ -37,7 +37,7 @@ def build_bundle(store_dir: str, mid: str, key_path: str | None = None) -> str:
 
 def export_meeting(store_dir: str, mid: str, out_path: str, key_path: str | None = None) -> str:
     bundle = build_bundle(store_dir, mid, key_path)
-    with open(out_path, "w") as f:
+    with open(out_path, "w", encoding="utf-8") as f:
         f.write(bundle)
     return out_path
 
@@ -48,6 +48,6 @@ def share_meeting(store_dir: str, mid: str, recipient_pub: str, out_path: str,
         raise C.CryptoError(f"not an age public key: {recipient_pub[:24]!r}... "
                             f"(it starts with 'age1', ask them to run `iris key`)")
     blob = C.encrypt_bytes(build_bundle(store_dir, mid, key_path).encode(), recipient_pub)
-    with open(out_path, "w") as f:
+    with open(out_path, "w", encoding="utf-8") as f:
         f.write(blob.decode())
     return out_path
