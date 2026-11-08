@@ -33,7 +33,7 @@ def generate_key(path: str = DEFAULT_KEY) -> str:
     """Create key file, return the public key. Refuses to overwrite."""
     if os.path.exists(path):
         raise CryptoError(f"key already exists: {path}")
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     out = subprocess.run([AGE_KEYGEN, "-o", path], capture_output=True, text=True)
     if out.returncode != 0:
         raise CryptoError(out.stderr.strip())
