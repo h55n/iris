@@ -28,7 +28,7 @@ def attach_audio(store_dir: str, mid: str, audio_path: str) -> str:
     return dest
 
 def write_text(store_dir: str, mid: str, name: str, text: str):
-    with open(os.path.join(store_dir, mid, name), "w") as f:
+    with open(os.path.join(store_dir, mid, name), "w", encoding="utf-8") as f:
         f.write(text)
 
 def sweep(store_dir: str, now: float = None, dry_run: bool = False) -> list[str]:
@@ -119,7 +119,7 @@ def search(store_dir: str, query: str, key_path: str = None) -> list[dict]:
             except C.CryptoError:
                 continue  # locked meeting, key not here - search what you can read
         else:
-            texts = {n: open(os.path.join(d, n)).read()
+            texts = {n: open(os.path.join(d, n), encoding="utf-8").read()
                      for n in PLAINTEXT_FILES if os.path.exists(os.path.join(d, n))}
         for name, text in texts.items():
             for line in text.splitlines():
